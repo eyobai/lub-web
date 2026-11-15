@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { errorMessage } from '../api/errors';
 import { AuctionCard } from '../auctions/AuctionCard';
 import { AUCTION_TABS, PAGE_SIZE, useAuctions, type AuctionTab } from '../auctions/queries';
-import { Alert, Button, PageLoading } from '../components/ui';
+import { Alert, Button, PageLoading, Pagination } from '../components/ui';
 import { cx } from '../lib/cx';
 
 const EMPTY: Record<AuctionTab['key'], string> = {
@@ -85,23 +85,7 @@ export function AuctionListPage() {
           </ul>
         )}
 
-        {auctions.data && (pages > 1 || page > 1) && (
-          <nav aria-label="Pages" className="mt-6 flex items-center justify-between gap-3">
-            <Button
-              variant="secondary"
-              disabled={page <= 1}
-              onClick={() => go(tab, Math.min(page - 1, pages))}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-slate-600">
-              Page {page} of {pages}
-            </span>
-            <Button variant="secondary" disabled={page >= pages} onClick={() => go(tab, page + 1)}>
-              Next
-            </Button>
-          </nav>
-        )}
+        {auctions.data && <Pagination page={page} pages={pages} onChange={(next) => go(tab, next)} />}
       </div>
     </>
   );

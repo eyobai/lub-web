@@ -7,6 +7,8 @@ import { ProductImage } from '../auctions/ProductImage';
 import { useAuction, useAuctionResult, type Auction, type AuctionResult } from '../auctions/queries';
 import { StatusBadge } from '../auctions/StatusBadge';
 import { useAuth } from '../auth/useAuth';
+import { BidPanel } from '../bids/BidPanel';
+import { MyAuctionBids } from '../bids/MyAuctionBids';
 import { Alert, Button, ButtonLink, Card, PageLoading } from '../components/ui';
 import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
@@ -33,6 +35,7 @@ function NotFound() {
 
 function AuctionDetail({ id }: { id: string }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const auction = useAuction(id);
   const over = auction.data?.status === 'COMPLETED';
   const result = useAuctionResult(id, over);
@@ -72,6 +75,8 @@ function AuctionDetail({ id }: { id: string }) {
           </header>
 
           <StatePanel auction={a} result={result.data} onElapsed={refresh} />
+          {user && a.status === 'ACTIVE' && <BidPanel auction={a} />}
+          {user && <MyAuctionBids auction={a} />}
 
           <Card className="p-4">
             <h2 className="font-semibold">Bidding rules</h2>
@@ -184,11 +189,7 @@ function StatePanel({
           <p className="text-3xl font-bold text-brand-800">
             <Countdown until={a.closesAt} onElapsed={onElapsed} />
           </p>
-          {user ? (
-            <p className="mt-3 text-sm text-slate-700">
-              Bidding from this site is coming in the next update.
-            </p>
-          ) : (
+          {!user && (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <ButtonLink to="/sign-in" state={{ from: location.pathname }}>
                 Sign in to bid

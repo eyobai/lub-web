@@ -8,9 +8,11 @@ import { AccountPage } from './pages/AccountPage';
 import { AuctionDetailPage } from './pages/AuctionDetailPage';
 import { AuctionListPage } from './pages/AuctionListPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
+import { MyBidsPage } from './pages/MyBidsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SignInPage } from './pages/SignInPage';
+import { WalletPage } from './pages/WalletPage';
 import { createQueryClient } from './queryClient';
 
 /** Everything except the router, so tests can mount it at any address. */
@@ -31,6 +33,8 @@ export function App({ queryClient }: { queryClient?: QueryClient }) {
               <Route path="register" element={<RegisterPage />} />
             </Route>
             <Route element={<RequireAuth />}>
+              <Route path="wallet" element={<WalletPage />} />
+              <Route path="bids" element={<MyBidsPage />} />
               <Route path="account" element={<AccountPage />} />
               <Route path="change-password" element={<ChangePasswordPage />} />
             </Route>

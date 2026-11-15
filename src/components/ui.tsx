@@ -96,6 +96,7 @@ const ALERT_TONES = {
   error: 'border-red-200 bg-red-50 text-red-800',
   info: 'border-sky-200 bg-sky-50 text-sky-900',
   warning: 'border-amber-200 bg-amber-50 text-amber-900',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-900',
 } as const;
 
 export function Alert({
@@ -127,5 +128,31 @@ export function PageLoading({ label = 'Loading' }: { label?: string }) {
       <Spinner />
       <span>{label}…</span>
     </div>
+  );
+}
+
+/** Previous / Next for lists the API serves a page at a time. */
+export function Pagination({
+  page,
+  pages,
+  onChange,
+}: {
+  page: number;
+  pages: number;
+  onChange: (page: number) => void;
+}) {
+  if (pages <= 1 && page <= 1) return null;
+  return (
+    <nav aria-label="Pages" className="mt-6 flex items-center justify-between gap-3">
+      <Button variant="secondary" disabled={page <= 1} onClick={() => onChange(Math.min(page - 1, pages))}>
+        Previous
+      </Button>
+      <span className="text-sm text-slate-600">
+        Page {page} of {pages}
+      </span>
+      <Button variant="secondary" disabled={page >= pages} onClick={() => onChange(page + 1)}>
+        Next
+      </Button>
+    </nav>
   );
 }

@@ -8,6 +8,7 @@ export interface RecordedCall {
   path: string;
   query: URLSearchParams;
   authorization: string | null;
+  idempotencyKey: string | null;
   body: unknown;
 }
 
@@ -29,6 +30,7 @@ export function fakeApi(handlers: Record<string, Handler | Reply>) {
       path: url.pathname,
       query: url.searchParams,
       authorization: request.headers.get('authorization'),
+      idempotencyKey: request.headers.get('idempotency-key'),
       body: text ? JSON.parse(text) : undefined,
     };
     calls.push(call);
@@ -130,4 +132,119 @@ export function anAuction(overrides: Partial<Schemas['AuctionDto']> = {}): Schem
 
 export function aPage(items: Schemas['AuctionDto'][], total = items.length): Schemas['AuctionPageDto'] {
   return { items, total, page: 1, limit: 12 };
+}
+
+export function aWallet(overrides: Partial<Schemas['WalletDto']> = {}): Schemas['WalletDto'] {
+  return {
+    id: '44444444-4444-4444-8444-444444444444',
+    userId: aUser().id,
+    currency: 'ETB',
+    minorUnits: 2,
+    availableMinor: '100000',
+    available: '1000.00',
+    heldMinor: '0',
+    held: '0.00',
+    isFrozen: false,
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+let sequence = 0;
+const nextId = () => `55555555-5555-4555-8555-${String(++sequence).padStart(12, '0')}`;
+const major = (minor: string) => `${minor.slice(0, -2) || '0'}.${minor.slice(-2).padStart(2, '0')}`;
+
+export function aTransaction(
+  overrides: Partial<Schemas['WalletTransactionDto']> = {},
+): Schemas['WalletTransactionDto'] {
+  const amountMinor = overrides.amountMinor ?? '7500';
+  const balanceAfterMinor = overrides.balanceAfterMinor ?? '92500';
+  return {
+    id: nextId(),
+    reference: `TXN-${sequence}`,
+    type: 'BID_FEE',
+    status: 'POSTED',
+    direction: 'DEBIT',
+    currency: 'ETB',
+    amount: major(amountMinor),
+    balanceAfter: major(balanceAfterMinor),
+    description: null,
+    reversalOf: null,
+    createdAt: '2026-01-02T10:00:00.000Z',
+    ...overrides,
+    amountMinor,
+    balanceAfterMinor,
+  };
+}
+
+export function aMyBid(
+  amountMinor: string,
+  overrides: Partial<Schemas['MyBidDto']> = {},
+): Schemas['MyBidDto'] {
+  return {
+    id: nextId(),
+    amountMinor,
+    amount: major(amountMinor),
+    createdAt: '2026-01-02T10:00:00.000Z',
+    auctionId: anAuction().id,
+    auctionTitle: anAuction().title,
+    auctionStatus: 'ACTIVE',
+    currency: 'ETB',
+    submissionId: '66666666-6666-4666-8666-666666666666',
+    bidFeeMinor: '7500',
+    bidFee: '75.00',
+    ...overrides,
+  };
+}
+
+export function myBids(items: Schemas['MyBidDto'][], total = items.length): Schemas['MyBidPageDto'] {
+  return { items, total, page: 1, limit: 20 };
+}
+
+/** The server's answer to placing `amountsMinor` at ETB 75 each from a wallet that had `walletMinor`. */
+export function aSubmission(amountsMinor: string[], walletMinor = '100000'): Schemas['BidSubmissionDto'] {
+  const totalFeeMinor = String(7500 * amountsMinor.length);
+  const left = String(Number(walletMinor) - Number(totalFeeMinor));
+  return {
+    id: nextId(),
+    auctionId: anAuction().id,
+    currency: 'ETB',
+    minorUnits: 2,
+    bidCount: amountsMinor.length,
+    bidFeeMinor: '7500',
+    bidFee: '75.00',
+    totalFeeMinor,
+    totalFee: major(totalFeeMinor),
+    transactionId: nextId(),
+    transactionReference: 'TXN-BID',
+    walletAvailableMinor: left,
+    walletAvailable: major(left),
+    bids: amountsMinor.map((amountMinor) => ({
+      id: nextId(),
+      amountMinor,
+      amount: major(amountMinor),
+      createdAt: '2026-01-02T10:00:00.000Z',
+    })),
+    createdAt: '2026-01-02T10:00:00.000Z',
+  };
+}
+
+export function myResult(
+  overrides: Partial<Schemas['MyAuctionResultDto']> = {},
+): Schemas['MyAuctionResultDto'] {
+  return {
+    auctionId: anAuction().id,
+    outcome: 'WINNER_FOUND',
+    currency: 'ETB',
+    minorUnits: 2,
+    winningAmountMinor: '400',
+    winningAmount: '4.00',
+    totalBids: 12,
+    appliedNoUniquePolicy: null,
+    bidFeesRefundedAt: null,
+    computedAt: '2026-01-02T12:00:00.000Z',
+    won: false,
+    bids: [],
+    ...overrides,
+  };
 }

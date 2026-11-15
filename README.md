@@ -5,7 +5,7 @@ backend (`lub-auction-backend`) and talks to it only through the HTTP API.
 
 Built with React, TypeScript, Vite and Tailwind CSS. Mobile-first: it is meant to be used in a phone browser.
 
-## What is in this phase
+## What is built so far
 
 | Area                   | Pages                                                                                               |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
@@ -13,8 +13,21 @@ Built with React, TypeScript, Vite and Tailwind CSS. Mobile-first: it is meant t
 | Session                | Stays signed in across reloads and tabs; access tokens are renewed in the background                |
 | Forced password change | After a staff password reset the user must choose a new password before anything else               |
 | Auctions               | Public list (live / upcoming / ended, paged) and auction detail with rules, countdown and result    |
+| Wallet                 | Balance, money on hold, frozen notice, history (newest first, older entries on request)             |
+| Bidding                | One or several amounts per request, a range of amounts, the total fee, a confirmation before paying |
+| My bids and results    | All my bids by auction; on an ended auction, whether I won and how each of my bids did              |
 
-Not built yet: wallet, placing bids, my bids and results, my wins and delivery details, notifications.
+Bidding notes:
+
+- Amounts are checked in the browser against the auction's range and step before anything is sent, and
+  money is handled as whole minor units (never floating point). The server checks everything again.
+- Every request carries an `Idempotency-Key`. If the answer is lost (no connection, server error) the
+  same key is sent again on retry, so a bid cannot be charged twice.
+- A request is all or nothing: if the server refuses one amount, nothing is placed or charged, and the
+  page marks the refused amounts.
+
+Not built yet: paying in and withdrawing (the backend has no payment provider yet), my wins and delivery
+details, recent winners, notifications.
 The admin screens will be a separate project.
 
 ## Running it

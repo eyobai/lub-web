@@ -7,6 +7,7 @@
 //   CHROME_CDP_URL                           attach to a running Chrome instead of starting one
 import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 
 const WEB = (process.env.WEB_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
@@ -45,6 +46,8 @@ page.on('request', (r) => {
   if (pathname.startsWith('/api/v1/')) requests.push(`${r.method()} ${pathname.replace('/api/v1', '')}`);
 });
 const shot = (name) => page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
+// What a phone shows without scrolling; a full-page capture draws the fixed tab bar mid-page.
+const view = (name) => page.screenshot({ path: `${SHOTS}/${name}.png` });
 const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('lub.session')));
 
 process.on('uncaughtException', async (e) => {
@@ -150,7 +153,11 @@ ok('expired and refused access tokens are renewed without signing out');
 const api = async (method, path, token, body) => {
   const r = await fetch(API + path, {
     method,
-    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    headers: {
+      'content-type': 'application/json',
+      'idempotency-key': randomUUID(),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const t = await r.text();
@@ -210,6 +217,98 @@ await page.getByLabel('Password').fill('second-pass2');
 await page.getByRole('button', { name: 'Sign in' }).click();
 await page.getByRole('link', { name: 'Account' }).waitFor();
 ok('sign out revokes the session on the server; sign in with the new password works');
+
+// Wallet and bidding. A short auction where another bidder also picks ETB 1 and ETB 2, so ETB 3 wins.
+const product = await api('POST', '/admin/products', admin, {
+  name: 'Browser test prize',
+  marketValueMinor: '500000',
+});
+const quick = await api('POST', '/admin/auctions', admin, {
+  productId: product.id,
+  title: `Browser test ${phone.slice(-4)}`,
+  bidFeeMinor: '7500',
+  minBidMinor: '100',
+  maxBidMinor: '100000',
+  bidStepMinor: '100',
+  noUniqueBidPolicy: 'REFUND_BID_FEES',
+  opensAt: new Date(Date.now() + 2_000).toISOString(),
+  closesAt: new Date(Date.now() + 50_000).toISOString(),
+});
+await api('POST', `/admin/auctions/${quick.id}/activate`, admin);
+const credit = (id, amountMinor) =>
+  api('POST', `/admin/wallets/${id}/adjustments`, admin, {
+    direction: 'CREDIT',
+    amountMinor,
+    reason: 'Browser test: starting balance',
+  });
+const rival = await api('POST', '/auth/register', null, {
+  phoneNumber: `09${Math.floor(10000000 + Math.random() * 89999999)}`,
+  password: `Rival-${randomUUID()}`,
+});
+await credit(rival.userId, '50000');
+await api('POST', `/auctions/${quick.id}/bids`, rival.tokens.accessToken, { amountsMinor: ['100', '200'] });
+
+await page.getByRole('link', { name: 'Wallet', exact: true }).click();
+await page.getByText('Nothing has gone in or out of your wallet yet.').waitFor();
+assert.match(await page.getByRole('region', { name: 'Balance' }).innerText(), /ETB 0/);
+await page.goto(`${WEB}/auctions/${quick.id}`);
+await page.getByLabel('Bid amount (ETB)').fill('3');
+await page.getByRole('button', { name: 'Add', exact: true }).click();
+await page.getByText('Your wallet has ETB 0, which does not cover ETB 75').waitFor();
+assert.ok(await page.getByRole('button', { name: 'Review 1 bid' }).isDisabled());
+ok('wallet starts empty, and an empty wallet cannot go on to pay');
+
+await credit(userId, '50000');
+await page.reload();
+await page.getByRole('link', { name: 'Balance: ETB 500' }).waitFor();
+await page.getByLabel('Bid amount (ETB)').fill('1');
+await page.getByRole('button', { name: 'Add', exact: true }).click();
+await page.getByRole('button', { name: 'Add a range of amounts' }).click();
+await page.getByLabel('From', { exact: true }).fill('2');
+await page.getByLabel('To', { exact: true }).fill('4');
+await page.getByRole('button', { name: 'Add range' }).click();
+await page.getByText('4 bids × ETB 75 =').waitFor();
+await page.getByRole('list', { name: 'Bids to place' }).scrollIntoViewIfNeeded();
+await view('10-bid-form');
+await page.getByRole('button', { name: 'Review 4 bids' }).click();
+await page.getByRole('heading', { name: 'Place 4 bids?' }).waitFor();
+await view('11-bid-confirm');
+await page.getByRole('button', { name: 'Pay ETB 300 and bid' }).click();
+await page
+  .getByText('4 bids placed: ETB 1, ETB 2, ETB 3, ETB 4. ETB 300 was taken from your wallet.')
+  .waitFor();
+await page.getByRole('link', { name: 'Balance: ETB 200' }).waitFor();
+await page.getByText('Your bids in this auction (4)').waitFor();
+assert.equal(requests.filter((r) => r === `POST /auctions/${quick.id}/bids`).length, 1);
+await view('12-bid-placed');
+await page.getByLabel('Bid amount (ETB)').fill('3');
+await page.getByRole('button', { name: 'Add', exact: true }).click();
+await page.getByText('You have already bid ETB 3 in this auction.').waitFor();
+ok('place four bids (one typed, a range of three): charged once, balance and my bids update');
+
+await page.getByRole('link', { name: 'Wallet', exact: true }).click();
+await page.getByText('Bid fees').waitFor();
+const history = await page.locator('main').innerText();
+assert.match(history, /Bid fees[\s\S]*−ETB 300[\s\S]*Balance ETB 200/);
+assert.match(history, /Adjustment by support[\s\S]*\+ETB 500/);
+assert.doesNotMatch(history, /Browser test: starting balance/, 'the staff note is not shown');
+await view('13-wallet');
+await page.getByRole('link', { name: 'My bids' }).click();
+await page.getByText('4 bids in total, newest first.').waitFor();
+await view('14-my-bids');
+await page.getByRole('link', { name: quick.title }).click();
+await page.waitForURL(`${WEB}/auctions/${quick.id}`);
+ok('wallet history and my bids show the bids');
+
+await page.getByRole('heading', { name: 'You won with ETB 3!' }).waitFor({ timeout: 90_000 });
+const outcome = await page.locator('main').innerText();
+assert.match(outcome, /ETB 1\s*Also bid by others/);
+assert.match(outcome, /ETB 3\s*Won/);
+assert.match(outcome, /ETB 4\s*Unique, but not the lowest/);
+assert.match(outcome, /Out of 6 bids\./);
+await page.getByRole('heading', { name: 'You won with ETB 3!' }).scrollIntoViewIfNeeded();
+await view('15-my-result');
+ok('when the auction closes the page shows the win and how each bid did');
 
 // Unknown auction, and desktop layout
 await page.goto(`${WEB}/auctions/00000000-0000-4000-8000-000000000000`);
