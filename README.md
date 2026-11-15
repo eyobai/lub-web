@@ -113,4 +113,12 @@ Local use only: it creates accounts and resets a password.
 - `VITE_API_BASE_URL` set at build time to the public backend address;
 - the site's address added to the backend's `CORS_ORIGINS`.
 
+Alternatively, put the API behind the site's own address with a reverse proxy (`/api` → backend) and build
+with `VITE_API_BASE_URL=/`. Then no CORS setting is needed. To try this locally:
+
+```bash
+VITE_API_BASE_URL=/ npm run build
+API_PROXY_TARGET=http://localhost:3000 npm run preview
+```
+
 The build adds a Content-Security-Policy to `index.html` that only allows requests to the configured backend.

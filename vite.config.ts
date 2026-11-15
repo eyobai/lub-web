@@ -14,7 +14,8 @@ function contentSecurityPolicy(apiBaseUrl: string): Plugin {
     "script-src 'self'",
     "style-src 'self'",
     "img-src 'self' https: data:",
-    `connect-src 'self' ${new URL(apiBaseUrl).origin}`,
+    // "/" means the API is served from the site's own address.
+    apiBaseUrl.startsWith('/') ? "connect-src 'self'" : `connect-src 'self' ${new URL(apiBaseUrl).origin}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -29,14 +30,22 @@ function contentSecurityPolicy(apiBaseUrl: string): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  // With VITE_API_BASE_URL=/ the local servers pass /api on to the backend, as a reverse proxy would in production.
+  // PREVIEW_ANY_HOST=1 lets `npm run preview` answer under a tunnel's host name; never needed in production.
+  const proxy = process.env.API_PROXY_TARGET ? { '/api': process.env.API_PROXY_TARGET } : undefined;
   return {
     plugins: [
       react(),
       tailwindcss(),
       contentSecurityPolicy(env.VITE_API_BASE_URL || 'http://localhost:3000'),
     ],
-    server: { port: 5173, strictPort: true },
-    preview: { port: 5173, strictPort: true },
+    server: { port: 5173, strictPort: true, proxy },
+    preview: {
+      port: 5173,
+      strictPort: true,
+      proxy,
+      allowedHosts: process.env.PREVIEW_ANY_HOST ? true : undefined,
+    },
     test: {
       environment: 'jsdom',
       setupFiles: ['src/test/setup.ts'],

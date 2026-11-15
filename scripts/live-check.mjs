@@ -40,8 +40,9 @@ page.on('console', (m) => {
 });
 page.on('pageerror', (e) => problems.push(String(e)));
 page.on('request', (r) => {
-  if (r.url().startsWith(API))
-    requests.push(`${r.method()} ${new URL(r.url()).pathname.replace('/api/v1', '')}`);
+  // The API may be on its own address or behind the site's address.
+  const { pathname } = new URL(r.url());
+  if (pathname.startsWith('/api/v1/')) requests.push(`${r.method()} ${pathname.replace('/api/v1', '')}`);
 });
 const shot = (name) => page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
 const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('lub.session')));
