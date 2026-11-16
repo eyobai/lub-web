@@ -4,7 +4,7 @@ import { Alert, Button, ButtonLink, Card, PageLoading, Spinner } from '../compon
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { usePageTitle } from '../lib/usePageTitle';
-import { checkoutAddress, isWaiting, useDeposit, type Deposit } from '../wallet/deposits';
+import { bidsPending, checkoutAddress, isWaiting, useDeposit, type Deposit } from '../wallet/deposits';
 
 const CLOSED: Record<'FAILED' | 'CANCELLED' | 'EXPIRED', { title: string; text: string }> = {
   FAILED: {
@@ -72,6 +72,8 @@ export function DepositPage() {
 function Outcome({ deposit }: { deposit: Deposit }) {
   const amount = formatMoney(deposit.amount, deposit.currency);
 
+  if (deposit.status === 'SUCCEEDED' && deposit.bid) return <PaidBids deposit={deposit} bid={deposit.bid} />;
+
   if (deposit.status === 'SUCCEEDED') {
     return (
       <div className="space-y-3">
@@ -97,6 +99,12 @@ function Outcome({ deposit }: { deposit: Deposit }) {
           <Spinner className="mt-1 h-5 w-5 shrink-0 text-brand-700" />
           <div>
             <h2 className="text-lg font-semibold">Waiting for your payment</h2>
+            {deposit.bid && (
+              <p className="text-slate-700">
+                Your {deposit.bid.amounts.length === 1 ? 'bid' : 'bids'} of {bidList(deposit)} will be placed
+                as soon as the payment is confirmed.
+              </p>
+            )}
             <p className="text-slate-700">
               We have not received confirmation from Chapa yet. If you have paid, stay on this page: it
               updates by itself, usually within a minute. No money is added until the payment is confirmed.
@@ -130,6 +138,64 @@ function Outcome({ deposit }: { deposit: Deposit }) {
         If money left your account for this payment, contact support and give them the reference below.
       </p>
       <ButtonLink to="/wallet">Try again</ButtonLink>
+    </div>
+  );
+}
+
+const bidList = (deposit: Deposit): string =>
+  (deposit.bid?.amounts ?? []).map((amount) => formatMoney(amount, deposit.currency)).join(', ');
+
+/** Pay and bid: the payment arrived; what happened to the bids it was for. */
+function PaidBids({ deposit, bid }: { deposit: Deposit; bid: NonNullable<Deposit['bid']> }) {
+  const amount = formatMoney(deposit.amount, deposit.currency);
+  const auction = (
+    <ButtonLink to={`/auctions/${bid.auctionId}`} variant="secondary">
+      Back to the auction
+    </ButtonLink>
+  );
+  if (bidsPending(deposit)) {
+    return (
+      <div role="status" className="flex items-start gap-3">
+        <Spinner className="mt-1 h-5 w-5 shrink-0 text-brand-700" />
+        <div>
+          <h2 className="text-lg font-semibold">Payment received, placing your bids</h2>
+          <p className="text-slate-700">This takes a moment. The page updates by itself.</p>
+        </div>
+      </div>
+    );
+  }
+  if (bid.state === 'PLACED') {
+    const many = bid.amounts.length > 1;
+    return (
+      <div className="space-y-3">
+        <div role="status">
+          <h2 className="text-lg font-semibold text-emerald-800">
+            {many ? 'Your bids are placed' : 'Your bid is placed'}
+          </h2>
+          <p className="text-slate-700">
+            You paid {amount} and bid {bidList(deposit)}. Good luck!
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink to="/bids">See my bids</ButtonLink>
+          {auction}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      <div role="alert">
+        <h2 className="text-lg font-semibold text-red-800">Payment received, but the bids were not placed</h2>
+        <p className="text-slate-700">
+          {bid.error ? `${bid.error.replace(/\.?$/, '.')} ` : ''}Your {amount} is in your wallet, so you can
+          bid again from there.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <ButtonLink to="/wallet">Go to wallet</ButtonLink>
+        {auction}
+      </div>
     </div>
   );
 }

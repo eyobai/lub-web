@@ -1722,8 +1722,18 @@
               }
             }
           },
+          "409": {
+            "description": "With `bid`: AUCTION_NOT_OPEN, AUCTION_CLOSED, DUPLICATE_BID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
           "422": {
-            "description": "DEPOSIT_AMOUNT_INVALID — outside the limits (details carry them); IDEMPOTENCY_KEY_REUSED",
+            "description": "DEPOSIT_AMOUNT_INVALID — outside the limits, or not what the bids cost (details say); IDEMPOTENCY_KEY_REUSED; with `bid`, any refusal placing those bids would give (BID_AMOUNT_INVALID, BID_LIMIT_EXCEEDED, …)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2395,6 +2405,320 @@
         "summary": "Record that a flagged deposit has been dealt with",
         "tags": [
           "Admin: Payments"
+        ]
+      }
+    },
+    "/api/v1/auctions/{id}/bids": {
+      "post": {
+        "description": "Charges one bid fee per amount from the wallet and records one bid per amount, all or nothing: if anything is wrong (an invalid or repeated amount, not enough balance, bidding closed) no bid is recorded and nothing is charged. The fee, the allowed range and the deadline are taken from the server, never from the request. Bids cannot be changed or withdrawn.",
+        "operationId": "BidsController_place",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Unique key for this bid request (e.g. a UUID). Retrying with the same key returns the original result with the response header `Idempotent-Replayed: true` and charges nothing.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceBidsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BidSubmissionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED, IDEMPOTENCY_KEY_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "WALLET_FROZEN, or FORBIDDEN for staff accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such auction, or it is not public",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "AUCTION_NOT_OPEN, AUCTION_CLOSED, DUPLICATE_BID — `details.amountsMinor` lists the amounts already bid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "BID_AMOUNT_INVALID, BID_LIMIT_EXCEEDED, INSUFFICIENT_FUNDS, IDEMPOTENCY_KEY_REUSED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Place one or several bids",
+        "tags": [
+          "Bids"
+        ]
+      }
+    },
+    "/api/v1/bids/mine": {
+      "get": {
+        "description": "My own bids, newest first, across all auctions or in one. Other users’ bids are never shown.",
+        "operationId": "BidsController_listMine",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "auctionId",
+            "required": false,
+            "in": "query",
+            "description": "Only my bids in this auction",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyBidPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my bids",
+        "tags": [
+          "Bids"
+        ]
+      }
+    },
+    "/api/v1/admin/auctions/{id}/bids": {
+      "get": {
+        "description": "Roles: SUPPORT, FINANCE, ADMIN. In the order the bids were accepted.",
+        "operationId": "AdminBidsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Only bids placed by this user",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "amountMinor",
+            "required": false,
+            "in": "query",
+            "description": "Only bids of exactly this amount. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.",
+            "schema": {
+              "example": "500",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBidPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — a malformed id, query parameter or body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the bids of an auction",
+        "tags": [
+          "Admin: Auctions"
         ]
       }
     },
@@ -3635,320 +3959,6 @@
           }
         ],
         "summary": "Cancel an auction",
-        "tags": [
-          "Admin: Auctions"
-        ]
-      }
-    },
-    "/api/v1/auctions/{id}/bids": {
-      "post": {
-        "description": "Charges one bid fee per amount from the wallet and records one bid per amount, all or nothing: if anything is wrong (an invalid or repeated amount, not enough balance, bidding closed) no bid is recorded and nothing is charged. The fee, the allowed range and the deadline are taken from the server, never from the request. Bids cannot be changed or withdrawn.",
-        "operationId": "BidsController_place",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "description": "Unique key for this bid request (e.g. a UUID). Retrying with the same key returns the original result with the response header `Idempotent-Replayed: true` and charges nothing.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlaceBidsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BidSubmissionDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "VALIDATION_FAILED, IDEMPOTENCY_KEY_REQUIRED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UNAUTHORIZED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "WALLET_FROZEN, or FORBIDDEN for staff accounts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "NOT_FOUND — no such auction, or it is not public",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "AUCTION_NOT_OPEN, AUCTION_CLOSED, DUPLICATE_BID — `details.amountsMinor` lists the amounts already bid",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "BID_AMOUNT_INVALID, BID_LIMIT_EXCEEDED, INSUFFICIENT_FUNDS, IDEMPOTENCY_KEY_REUSED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Place one or several bids",
-        "tags": [
-          "Bids"
-        ]
-      }
-    },
-    "/api/v1/bids/mine": {
-      "get": {
-        "description": "My own bids, newest first, across all auctions or in one. Other users’ bids are never shown.",
-        "operationId": "BidsController_listMine",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "auctionId",
-            "required": false,
-            "in": "query",
-            "description": "Only my bids in this auction",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MyBidPageDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "VALIDATION_FAILED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UNAUTHORIZED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List my bids",
-        "tags": [
-          "Bids"
-        ]
-      }
-    },
-    "/api/v1/admin/auctions/{id}/bids": {
-      "get": {
-        "description": "Roles: SUPPORT, FINANCE, ADMIN. In the order the bids were accepted.",
-        "operationId": "AdminBidsController_list",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "description": "Only bids placed by this user",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "amountMinor",
-            "required": false,
-            "in": "query",
-            "description": "Only bids of exactly this amount. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.",
-            "schema": {
-              "example": "500",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AdminBidPageDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "VALIDATION_FAILED — a malformed id, query parameter or body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UNAUTHORIZED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "FORBIDDEN — the signed-in user lacks the required role",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List the bids of an auction",
         "tags": [
           "Admin: Auctions"
         ]
@@ -7592,17 +7602,113 @@
           "maxAmountMinor"
         ]
       },
+      "BidToPayDto": {
+        "type": "object",
+        "properties": {
+          "amountsMinor": {
+            "example": [
+              "500",
+              "1000",
+              "1500",
+              "2000"
+            ],
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "One or several different bid amounts. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. Each amount costs one bid fee. Either every amount is accepted and charged, or none is.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auctionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The auction to bid in."
+          }
+        },
+        "required": [
+          "amountsMinor",
+          "auctionId"
+        ]
+      },
       "StartDepositDto": {
         "type": "object",
         "properties": {
           "amountMinor": {
             "type": "string",
             "example": "50000",
-            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision. With `bid`, it must equal the bid fee times the number of amounts."
+          },
+          "bid": {
+            "description": "Pay and bid: this payment is for these bids. They are checked before the payment opens; once it is confirmed the money goes into the wallet and the bids are placed from it. If they are refused by then (the auction closed, for example) the money stays in the wallet. The smallest-deposit limit does not apply.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BidToPayDto"
+              }
+            ]
           }
         },
         "required": [
           "amountMinor"
+        ]
+      },
+      "PaidBidDto": {
+        "type": "object",
+        "properties": {
+          "auctionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountsMinor": {
+            "example": [
+              "500",
+              "1250"
+            ],
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "amounts": {
+            "example": [
+              "5.00",
+              "12.50"
+            ],
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "WAITING",
+              "PLACED",
+              "REFUSED"
+            ],
+            "description": "WAITING: the payment is not confirmed yet (or the bids are being placed). PLACED: the bids were placed. REFUSED: the bids could not be placed; `error` says why and the money is in the wallet."
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The bid submission, once PLACED."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the bids were refused."
+          }
+        },
+        "required": [
+          "auctionId",
+          "amountsMinor",
+          "amounts",
+          "state",
+          "submissionId",
+          "error"
         ]
       },
       "DepositDto": {
@@ -7681,6 +7787,16 @@
           "createdAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "bid": {
+            "nullable": true,
+            "description": "Pay and bid: the bids this payment is for.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaidBidDto"
+              }
+            ]
           }
         },
         "required": [
@@ -7697,7 +7813,8 @@
           "walletTransactionId",
           "confirmedAt",
           "expiresAt",
-          "createdAt"
+          "createdAt",
+          "bid"
         ]
       },
       "DepositPageDto": {
@@ -7815,6 +7932,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "bid": {
+            "nullable": true,
+            "description": "Pay and bid: the bids this payment is for.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaidBidDto"
+              }
+            ]
+          },
           "userId": {
             "type": "string",
             "format": "uuid"
@@ -7858,6 +7985,7 @@
           "confirmedAt",
           "expiresAt",
           "createdAt",
+          "bid",
           "userId",
           "phoneNumber",
           "providerReference",
@@ -7905,6 +8033,326 @@
         },
         "required": [
           "note"
+        ]
+      },
+      "PlaceBidsDto": {
+        "type": "object",
+        "properties": {
+          "amountsMinor": {
+            "example": [
+              "500",
+              "1000",
+              "1500",
+              "2000"
+            ],
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "One or several different bid amounts. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. Each amount costs one bid fee. Either every amount is accepted and charged, or none is.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "amountsMinor"
+        ]
+      },
+      "BidDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "type": "string",
+            "example": "500",
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "amount": {
+            "type": "string",
+            "example": "5.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "amountMinor",
+          "amount",
+          "createdAt"
+        ]
+      },
+      "BidSubmissionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "auctionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currency": {
+            "type": "string",
+            "example": "ETB"
+          },
+          "minorUnits": {
+            "type": "number",
+            "example": 2
+          },
+          "bidCount": {
+            "type": "number",
+            "example": 4,
+            "description": "Number of bids recorded by this request"
+          },
+          "bidFeeMinor": {
+            "type": "string",
+            "example": "7500",
+            "description": "Fee charged per bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bidFee": {
+            "type": "string",
+            "example": "75.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "totalFeeMinor": {
+            "type": "string",
+            "example": "30000",
+            "description": "Total charged to the wallet: bidCount × bidFee. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "totalFee": {
+            "type": "string",
+            "example": "300.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "transactionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Wallet transaction that charged the fee"
+          },
+          "transactionReference": {
+            "type": "string",
+            "example": "TX-20261113-7K2M9QXA4T"
+          },
+          "walletAvailableMinor": {
+            "type": "string",
+            "example": "70000",
+            "description": "Spendable wallet balance right after this charge. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "walletAvailable": {
+            "type": "string",
+            "example": "700.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "bids": {
+            "description": "The recorded bids, in the order they were sent",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BidDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "auctionId",
+          "currency",
+          "minorUnits",
+          "bidCount",
+          "bidFeeMinor",
+          "bidFee",
+          "totalFeeMinor",
+          "totalFee",
+          "transactionId",
+          "transactionReference",
+          "walletAvailableMinor",
+          "walletAvailable",
+          "bids",
+          "createdAt"
+        ]
+      },
+      "MyBidDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "type": "string",
+            "example": "500",
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "amount": {
+            "type": "string",
+            "example": "5.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "auctionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "auctionTitle": {
+            "type": "string"
+          },
+          "auctionStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SCHEDULED",
+              "ACTIVE",
+              "CLOSING",
+              "COMPLETED",
+              "CANCELLED"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "example": "ETB"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The request this bid was part of"
+          },
+          "bidFeeMinor": {
+            "type": "string",
+            "example": "7500",
+            "description": "Fee paid for this bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bidFee": {
+            "type": "string",
+            "example": "75.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          }
+        },
+        "required": [
+          "id",
+          "amountMinor",
+          "amount",
+          "createdAt",
+          "auctionId",
+          "auctionTitle",
+          "auctionStatus",
+          "currency",
+          "submissionId",
+          "bidFeeMinor",
+          "bidFee"
+        ]
+      },
+      "MyBidPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyBidDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "AdminBidDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amountMinor": {
+            "type": "string",
+            "example": "500",
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "amount": {
+            "type": "string",
+            "example": "5.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sequence": {
+            "type": "string",
+            "example": "1042",
+            "description": "Platform-wide order in which bids were accepted"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+251911234567"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "amountMinor",
+          "amount",
+          "createdAt",
+          "sequence",
+          "userId",
+          "phoneNumber",
+          "submissionId"
+        ]
+      },
+      "AdminBidPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminBidDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
         ]
       },
       "ProductImageDto": {
@@ -8843,326 +9291,6 @@
         },
         "required": [
           "reason"
-        ]
-      },
-      "PlaceBidsDto": {
-        "type": "object",
-        "properties": {
-          "amountsMinor": {
-            "example": [
-              "500",
-              "1000",
-              "1500",
-              "2000"
-            ],
-            "minItems": 1,
-            "maxItems": 100,
-            "description": "One or several different bid amounts. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. Each amount costs one bid fee. Either every amount is accepted and charged, or none is.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "amountsMinor"
-        ]
-      },
-      "BidDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "amountMinor": {
-            "type": "string",
-            "example": "500",
-            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "amount": {
-            "type": "string",
-            "example": "5.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "amountMinor",
-          "amount",
-          "createdAt"
-        ]
-      },
-      "BidSubmissionDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "auctionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "currency": {
-            "type": "string",
-            "example": "ETB"
-          },
-          "minorUnits": {
-            "type": "number",
-            "example": 2
-          },
-          "bidCount": {
-            "type": "number",
-            "example": 4,
-            "description": "Number of bids recorded by this request"
-          },
-          "bidFeeMinor": {
-            "type": "string",
-            "example": "7500",
-            "description": "Fee charged per bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "bidFee": {
-            "type": "string",
-            "example": "75.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
-          "totalFeeMinor": {
-            "type": "string",
-            "example": "30000",
-            "description": "Total charged to the wallet: bidCount × bidFee. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "totalFee": {
-            "type": "string",
-            "example": "300.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
-          "transactionId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Wallet transaction that charged the fee"
-          },
-          "transactionReference": {
-            "type": "string",
-            "example": "TX-20261113-7K2M9QXA4T"
-          },
-          "walletAvailableMinor": {
-            "type": "string",
-            "example": "70000",
-            "description": "Spendable wallet balance right after this charge. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "walletAvailable": {
-            "type": "string",
-            "example": "700.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
-          "bids": {
-            "description": "The recorded bids, in the order they were sent",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BidDto"
-            }
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "auctionId",
-          "currency",
-          "minorUnits",
-          "bidCount",
-          "bidFeeMinor",
-          "bidFee",
-          "totalFeeMinor",
-          "totalFee",
-          "transactionId",
-          "transactionReference",
-          "walletAvailableMinor",
-          "walletAvailable",
-          "bids",
-          "createdAt"
-        ]
-      },
-      "MyBidDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "amountMinor": {
-            "type": "string",
-            "example": "500",
-            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "amount": {
-            "type": "string",
-            "example": "5.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "auctionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "auctionTitle": {
-            "type": "string"
-          },
-          "auctionStatus": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "SCHEDULED",
-              "ACTIVE",
-              "CLOSING",
-              "COMPLETED",
-              "CANCELLED"
-            ]
-          },
-          "currency": {
-            "type": "string",
-            "example": "ETB"
-          },
-          "submissionId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The request this bid was part of"
-          },
-          "bidFeeMinor": {
-            "type": "string",
-            "example": "7500",
-            "description": "Fee paid for this bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "bidFee": {
-            "type": "string",
-            "example": "75.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          }
-        },
-        "required": [
-          "id",
-          "amountMinor",
-          "amount",
-          "createdAt",
-          "auctionId",
-          "auctionTitle",
-          "auctionStatus",
-          "currency",
-          "submissionId",
-          "bidFeeMinor",
-          "bidFee"
-        ]
-      },
-      "MyBidPageDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MyBidDto"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "page",
-          "limit"
-        ]
-      },
-      "AdminBidDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "amountMinor": {
-            "type": "string",
-            "example": "500",
-            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "amount": {
-            "type": "string",
-            "example": "5.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "sequence": {
-            "type": "string",
-            "example": "1042",
-            "description": "Platform-wide order in which bids were accepted"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "phoneNumber": {
-            "type": "string",
-            "example": "+251911234567"
-          },
-          "submissionId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "id",
-          "amountMinor",
-          "amount",
-          "createdAt",
-          "sequence",
-          "userId",
-          "phoneNumber",
-          "submissionId"
-        ]
-      },
-      "AdminBidPageDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminBidDto"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "limit": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "page",
-          "limit"
         ]
       },
       "AuctionResultDto": {

@@ -88,7 +88,7 @@ export function AuctionListPage() {
           >
             {auctions.data.items.map((auction) => (
               <li key={auction.id} className="flex">
-                <div className="flex w-full flex-col [&>a]:flex-1">
+                <div className="flex w-full flex-col [&>div]:flex-1">
                   <AuctionCard auction={auction} />
                 </div>
               </li>

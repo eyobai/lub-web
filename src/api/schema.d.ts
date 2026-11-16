@@ -630,6 +630,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auctions/{id}/bids": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Place one or several bids
+         * @description Charges one bid fee per amount from the wallet and records one bid per amount, all or nothing: if anything is wrong (an invalid or repeated amount, not enough balance, bidding closed) no bid is recorded and nothing is charged. The fee, the allowed range and the deadline are taken from the server, never from the request. Bids cannot be changed or withdrawn.
+         */
+        post: operations["BidsController_place"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bids/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my bids
+         * @description My own bids, newest first, across all auctions or in one. Other users’ bids are never shown.
+         */
+        get: operations["BidsController_listMine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/auctions/{id}/bids": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the bids of an auction
+         * @description Roles: SUPPORT, FINANCE, ADMIN. In the order the bids were accepted.
+         */
+        get: operations["AdminBidsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/products": {
         parameters: {
             query?: never;
@@ -840,66 +900,6 @@ export interface paths {
          * @description Role: ADMIN. DRAFT, SCHEDULED or ACTIVE → CANCELLED, with a reason. Bidding stops immediately and every bid fee already paid is refunded to the bidder’s wallet; `bidFeesRefundedAt` is set when all refunds are done.
          */
         post: operations["AdminAuctionsController_cancel"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auctions/{id}/bids": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Place one or several bids
-         * @description Charges one bid fee per amount from the wallet and records one bid per amount, all or nothing: if anything is wrong (an invalid or repeated amount, not enough balance, bidding closed) no bid is recorded and nothing is charged. The fee, the allowed range and the deadline are taken from the server, never from the request. Bids cannot be changed or withdrawn.
-         */
-        post: operations["BidsController_place"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/bids/mine": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List my bids
-         * @description My own bids, newest first, across all auctions or in one. Other users’ bids are never shown.
-         */
-        get: operations["BidsController_listMine"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/auctions/{id}/bids": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List the bids of an auction
-         * @description Roles: SUPPORT, FINANCE, ADMIN. In the order the bids were accepted.
-         */
-        get: operations["AdminBidsController_list"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1943,12 +1943,63 @@ export interface components {
              */
             maxAmountMinor: string;
         };
+        BidToPayDto: {
+            /**
+             * @description One or several different bid amounts. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. Each amount costs one bid fee. Either every amount is accepted and charged, or none is.
+             * @example [
+             *       "500",
+             *       "1000",
+             *       "1500",
+             *       "2000"
+             *     ]
+             */
+            amountsMinor: string[];
+            /**
+             * Format: uuid
+             * @description The auction to bid in.
+             */
+            auctionId: string;
+        };
         StartDepositDto: {
             /**
-             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision. With `bid`, it must equal the bid fee times the number of amounts.
              * @example 50000
              */
             amountMinor: string;
+            /** @description Pay and bid: this payment is for these bids. They are checked before the payment opens; once it is confirmed the money goes into the wallet and the bids are placed from it. If they are refused by then (the auction closed, for example) the money stays in the wallet. The smallest-deposit limit does not apply. */
+            bid?: components["schemas"]["BidToPayDto"];
+        };
+        PaidBidDto: {
+            /** Format: uuid */
+            auctionId: string;
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example [
+             *       "500",
+             *       "1250"
+             *     ]
+             */
+            amountsMinor: string[];
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example [
+             *       "5.00",
+             *       "12.50"
+             *     ]
+             */
+            amounts: string[];
+            /**
+             * @description WAITING: the payment is not confirmed yet (or the bids are being placed). PLACED: the bids were placed. REFUSED: the bids could not be placed; `error` says why and the money is in the wallet.
+             * @enum {string}
+             */
+            state: "WAITING" | "PLACED" | "REFUSED";
+            /**
+             * Format: uuid
+             * @description The bid submission, once PLACED.
+             */
+            submissionId: string | null;
+            /** @description Why the bids were refused. */
+            error: string | null;
         };
         DepositDto: {
             /** Format: uuid */
@@ -2000,6 +2051,8 @@ export interface components {
             expiresAt: string;
             /** Format: date-time */
             createdAt: string;
+            /** @description Pay and bid: the bids this payment is for. */
+            bid: components["schemas"]["PaidBidDto"] | null;
         };
         DepositPageDto: {
             items: components["schemas"]["DepositDto"][];
@@ -2061,6 +2114,8 @@ export interface components {
             expiresAt: string;
             /** Format: date-time */
             createdAt: string;
+            /** @description Pay and bid: the bids this payment is for. */
+            bid: components["schemas"]["PaidBidDto"] | null;
             /** Format: uuid */
             userId: string;
             /** @example +251911223344 */
@@ -2086,6 +2141,167 @@ export interface components {
              * @example Refund confirmed with Chapa; wallet debited by adjustment WTX-…
              */
             note: string;
+        };
+        PlaceBidsDto: {
+            /**
+             * @description One or several different bid amounts. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. Each amount costs one bid fee. Either every amount is accepted and charged, or none is.
+             * @example [
+             *       "500",
+             *       "1000",
+             *       "1500",
+             *       "2000"
+             *     ]
+             */
+            amountsMinor: string[];
+        };
+        BidDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 500
+             */
+            amountMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 5.00
+             */
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        BidSubmissionDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            auctionId: string;
+            /** @example ETB */
+            currency: string;
+            /** @example 2 */
+            minorUnits: number;
+            /**
+             * @description Number of bids recorded by this request
+             * @example 4
+             */
+            bidCount: number;
+            /**
+             * @description Fee charged per bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 7500
+             */
+            bidFeeMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 75.00
+             */
+            bidFee: string;
+            /**
+             * @description Total charged to the wallet: bidCount × bidFee. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 30000
+             */
+            totalFeeMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 300.00
+             */
+            totalFee: string;
+            /**
+             * Format: uuid
+             * @description Wallet transaction that charged the fee
+             */
+            transactionId: string;
+            /** @example TX-20261113-7K2M9QXA4T */
+            transactionReference: string;
+            /**
+             * @description Spendable wallet balance right after this charge. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 70000
+             */
+            walletAvailableMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 700.00
+             */
+            walletAvailable: string;
+            /** @description The recorded bids, in the order they were sent */
+            bids: components["schemas"]["BidDto"][];
+            /** Format: date-time */
+            createdAt: string;
+        };
+        MyBidDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 500
+             */
+            amountMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 5.00
+             */
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            auctionId: string;
+            auctionTitle: string;
+            /** @enum {string} */
+            auctionStatus: "DRAFT" | "SCHEDULED" | "ACTIVE" | "CLOSING" | "COMPLETED" | "CANCELLED";
+            /** @example ETB */
+            currency: string;
+            /**
+             * Format: uuid
+             * @description The request this bid was part of
+             */
+            submissionId: string;
+            /**
+             * @description Fee paid for this bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 7500
+             */
+            bidFeeMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 75.00
+             */
+            bidFee: string;
+        };
+        MyBidPageDto: {
+            items: components["schemas"]["MyBidDto"][];
+            total: number;
+            page: number;
+            limit: number;
+        };
+        AdminBidDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 500
+             */
+            amountMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 5.00
+             */
+            amount: string;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * @description Platform-wide order in which bids were accepted
+             * @example 1042
+             */
+            sequence: string;
+            /** Format: uuid */
+            userId: string;
+            /** @example +251911234567 */
+            phoneNumber: string;
+            /** Format: uuid */
+            submissionId: string;
+        };
+        AdminBidPageDto: {
+            items: components["schemas"]["AdminBidDto"][];
+            total: number;
+            page: number;
+            limit: number;
         };
         ProductImageDto: {
             /** Format: uuid */
@@ -2521,167 +2737,6 @@ export interface components {
         CancelAuctionDto: {
             /** @example Supplier could not deliver the product */
             reason: string;
-        };
-        PlaceBidsDto: {
-            /**
-             * @description One or several different bid amounts. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. Each amount costs one bid fee. Either every amount is accepted and charged, or none is.
-             * @example [
-             *       "500",
-             *       "1000",
-             *       "1500",
-             *       "2000"
-             *     ]
-             */
-            amountsMinor: string[];
-        };
-        BidDto: {
-            /** Format: uuid */
-            id: string;
-            /**
-             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 500
-             */
-            amountMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 5.00
-             */
-            amount: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        BidSubmissionDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            auctionId: string;
-            /** @example ETB */
-            currency: string;
-            /** @example 2 */
-            minorUnits: number;
-            /**
-             * @description Number of bids recorded by this request
-             * @example 4
-             */
-            bidCount: number;
-            /**
-             * @description Fee charged per bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 7500
-             */
-            bidFeeMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 75.00
-             */
-            bidFee: string;
-            /**
-             * @description Total charged to the wallet: bidCount × bidFee. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 30000
-             */
-            totalFeeMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 300.00
-             */
-            totalFee: string;
-            /**
-             * Format: uuid
-             * @description Wallet transaction that charged the fee
-             */
-            transactionId: string;
-            /** @example TX-20261113-7K2M9QXA4T */
-            transactionReference: string;
-            /**
-             * @description Spendable wallet balance right after this charge. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 70000
-             */
-            walletAvailableMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 700.00
-             */
-            walletAvailable: string;
-            /** @description The recorded bids, in the order they were sent */
-            bids: components["schemas"]["BidDto"][];
-            /** Format: date-time */
-            createdAt: string;
-        };
-        MyBidDto: {
-            /** Format: uuid */
-            id: string;
-            /**
-             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 500
-             */
-            amountMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 5.00
-             */
-            amount: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: uuid */
-            auctionId: string;
-            auctionTitle: string;
-            /** @enum {string} */
-            auctionStatus: "DRAFT" | "SCHEDULED" | "ACTIVE" | "CLOSING" | "COMPLETED" | "CANCELLED";
-            /** @example ETB */
-            currency: string;
-            /**
-             * Format: uuid
-             * @description The request this bid was part of
-             */
-            submissionId: string;
-            /**
-             * @description Fee paid for this bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 7500
-             */
-            bidFeeMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 75.00
-             */
-            bidFee: string;
-        };
-        MyBidPageDto: {
-            items: components["schemas"]["MyBidDto"][];
-            total: number;
-            page: number;
-            limit: number;
-        };
-        AdminBidDto: {
-            /** Format: uuid */
-            id: string;
-            /**
-             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 500
-             */
-            amountMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 5.00
-             */
-            amount: string;
-            /** Format: date-time */
-            createdAt: string;
-            /**
-             * @description Platform-wide order in which bids were accepted
-             * @example 1042
-             */
-            sequence: string;
-            /** Format: uuid */
-            userId: string;
-            /** @example +251911234567 */
-            phoneNumber: string;
-            /** Format: uuid */
-            submissionId: string;
-        };
-        AdminBidPageDto: {
-            items: components["schemas"]["AdminBidDto"][];
-            total: number;
-            page: number;
-            limit: number;
         };
         AuctionResultDto: {
             /** Format: uuid */
@@ -4711,7 +4766,16 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description DEPOSIT_AMOUNT_INVALID — outside the limits (details carry them); IDEMPOTENCY_KEY_REUSED */
+            /** @description With `bid`: AUCTION_NOT_OPEN, AUCTION_CLOSED, DUPLICATE_BID */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description DEPOSIT_AMOUNT_INVALID — outside the limits, or not what the bids cost (details say); IDEMPOTENCY_KEY_REUSED; with `bid`, any refusal placing those bids would give (BID_AMOUNT_INVALID, BID_LIMIT_EXCEEDED, …) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -5115,6 +5179,194 @@ export interface operations {
             };
             /** @description CONFLICT — the deposit is not waiting for review */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    BidsController_place: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key for this bid request (e.g. a UUID). Retrying with the same key returns the original result with the response header `Idempotent-Replayed: true` and charges nothing. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlaceBidsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BidSubmissionDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED, IDEMPOTENCY_KEY_REQUIRED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description WALLET_FROZEN, or FORBIDDEN for staff accounts */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such auction, or it is not public */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description AUCTION_NOT_OPEN, AUCTION_CLOSED, DUPLICATE_BID — `details.amountsMinor` lists the amounts already bid */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description BID_AMOUNT_INVALID, BID_LIMIT_EXCEEDED, INSUFFICIENT_FUNDS, IDEMPOTENCY_KEY_REUSED */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    BidsController_listMine: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                /** @description Only my bids in this auction */
+                auctionId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyBidPageDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminBidsController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                /** @description Only bids placed by this user */
+                userId?: string;
+                /** @description Only bids of exactly this amount. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. */
+                amountMinor?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBidPageDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — a malformed id, query parameter or body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5953,194 +6205,6 @@ export interface operations {
             };
             /** @description AUCTION_INVALID_STATE */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-        };
-    };
-    BidsController_place: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Unique key for this bid request (e.g. a UUID). Retrying with the same key returns the original result with the response header `Idempotent-Replayed: true` and charges nothing. */
-                "Idempotency-Key": string;
-            };
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PlaceBidsDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BidSubmissionDto"];
-                };
-            };
-            /** @description VALIDATION_FAILED, IDEMPOTENCY_KEY_REQUIRED */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description UNAUTHORIZED */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description WALLET_FROZEN, or FORBIDDEN for staff accounts */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description NOT_FOUND — no such auction, or it is not public */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description AUCTION_NOT_OPEN, AUCTION_CLOSED, DUPLICATE_BID — `details.amountsMinor` lists the amounts already bid */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description BID_AMOUNT_INVALID, BID_LIMIT_EXCEEDED, INSUFFICIENT_FUNDS, IDEMPOTENCY_KEY_REUSED */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-        };
-    };
-    BidsController_listMine: {
-        parameters: {
-            query?: {
-                page?: number;
-                limit?: number;
-                /** @description Only my bids in this auction */
-                auctionId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MyBidPageDto"];
-                };
-            };
-            /** @description VALIDATION_FAILED */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description UNAUTHORIZED */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-        };
-    };
-    AdminBidsController_list: {
-        parameters: {
-            query?: {
-                page?: number;
-                limit?: number;
-                /** @description Only bids placed by this user */
-                userId?: string;
-                /** @description Only bids of exactly this amount. Integer amount in minor units (santim for ETB), as a string so large values keep full precision. */
-                amountMinor?: string;
-            };
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminBidPageDto"];
-                };
-            };
-            /** @description VALIDATION_FAILED — a malformed id, query parameter or body */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description UNAUTHORIZED */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description FORBIDDEN — the signed-in user lacks the required role */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description NOT_FOUND */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };

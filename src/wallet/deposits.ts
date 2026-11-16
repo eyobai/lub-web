@@ -5,7 +5,7 @@ import { errorMessage, isApiError } from '../api/errors';
 import type { components } from '../api/schema';
 import { useAuth } from '../auth/useAuth';
 import { newIdempotencyKey } from '../bids/amounts';
-import { isUnconfirmed } from '../bids/queries';
+import { bidKeys, isUnconfirmed } from '../bids/queries';
 import { formatMinor, toMinor } from '../lib/money';
 import { notificationKeys } from '../notifications/queries';
 import { walletKeys } from './queries';
@@ -69,7 +69,7 @@ export function useDeposit(id: string) {
     // The interval below asks again anyway, so a failed read is not retried on top of it.
     retry: false,
     refetchInterval: (q) => {
-      if (q.state.data && !isWaiting(q.state.data)) return false;
+      if (q.state.data && !isWaiting(q.state.data) && !bidsPending(q.state.data)) return false;
       if (isApiError(q.state.error, 'NOT_FOUND', 'VALIDATION_FAILED')) return false;
       return Date.now() - since < FAST_POLL_FOR_MS ? DEPOSIT_POLL_MS : SLOW_POLL_MS;
     },
@@ -84,7 +84,53 @@ export function useDeposit(id: string) {
     void queryClient.invalidateQueries({ queryKey: notificationKeys.all(user?.id) });
   }, [status, queryClient, user?.id]);
 
+  // Pay and bid: the bids appear, and the bid count changes, once they are placed.
+  const bidState = query.data?.bid?.state;
+  useEffect(() => {
+    if (bidState !== 'PLACED' && bidState !== 'REFUSED') return;
+    void queryClient.invalidateQueries({ queryKey: walletKeys.all(user?.id) });
+    void queryClient.invalidateQueries({ queryKey: bidKeys.all(user?.id) });
+    void queryClient.invalidateQueries({ queryKey: ['auctions'] });
+  }, [bidState, queryClient, user?.id]);
+
   return query;
+}
+
+/** Pay and bid: paid, but the bids are not placed yet. The server places them on the next read. */
+export const bidsPending = (deposit: Pick<Deposit, 'status' | 'bid'>): boolean =>
+  deposit.status === 'SUCCEEDED' && deposit.bid?.state === 'WAITING';
+
+/**
+ * Pay and bid: opens a Chapa payment for exactly these bids. Once it is confirmed the money goes into the wallet
+ * and the server places the bids from it. A retry of the same bids reuses the key, so only one payment opens.
+ */
+export function useStartBidPayment(auctionId: string) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const attempt = useRef<{ key: string; request: string } | null>(null);
+
+  return useMutation({
+    mutationFn: async ({ amountMinor, amountsMinor }: { amountMinor: string; amountsMinor: string[] }) => {
+      const request = `${amountMinor}|${amountsMinor.join(',')}`;
+      if (attempt.current?.request !== request) attempt.current = { key: newIdempotencyKey(), request };
+      try {
+        const deposit = await unwrap(
+          api.POST('/api/v1/wallet/deposits', {
+            params: { header: { 'Idempotency-Key': attempt.current.key } },
+            body: { amountMinor, bid: { auctionId, amountsMinor } },
+          }),
+        );
+        attempt.current = null;
+        return deposit;
+      } catch (error) {
+        if (!isUnconfirmed(error)) attempt.current = null;
+        throw error;
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: depositKeys.all(user?.id) });
+    },
+  });
 }
 
 /**

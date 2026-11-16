@@ -209,6 +209,7 @@ export function aDeposit(overrides: Partial<Schemas['DepositDto']> = {}): Schema
     confirmedAt: null,
     expiresAt: '2026-01-02T12:00:00.000Z',
     createdAt: '2026-01-02T10:00:00.000Z',
+    bid: null,
     ...overrides,
     amountMinor,
   };

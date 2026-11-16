@@ -8,6 +8,7 @@ import { useAuction, useAuctionResult, type Auction, type AuctionResult } from '
 import { StatusBadge } from '../auctions/StatusBadge';
 import { useAuth } from '../auth/useAuth';
 import { BidPanel } from '../bids/BidPanel';
+import { PayAndBidButton } from '../bids/PayAndBid';
 import { MyAuctionBids } from '../bids/MyAuctionBids';
 import { Alert, Button, ButtonLink, Card, PageLoading } from '../components/ui';
 import { cx } from '../lib/cx';
@@ -198,6 +199,11 @@ function StatePanel({
           <p className="text-4xl font-bold tracking-tight text-brand-400">
             <Countdown until={a.closesAt} onElapsed={onElapsed} />
           </p>
+          {user && (
+            <div className="mt-4">
+              <PayAndBidButton auction={a} gold />
+            </div>
+          )}
           {!user && (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <ButtonLink to="/sign-in" state={{ from: location.pathname }}>
