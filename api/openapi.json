@@ -828,7 +828,9 @@
                 "WITHDRAWAL_HOLD",
                 "WITHDRAWAL_RELEASE",
                 "WITHDRAWAL_PAYOUT",
-                "ADJUSTMENT"
+                "ADJUSTMENT",
+                "BONUS",
+                "BONUS_EXPIRY"
               ]
             }
           }
@@ -1076,7 +1078,9 @@
                 "WITHDRAWAL_HOLD",
                 "WITHDRAWAL_RELEASE",
                 "WITHDRAWAL_PAYOUT",
-                "ADJUSTMENT"
+                "ADJUSTMENT",
+                "BONUS",
+                "BONUS_EXPIRY"
               ]
             }
           }
@@ -7267,6 +7271,32 @@
             "example": "0.00",
             "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
           },
+          "bonusMinor": {
+            "type": "string",
+            "example": "50000",
+            "description": "Top-up bonus that has not expired: spent on bid fees before `available`, never withdrawable. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bonus": {
+            "type": "string",
+            "example": "500.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "bonusExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the bonus that expires first does so; null without bonus."
+          },
+          "spendableMinor": {
+            "type": "string",
+            "example": "175050",
+            "description": "What can be spent on bid fees: available + bonus. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "spendable": {
+            "type": "string",
+            "example": "1750.50",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
           "isFrozen": {
             "type": "boolean",
             "description": "A frozen wallet can receive money but cannot spend or withdraw it"
@@ -7285,6 +7315,11 @@
           "available",
           "heldMinor",
           "held",
+          "bonusMinor",
+          "bonus",
+          "bonusExpiresAt",
+          "spendableMinor",
+          "spendable",
           "isFrozen",
           "updatedAt"
         ]
@@ -7309,7 +7344,9 @@
               "WITHDRAWAL_HOLD",
               "WITHDRAWAL_RELEASE",
               "WITHDRAWAL_PAYOUT",
-              "ADJUSTMENT"
+              "ADJUSTMENT",
+              "BONUS",
+              "BONUS_EXPIRY"
             ]
           },
           "status": {
@@ -7352,6 +7389,14 @@
             "example": "1250.50",
             "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
           },
+          "balance": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "BONUS"
+            ],
+            "description": "Which balance moved: the spendable balance, or the top-up bonus. `balanceAfter` is of that balance."
+          },
           "description": {
             "type": "string",
             "nullable": true
@@ -7378,6 +7423,7 @@
           "amount",
           "balanceAfterMinor",
           "balanceAfter",
+          "balance",
           "createdAt"
         ]
       },
@@ -7463,6 +7509,8 @@
             "enum": [
               "USER_WALLET",
               "USER_WALLET_HOLD",
+              "USER_WALLET_BONUS",
+              "PROMOTIONS",
               "PLATFORM_REVENUE",
               "PAYMENT_CLEARING",
               "WITHDRAWAL_CLEARING",
@@ -7603,6 +7651,21 @@
             "items": {
               "type": "string"
             }
+          },
+          "bonusPercent": {
+            "type": "number",
+            "example": 100,
+            "description": "Top-up bonus, in percent of a wallet top-up. 0: no bonus."
+          },
+          "bonusMaxMinor": {
+            "type": "string",
+            "example": "1000000",
+            "description": "The most bonus one top-up earns. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bonusValidDays": {
+            "type": "number",
+            "example": 7,
+            "description": "Days a bonus can be spent before it expires."
           }
         },
         "required": [
@@ -7613,7 +7676,10 @@
           "minorUnits",
           "minAmountMinor",
           "maxAmountMinor",
-          "directChargeMethods"
+          "directChargeMethods",
+          "bonusPercent",
+          "bonusMaxMinor",
+          "bonusValidDays"
         ]
       },
       "BidToPayDto": {
@@ -7808,6 +7874,16 @@
             "example": "telebirr",
             "description": "Direct charge: the wallet asked to send a request to the payer's phone. Null for a checkout-page payment."
           },
+          "bonusMinor": {
+            "type": "string",
+            "example": "50000",
+            "description": "Top-up bonus this deposit earns, added to the wallet's bonus once the payment is confirmed. 0 for bid payments. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bonus": {
+            "type": "string",
+            "example": "500.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
           "failureReason": {
             "type": "string",
             "nullable": true,
@@ -7856,6 +7932,8 @@
           "minorUnits",
           "checkoutUrl",
           "chargeMethod",
+          "bonusMinor",
+          "bonus",
           "failureReason",
           "walletTransactionId",
           "confirmedAt",
@@ -7959,6 +8037,16 @@
             "example": "telebirr",
             "description": "Direct charge: the wallet asked to send a request to the payer's phone. Null for a checkout-page payment."
           },
+          "bonusMinor": {
+            "type": "string",
+            "example": "50000",
+            "description": "Top-up bonus this deposit earns, added to the wallet's bonus once the payment is confirmed. 0 for bid payments. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bonus": {
+            "type": "string",
+            "example": "500.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
           "failureReason": {
             "type": "string",
             "nullable": true,
@@ -8034,6 +8122,8 @@
           "minorUnits",
           "checkoutUrl",
           "chargeMethod",
+          "bonusMinor",
+          "bonus",
           "failureReason",
           "walletTransactionId",
           "confirmedAt",
@@ -8204,6 +8294,21 @@
             "example": "700.00",
             "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
           },
+          "walletBonusMinor": {
+            "type": "string",
+            "example": "0",
+            "description": "Top-up bonus left after this charge. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "walletBonus": {
+            "type": "string",
+            "example": "0.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "paidWithBonusMinor": {
+            "type": "string",
+            "example": "7500",
+            "description": "Part of the fees paid with top-up bonus. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
           "bids": {
             "description": "The recorded bids, in the order they were sent",
             "type": "array",
@@ -8230,6 +8335,9 @@
           "transactionReference",
           "walletAvailableMinor",
           "walletAvailable",
+          "walletBonusMinor",
+          "walletBonus",
+          "paidWithBonusMinor",
           "bids",
           "createdAt"
         ]

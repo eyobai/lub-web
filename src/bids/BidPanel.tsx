@@ -47,7 +47,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   const room = Math.min(a.maxBidsPerRequest, leftForUser ?? Infinity) - amounts.length;
   const total = BigInt(a.bidFeeMinor) * BigInt(amounts.length);
   const balance =
-    wallet.data && wallet.data.currency === a.currency ? BigInt(wallet.data.availableMinor) : null;
+    wallet.data && wallet.data.currency === a.currency ? BigInt(wallet.data.spendableMinor) : null;
   const short = balance !== null && amounts.length > 0 && total > balance;
   const frozen = wallet.data?.isFrozen === true;
 
@@ -161,7 +161,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
           Wallet:{' '}
           <Link to="/wallet" className="font-semibold text-brand-700 hover:underline">
             {wallet.data
-              ? formatMinor(wallet.data.availableMinor, wallet.data.currency, wallet.data.minorUnits)
+              ? formatMinor(wallet.data.spendableMinor, wallet.data.currency, wallet.data.minorUnits)
               : '…'}
           </Link>
         </p>

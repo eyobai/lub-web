@@ -122,6 +122,14 @@ describe('pay and bid', () => {
     expect(fake.callsTo(PLACE)).toHaveLength(0);
   }, 10_000);
 
+  it('lets the bonus pay from the wallet', async () => {
+    signedIn({ [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00', bonusMinor: '7500' })] });
+    const { user } = renderApp('/');
+    const sheet = await openSheet(user);
+    expect(within(sheet).getByRole('radio', { name: /Wallet/ })).toBeChecked();
+    expect(within(sheet).getByText(/Available: ETB 75\s*\(incl\. ETB 75 bonus\)/)).toBeInTheDocument();
+  });
+
   it('asks for a phone number that can be charged', async () => {
     const fake = signedIn({ [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00' })] });
     const { user } = renderApp('/');

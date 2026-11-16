@@ -5,6 +5,7 @@ import { isApiError } from '../api/errors';
 import type { components } from '../api/schema';
 import { useAuth } from '../auth/useAuth';
 import { walletKeys, type Wallet } from '../wallet/queries';
+import { fromMinor } from '../lib/money';
 import { newIdempotencyKey } from './amounts';
 
 export type MyBid = components['schemas']['MyBidDto'];
@@ -94,12 +95,17 @@ export function usePlaceBids(auctionId: string) {
       }
     },
     onSuccess: (submission) => {
+      const spendableMinor = BigInt(submission.walletAvailableMinor) + BigInt(submission.walletBonusMinor);
       queryClient.setQueryData<Wallet>(walletKeys.balance(user?.id), (wallet) =>
         wallet && wallet.currency === submission.currency
           ? {
               ...wallet,
               availableMinor: submission.walletAvailableMinor,
               available: submission.walletAvailable,
+              bonusMinor: submission.walletBonusMinor,
+              bonus: submission.walletBonus,
+              spendableMinor: spendableMinor.toString(),
+              spendable: fromMinor(spendableMinor, submission.minorUnits),
             }
           : wallet,
       );

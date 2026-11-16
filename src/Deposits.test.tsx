@@ -28,7 +28,10 @@ type Reply = [number, unknown?];
 type Handlers = Parameters<typeof fakeApi>[0];
 const page = (items: unknown[]) => ({ items, total: items.length, page: 1, limit: 10 });
 
-/** A signed-in user with ETB 1,000, on a site where money can be added. */
+/**
+ * A signed-in user with ETB 1,000, on a site where money can be added through Chapa's checkout page (no mobile
+ * wallet charged in the site), so these tests follow the hand-over to Chapa.
+ */
 function signedIn(overrides: Handlers = {}) {
   session.start(aUser(), tokens());
   vi.mocked(leaveTo).mockClear();
@@ -36,15 +39,23 @@ function signedIn(overrides: Handlers = {}) {
     [ME]: [200, aUser()],
     [WALLET]: [200, aWallet()],
     [HISTORY]: [200, { items: [], nextCursor: null }],
-    [OPTIONS]: [200, depositOptions()],
+    [OPTIONS]: [200, depositOptions({ directChargeMethods: [] })],
     [DEPOSITS]: [200, page([])],
     [UNREAD]: [200, { unread: 0 }],
     ...overrides,
   });
 }
 
+/** Opens the top-up sheet if it is not open yet. */
+async function openTopUp(user: ReturnType<typeof renderApp>['user']) {
+  if (!screen.queryByRole('dialog'))
+    await user.click(await screen.findByRole('button', { name: 'Top up wallet' }));
+  return screen.getByRole('dialog', { name: 'Top up wallet' });
+}
+
 async function pay(user: ReturnType<typeof renderApp>['user'], amount: string) {
-  const field = await screen.findByLabelText('Amount (ETB)');
+  await openTopUp(user);
+  const field = await screen.findByLabelText('Amount');
   await user.clear(field);
   if (amount) await user.type(field, amount);
   await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
@@ -77,9 +88,9 @@ describe('deposit amounts', () => {
   });
 
   it('offers only the common amounts that are inside the limits', () => {
-    expect(quickAmounts(options)).toEqual(['100', '200', '500', '1000']);
+    expect(quickAmounts(options)).toEqual(['10', '100', '250', '500', '1000', '10000']);
     expect(quickAmounts(depositOptions({ minAmountMinor: '15000', maxAmountMinor: '50000' }))).toEqual([
-      '200',
+      '250',
       '500',
     ]);
   });
@@ -124,16 +135,20 @@ describe('adding money on the wallet page', () => {
     const [call] = fake.callsTo(START);
     expect(call.body).toEqual({ amountMinor: '50000' });
     expect(call.idempotencyKey).toMatch(/^[\w-]{16,}$/);
-    expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Opening Chapa…' })).toBeDisabled();
     expect(screen.queryByText(/Test mode/)).not.toBeInTheDocument();
   });
 
   it('fills the amount from a one-tap choice, and says when the site is in test mode', async () => {
-    const fake = signedIn({ [OPTIONS]: [200, depositOptions({ testMode: true })], [START]: [201, DEPOSIT] });
+    const fake = signedIn({
+      [OPTIONS]: [200, depositOptions({ testMode: true, directChargeMethods: [] })],
+      [START]: [201, DEPOSIT],
+    });
     const { user } = renderApp('/wallet');
 
-    await user.click(await screen.findByRole('button', { name: 'ETB 1,000' }));
-    expect(screen.getByLabelText('Amount (ETB)')).toHaveValue('1000');
+    await openTopUp(user);
+    await user.click(await screen.findByRole('button', { name: /^ETB 1,000\s*\+ETB 1,000$/ }));
+    expect(screen.getByLabelText('Amount')).toHaveValue('1000');
     expect(screen.getByText(/Test mode: payments here are practice only/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Continue to payment' }));
 
@@ -153,7 +168,7 @@ describe('adding money on the wallet page', () => {
     await pay(user, amount);
 
     expect(screen.getByText(message)).toBeInTheDocument();
-    expect(screen.getByLabelText('Amount (ETB)')).toBeInvalid();
+    expect(screen.getByLabelText('Amount')).toBeInvalid();
     expect(fake.callsTo(START)).toHaveLength(0);
     expect(leaveTo).not.toHaveBeenCalled();
   });
@@ -173,7 +188,7 @@ describe('adding money on the wallet page', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
     expect(leaveTo).not.toHaveBeenCalled();
-    expect(address()).toBe('/wallet');
+    expect(address()).toBe('/wallet?topup=1');
     expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeEnabled();
   });
 

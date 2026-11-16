@@ -16,6 +16,8 @@ const TYPE_LABELS: Record<WalletTransaction['type'], string> = {
   WITHDRAWAL_RELEASE: 'Withdrawal cancelled',
   WITHDRAWAL_PAYOUT: 'Withdrawal paid',
   ADJUSTMENT: 'Adjustment by support',
+  BONUS: 'Top-up bonus',
+  BONUS_EXPIRY: 'Bonus expired',
 };
 
 /** Types whose description is written by the system. An adjustment's is a staff note, so it is not shown. */
@@ -58,6 +60,19 @@ export function WalletPage() {
         <p className="relative mt-1 text-4xl font-bold tracking-tight text-brand-400 tabular-nums">
           {formatMoney(w.available, w.currency)}
         </p>
+        {w.bonusMinor !== '0' && (
+          <p className="relative mt-3 inline-flex flex-wrap items-center gap-x-2 rounded-full bg-emerald-400/15 px-3 py-1.5 text-sm text-emerald-200">
+            <span aria-hidden="true">🎁</span>
+            <span>
+              Bonus <strong className="text-white tabular-nums">{formatMoney(w.bonus, w.currency)}</strong>
+            </span>
+            {w.bonusExpiresAt && (
+              <span className="text-emerald-200/80">
+                expires <time dateTime={w.bonusExpiresAt}>{formatDateTime(w.bonusExpiresAt)}</time>
+              </span>
+            )}
+          </p>
+        )}
         {w.heldMinor !== '0' && (
           <p className="relative mt-1 text-sm text-white/70">
             On hold: <span className="tabular-nums">{formatMoney(w.held, w.currency)}</span>
@@ -137,6 +152,11 @@ function TransactionRow({ row }: { row: WalletTransaction }) {
       <div className="min-w-0">
         <p className="font-semibold">
           {TYPE_LABELS[row.type]}
+          {row.balance === 'BONUS' && row.type !== 'BONUS' && row.type !== 'BONUS_EXPIRY' && (
+            <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+              Bonus
+            </span>
+          )}
           {row.status === 'REVERSED' && (
             <span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-700">
               Reversed
@@ -156,7 +176,7 @@ function TransactionRow({ row }: { row: WalletTransaction }) {
           {formatMoney(row.amount, row.currency)}
         </p>
         <p className="text-xs text-slate-500 tabular-nums">
-          Balance {formatMoney(row.balanceAfter, row.currency)}
+          {row.balance === 'BONUS' ? 'Bonus' : 'Balance'} {formatMoney(row.balanceAfter, row.currency)}
         </p>
       </div>
     </li>

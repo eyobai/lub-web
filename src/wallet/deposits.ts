@@ -14,7 +14,7 @@ export type DepositOptions = components['schemas']['DepositOptionsDto'];
 export type Deposit = components['schemas']['DepositDto'];
 
 /** Amounts offered as one-tap choices, in major units; only those inside the limits are shown. */
-const QUICK_AMOUNTS = ['100', '200', '500', '1000'];
+const QUICK_AMOUNTS = ['10', '100', '250', '500', '1000', '10000'];
 
 /** How often the result page asks whether the payment has been confirmed. */
 export const DEPOSIT_POLL_MS = 3_000;
@@ -149,18 +149,24 @@ export function useStartBidPayment(auctionId: string) {
 export function useStartDeposit() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const attempt = useRef<{ key: string; amountMinor: string } | null>(null);
+  const attempt = useRef<{ key: string; request: string } | null>(null);
 
   return useMutation({
-    mutationFn: async (amountMinor: string): Promise<Deposit> => {
-      if (attempt.current?.amountMinor !== amountMinor) {
-        attempt.current = { key: newIdempotencyKey(), amountMinor };
-      }
+    mutationFn: async ({
+      amountMinor,
+      charge,
+    }: {
+      amountMinor: string;
+      /** Pay on the phone without leaving the site; without it Chapa's checkout page is used. */
+      charge?: { method: string; phoneNumber: string };
+    }): Promise<Deposit> => {
+      const request = `${amountMinor}|${charge?.method ?? ''}|${charge?.phoneNumber ?? ''}`;
+      if (attempt.current?.request !== request) attempt.current = { key: newIdempotencyKey(), request };
       try {
         const deposit = await unwrap(
           api.POST('/api/v1/wallet/deposits', {
             params: { header: { 'Idempotency-Key': attempt.current.key } },
-            body: { amountMinor },
+            body: { amountMinor, charge },
           }),
         );
         attempt.current = null;
@@ -255,4 +261,14 @@ export const walletName = (method: string): string => WALLET_NAMES[method] ?? me
 export function walletPhone(input: string): string | null {
   const match = /^(?:\+?251|0)?([79]\d{8})$/.exec(input.replace(/[\s-]/g, ''));
   return match ? `0${match[1]}` : null;
+}
+
+/** The top-up bonus a wallet top-up of `amountMinor` earns under the terms the server gave. */
+export function bonusFor(
+  amountMinor: bigint,
+  options: Pick<DepositOptions, 'bonusPercent' | 'bonusMaxMinor'>,
+): bigint {
+  const bonus = (amountMinor * BigInt(options.bonusPercent)) / 100n;
+  const max = BigInt(options.bonusMaxMinor);
+  return bonus < max ? bonus : max;
 }

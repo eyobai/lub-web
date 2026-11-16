@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigationType } from 'react-rou
 import { useAuth } from '../auth/useAuth';
 import { config } from '../config';
 import { cx } from '../lib/cx';
-import { formatMoney } from '../lib/money';
+import { formatMinor } from '../lib/money';
 import { useOnline } from '../lib/useOnline';
 import { useUnreadCount } from '../notifications/queries';
 import { useWallet } from '../wallet/queries';
@@ -232,7 +232,8 @@ function NotificationsLink() {
 function Balance() {
   const wallet = useWallet();
   if (!wallet.data) return null;
-  const amount = formatMoney(wallet.data.available, wallet.data.currency);
+  // Bonus counts: it is spent on bid fees like the rest.
+  const amount = formatMinor(wallet.data.spendableMinor, wallet.data.currency, wallet.data.minorUnits);
   return (
     <Link
       to="/wallet"

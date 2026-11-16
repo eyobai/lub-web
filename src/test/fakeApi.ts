@@ -134,7 +134,11 @@ export function aPage(items: Schemas['AuctionDto'][], total = items.length): Sch
   return { items, total, page: 1, limit: 12 };
 }
 
+/** A wallet; `spendable` follows `available` + `bonus` unless given. */
 export function aWallet(overrides: Partial<Schemas['WalletDto']> = {}): Schemas['WalletDto'] {
+  const availableMinor = overrides.availableMinor ?? '100000';
+  const bonusMinor = overrides.bonusMinor ?? '0';
+  const spendableMinor = String(Number(availableMinor) + Number(bonusMinor));
   return {
     id: '44444444-4444-4444-8444-444444444444',
     userId: aUser().id,
@@ -144,6 +148,11 @@ export function aWallet(overrides: Partial<Schemas['WalletDto']> = {}): Schemas[
     available: '1000.00',
     heldMinor: '0',
     held: '0.00',
+    bonusMinor,
+    bonus: major(bonusMinor),
+    bonusExpiresAt: null,
+    spendableMinor,
+    spendable: major(spendableMinor),
     isFrozen: false,
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
@@ -168,6 +177,7 @@ export function aTransaction(
     currency: 'ETB',
     amount: major(amountMinor),
     balanceAfter: major(balanceAfterMinor),
+    balance: 'CASH',
     description: null,
     reversalOf: null,
     createdAt: '2026-01-02T10:00:00.000Z',
@@ -189,6 +199,9 @@ export function depositOptions(
     minAmountMinor: '1000',
     maxAmountMinor: '5000000',
     directChargeMethods: ['telebirr', 'mpesa', 'cbebirr', 'ebirr'],
+    bonusPercent: 100,
+    bonusMaxMinor: '1000000',
+    bonusValidDays: 7,
     ...overrides,
   };
 }
@@ -206,6 +219,8 @@ export function aDeposit(overrides: Partial<Schemas['DepositDto']> = {}): Schema
     minorUnits: 2,
     checkoutUrl: 'https://checkout.chapa.co/checkout/payment/abc123',
     chargeMethod: null,
+    bonusMinor: '0',
+    bonus: '0.00',
     failureReason: null,
     walletTransactionId: null,
     confirmedAt: null,
@@ -259,6 +274,9 @@ export function aSubmission(amountsMinor: string[], walletMinor = '100000'): Sch
     transactionReference: 'TXN-BID',
     walletAvailableMinor: left,
     walletAvailable: major(left),
+    walletBonusMinor: '0',
+    walletBonus: '0.00',
+    paidWithBonusMinor: '0',
     bids: amountsMinor.map((amountMinor) => ({
       id: nextId(),
       amountMinor,

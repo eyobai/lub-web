@@ -1801,6 +1801,31 @@ export interface components {
              * @example 0.00
              */
             held: string;
+            /**
+             * @description Top-up bonus that has not expired: spent on bid fees before `available`, never withdrawable. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 50000
+             */
+            bonusMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 500.00
+             */
+            bonus: string;
+            /**
+             * Format: date-time
+             * @description When the bonus that expires first does so; null without bonus.
+             */
+            bonusExpiresAt: string | null;
+            /**
+             * @description What can be spent on bid fees: available + bonus. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 175050
+             */
+            spendableMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 1750.50
+             */
+            spendable: string;
             /** @description A frozen wallet can receive money but cannot spend or withdraw it */
             isFrozen: boolean;
             /** Format: date-time */
@@ -1812,7 +1837,7 @@ export interface components {
             /** @example TX-20261113-7K2M9QXA4T */
             reference: string;
             /** @enum {string} */
-            type: "DEPOSIT" | "BID_FEE" | "REFUND" | "WITHDRAWAL_HOLD" | "WITHDRAWAL_RELEASE" | "WITHDRAWAL_PAYOUT" | "ADJUSTMENT";
+            type: "DEPOSIT" | "BID_FEE" | "REFUND" | "WITHDRAWAL_HOLD" | "WITHDRAWAL_RELEASE" | "WITHDRAWAL_PAYOUT" | "ADJUSTMENT" | "BONUS" | "BONUS_EXPIRY";
             /**
              * @description REVERSED when a later transaction undid this one
              * @enum {string}
@@ -1845,6 +1870,11 @@ export interface components {
              * @example 1250.50
              */
             balanceAfter: string;
+            /**
+             * @description Which balance moved: the spendable balance, or the top-up bonus. `balanceAfter` is of that balance.
+             * @enum {string}
+             */
+            balance: "CASH" | "BONUS";
             description?: string | null;
             /**
              * @description Reference of the transaction this one reverses, if any
@@ -1893,7 +1923,7 @@ export interface components {
             /** @example ETB */
             currency: string;
             /** @enum {string} */
-            accountType: "USER_WALLET" | "USER_WALLET_HOLD" | "PLATFORM_REVENUE" | "PAYMENT_CLEARING" | "WITHDRAWAL_CLEARING" | "ADJUSTMENTS";
+            accountType: "USER_WALLET" | "USER_WALLET_HOLD" | "USER_WALLET_BONUS" | "PROMOTIONS" | "PLATFORM_REVENUE" | "PAYMENT_CLEARING" | "WITHDRAWAL_CLEARING" | "ADJUSTMENTS";
             /** @example 42 */
             accounts: number;
             /**
@@ -1952,6 +1982,21 @@ export interface components {
              *     ]
              */
             directChargeMethods: string[];
+            /**
+             * @description Top-up bonus, in percent of a wallet top-up. 0: no bonus.
+             * @example 100
+             */
+            bonusPercent: number;
+            /**
+             * @description The most bonus one top-up earns. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 1000000
+             */
+            bonusMaxMinor: string;
+            /**
+             * @description Days a bonus can be spent before it expires.
+             * @example 7
+             */
+            bonusValidDays: number;
         };
         BidToPayDto: {
             /**
@@ -2061,6 +2106,16 @@ export interface components {
              * @example telebirr
              */
             chargeMethod: string | null;
+            /**
+             * @description Top-up bonus this deposit earns, added to the wallet's bonus once the payment is confirmed. 0 for bid payments. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 50000
+             */
+            bonusMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 500.00
+             */
+            bonus: string;
             /** @description Why no money was added, when the deposit did not succeed. */
             failureReason: string | null;
             /**
@@ -2129,6 +2184,16 @@ export interface components {
              * @example telebirr
              */
             chargeMethod: string | null;
+            /**
+             * @description Top-up bonus this deposit earns, added to the wallet's bonus once the payment is confirmed. 0 for bid payments. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 50000
+             */
+            bonusMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 500.00
+             */
+            bonus: string;
             /** @description Why no money was added, when the deposit did not succeed. */
             failureReason: string | null;
             /**
@@ -2255,6 +2320,21 @@ export interface components {
              * @example 700.00
              */
             walletAvailable: string;
+            /**
+             * @description Top-up bonus left after this charge. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 0
+             */
+            walletBonusMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 0.00
+             */
+            walletBonus: string;
+            /**
+             * @description Part of the fees paid with top-up bonus. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 7500
+             */
+            paidWithBonusMinor: string;
             /** @description The recorded bids, in the order they were sent */
             bids: components["schemas"]["BidDto"][];
             /** Format: date-time */
@@ -4151,7 +4231,7 @@ export interface operations {
                 /** @description `nextCursor` from the previous page. Omit for the newest entries. */
                 cursor?: string;
                 /** @description Only return transactions of this type */
-                type?: "DEPOSIT" | "BID_FEE" | "REFUND" | "WITHDRAWAL_HOLD" | "WITHDRAWAL_RELEASE" | "WITHDRAWAL_PAYOUT" | "ADJUSTMENT";
+                type?: "DEPOSIT" | "BID_FEE" | "REFUND" | "WITHDRAWAL_HOLD" | "WITHDRAWAL_RELEASE" | "WITHDRAWAL_PAYOUT" | "ADJUSTMENT" | "BONUS" | "BONUS_EXPIRY";
             };
             header?: never;
             path?: never;
@@ -4295,7 +4375,7 @@ export interface operations {
                 /** @description `nextCursor` from the previous page. Omit for the newest entries. */
                 cursor?: string;
                 /** @description Only return transactions of this type */
-                type?: "DEPOSIT" | "BID_FEE" | "REFUND" | "WITHDRAWAL_HOLD" | "WITHDRAWAL_RELEASE" | "WITHDRAWAL_PAYOUT" | "ADJUSTMENT";
+                type?: "DEPOSIT" | "BID_FEE" | "REFUND" | "WITHDRAWAL_HOLD" | "WITHDRAWAL_RELEASE" | "WITHDRAWAL_PAYOUT" | "ADJUSTMENT" | "BONUS" | "BONUS_EXPIRY";
             };
             header?: never;
             path: {
