@@ -85,7 +85,7 @@ const CLOCK = (
   </svg>
 );
 
-/** A running auction counts down to its close, an upcoming one to its opening; both name the exact date too. */
+/** A running auction counts down to its close, an upcoming one to its opening. */
 function AuctionTiming({ auction }: { auction: Auction }) {
   const upcoming = auction.status === 'SCHEDULED';
   if (auction.status === 'ACTIVE' || upcoming) {
@@ -103,13 +103,6 @@ function AuctionTiming({ auction }: { auction: Auction }) {
             <Countdown until={until} />
           </p>
         </div>
-        <p className="min-w-0 shrink border-l border-brand-200 pl-3 text-right text-[0.7rem] leading-snug text-slate-500">
-          {upcoming ? 'Opens' : 'Closes'}
-          <br />
-          <time dateTime={until} className="font-semibold text-slate-800">
-            {formatDateTime(until)}
-          </time>
-        </p>
       </div>
     );
   }
