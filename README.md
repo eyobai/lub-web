@@ -14,6 +14,7 @@ Built with React, TypeScript, Vite and Tailwind CSS. Mobile-first: it is meant t
 | Forced password change | After a staff password reset the user must choose a new password before anything else               |
 | Auctions               | Public list (live / upcoming / ended, paged) and auction detail with rules, countdown and result    |
 | Wallet                 | Balance, money on hold, frozen notice, history (newest first, older entries on request)             |
+| Add money              | Amount form on the wallet page, hand-over to Chapa's payment page, payment result page              |
 | Bidding                | One or several amounts per request, a range of amounts, the total fee, a confirmation before paying |
 | My bids and results    | All my bids by auction; on an ended auction, whether I won and how each of my bids did              |
 | My wins                | My wins with their progress (confirmed, details, on its way, delivered), tracking, delivery details |
@@ -28,6 +29,21 @@ Bidding notes:
   same key is sent again on retry, so a bid cannot be charged twice.
 - A request is all or nothing: if the server refuses one amount, nothing is placed or charged, and the
   page marks the refused amounts.
+
+Add money notes:
+
+- The wallet page asks the server whether deposits are on, the limits and whether Chapa is in test mode
+  (`GET /wallet/deposit-options`). With deposits off, or a frozen wallet, the form is not shown.
+- "Continue to payment" opens the payment on the server and then leaves the site for the checkout address
+  the server returns. Only an `https` address is followed.
+- Chapa sends the user back to `/wallet/deposits/:id`. That page shows what the server says about the
+  payment and nothing else: `status=success` in the address is ignored. While the payment is not confirmed
+  it asks the server again every 3 seconds (every 15 seconds after two minutes).
+- The wallet is credited by the server once it has confirmed the payment with Chapa. The site never adds
+  money itself.
+- Payments started and not finished are listed on the wallet page, so closing the tab does not lose them.
+- Retrying "Continue to payment" for the same amount reuses one `Idempotency-Key`, so a lost answer cannot
+  open two payments.
 
 Wins and notifications notes:
 
@@ -49,7 +65,7 @@ Across the whole site:
 - **Home screen**: the site has a web app manifest and icons, so "Add to Home screen" on a phone gives it its
   own icon and opens it without the browser's address bar. It does not work without a connection.
 
-Not built yet: paying in and withdrawing (the backend has no payment provider yet).
+Not built yet: withdrawing money (the backend has no withdrawals yet).
 The admin screens will be a separate project.
 
 ## Running it
@@ -91,6 +107,7 @@ bids from the brief (ETB 1 ×5, 2 ×3, 3 ×2, 4 ×1, 5 ×1), so the result page 
 | `npm run api:types` | Regenerate `src/api/schema.d.ts` from `api/openapi.json`                |
 | `npm run seed:demo` | Demo auctions on a local backend                                        |
 | `npm run test:live` | Drives the site in a real browser against a running backend (see below) |
+| `npm run test:pay`  | Drives "Add money" in a real browser against a simulated Chapa          |
 
 ## Keeping in step with the backend
 
@@ -113,7 +130,7 @@ src/
   components/ app shell and shared UI pieces
   pages/      one file per page
   bids/       bid form, amount checks, bid queries
-  wallet/     wallet queries
+  wallet/     wallet queries, deposit queries and amount checks, the Add money form
   wins/       win and winner queries, delivery form and its checks
   notifications/ notification queries and where each one leads
   lib/        money, clock, validation helpers, tab title, online state
@@ -214,12 +231,31 @@ The libraries are a separate file so that a release which only changes the site'
 The pages are deliberately not split into one file each: all of them together are 23 kB, and splitting
 would make each first visit to a page wait for another download.
 
+### Add money check
+
+`npm run test:pay` registers a new user and walks through adding money in Chrome: an amount under the
+minimum, the hand-over to the payment page, coming back before the payment is confirmed, the page updating
+by itself once it is, the wallet balance and history, opening the result page twice, and a payment that
+fails. It contacts no real Chapa: the script answers the two Chapa calls the backend makes and stands in
+for Chapa's payment page in the browser. Start the backend for it with:
+
+```
+PAYMENT_PROVIDER=chapa
+CHAPA_SECRET_KEY=CHASECK_TEST-local-simulated
+CHAPA_WEBHOOK_SECRET=<any 16 or more characters>
+CHAPA_BASE_URL=http://127.0.0.1:4010
+WEB_APP_URL=http://localhost:5173
+```
+
+It does not cover Chapa's webhook (the backend's own tests do) or Chapa's real payment page.
+
 ## Hand-off notes
 
 What has and has not been checked:
 
-- **Checked**: 136 unit and page tests; the live browser check in Chrome against the real backend, at phone
-  size (390 px wide); layouts at 320, 390 and 1280 px; automated accessibility rules on 15 pages; the
+- **Checked**: 176 unit and page tests; the live browser check in Chrome against the real backend, at phone
+  size (390 px wide); layouts at 320, 390 and 1280 px; automated accessibility rules on 15 pages; adding
+  money against a simulated Chapa (`npm run test:pay`); the
   example nginx configuration (without its HTTPS part) with nginx 1.28.
 - **Not checked**: Safari, Firefox and Samsung Internet; real phones; a screen reader used by a person
   (automated rules find only part of what a person would); slow or unreliable mobile networks beyond a
@@ -228,7 +264,9 @@ What has and has not been checked:
 Known limits:
 
 - English only.
-- No paying in or withdrawing: the wallet page tells users to contact support.
+- Adding money goes through Chapa and has only been run against a simulated Chapa, not Chapa itself.
+  Real payments need the backend's live-mode steps first (see the backend's deployment notes).
+- No withdrawing money.
 - No "forgot password": staff reset a password and the user must then choose a new one.
 - The unread notification count is refreshed every minute, not instantly, and there are no push notifications.
 - Sign-in tokens are kept in the browser's local storage. The Content-Security-Policy above is what protects
