@@ -96,6 +96,25 @@ describe('deposit amounts', () => {
       'not an address',
     ]) {
       expect(checkoutAddress({ checkoutUrl })).toBeNull();
+      expect(checkoutAddress({ checkoutUrl }, 'localhost')).toBeNull();
+    }
+  });
+
+  it('follows the local simulator only while the site is open on this machine', () => {
+    const simulator = 'http://localhost:4010/checkout/LUB-1';
+    expect(checkoutAddress({ checkoutUrl: simulator }, 'localhost')).toBe(simulator);
+    expect(checkoutAddress({ checkoutUrl: simulator }, '127.0.0.1')).toBe(simulator);
+    expect(checkoutAddress({ checkoutUrl: 'http://127.0.0.1:4010/x' }, 'localhost')).toBe(
+      'http://127.0.0.1:4010/x',
+    );
+    expect(checkoutAddress({ checkoutUrl: simulator }, 'lub.example')).toBeNull();
+    expect(checkoutAddress({ checkoutUrl: simulator }, 'localhost.lub.example')).toBeNull();
+    for (const checkoutUrl of [
+      'http://localhost.evil.example/pay',
+      'http://localhost@evil.example/pay',
+      'http://192.168.1.10:4010/pay',
+    ]) {
+      expect(checkoutAddress({ checkoutUrl }, 'localhost')).toBeNull();
     }
   });
 
