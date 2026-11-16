@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import { anonymousApi, api, unwrap } from '../api/client';
 import { ApiError } from '../api/errors';
+import { PUBLIC_QUERIES } from '../queryClient';
 import { session } from './session';
 import { AuthContext, type RegisterInput } from './useAuth';
 
@@ -24,7 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Whatever one account loaded must not be shown to the next one.
   useEffect(() => {
-    if (userId === null) queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auctions' });
+    if (userId === null)
+      queryClient.removeQueries({ predicate: (q) => !PUBLIC_QUERIES.includes(q.queryKey[0]) });
   }, [userId, queryClient]);
 
   const signIn = useCallback(async (phoneNumber: string, password: string) => {

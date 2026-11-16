@@ -50,6 +50,14 @@ export function AccountPage() {
         </dl>
       </Card>
       <Card className="space-y-3 p-5">
+        <ButtonLink to="/wins" variant="secondary" className="w-full">
+          My wins
+        </ButtonLink>
+        <ButtonLink to="/notifications" variant="secondary" className="w-full">
+          Notifications
+        </ButtonLink>
+      </Card>
+      <Card className="space-y-3 p-5">
         <ButtonLink to="/change-password" variant="secondary" className="w-full">
           Change password
         </ButtonLink>

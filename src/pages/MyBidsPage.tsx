@@ -31,7 +31,12 @@ export function MyBidsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold">My bids</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold">My bids</h1>
+        <ButtonLink to="/wins" variant="secondary">
+          My wins
+        </ButtonLink>
+      </div>
       {bids.data && bids.data.total > 0 && (
         <p className="mt-1 text-sm text-slate-600">
           {bids.data.total.toLocaleString()} {bids.data.total === 1 ? 'bid' : 'bids'} in total, newest first.

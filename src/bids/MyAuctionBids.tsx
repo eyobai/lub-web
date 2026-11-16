@@ -70,8 +70,11 @@ function MyResult({ result, money }: { result: MyAuctionResult; money: (minor: s
       </h2>
       {result.won ? (
         <p className="mt-1 text-sm text-slate-700">
-          Your bid was the lowest amount nobody else chose. We will confirm the result and contact you about
-          your prize.
+          Your bid was the lowest amount nobody else chose. We will confirm the result, then ask you where to
+          deliver your prize.{' '}
+          <Link to="/wins" className="font-semibold text-brand-700 hover:underline">
+            See my wins
+          </Link>
         </p>
       ) : (
         <p className="mt-1 text-sm text-slate-700">

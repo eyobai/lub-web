@@ -248,3 +248,81 @@ export function myResult(
     ...overrides,
   };
 }
+
+export function aDelivery(overrides: Partial<Schemas['DeliveryDto']> = {}): Schemas['DeliveryDto'] {
+  return {
+    status: 'PENDING',
+    recipientName: null,
+    recipientPhone: null,
+    address: null,
+    trackingInfo: null,
+    updatedAt: '2026-01-03T09:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** A win staff have confirmed, waiting for the winner's delivery details. */
+export function aWin(overrides: Partial<Schemas['MyWinDto']> = {}): Schemas['MyWinDto'] {
+  return {
+    id: '77777777-7777-4777-8777-777777777777',
+    auctionId: anAuction().id,
+    auctionTitle: anAuction().title,
+    productName: 'Samsung Galaxy A55',
+    productImageUrl: null,
+    amountMinor: '400',
+    amount: '4.00',
+    currency: 'ETB',
+    verificationStatus: 'VERIFIED',
+    publishedAt: null,
+    canEditDeliveryDetails: true,
+    delivery: aDelivery(),
+    createdAt: '2026-01-02T12:00:00.000Z',
+    ...overrides,
+  };
+}
+
+export function myWins(items: Schemas['MyWinDto'][], total = items.length): Schemas['MyWinPageDto'] {
+  return { items, total, page: 1, limit: 20 };
+}
+
+export function aPublicWinner(
+  overrides: Partial<Schemas['PublicWinnerDto']> = {},
+): Schemas['PublicWinnerDto'] {
+  return {
+    id: nextId(),
+    auctionId: anAuction().id,
+    auctionTitle: anAuction().title,
+    productName: 'Samsung Galaxy A55',
+    productImageUrl: null,
+    amountMinor: '400',
+    amount: '4.00',
+    currency: 'ETB',
+    winnerLabel: '+2519****4567',
+    publishedAt: '2026-01-03T09:00:00.000Z',
+    ...overrides,
+  };
+}
+
+export function aNotification(
+  overrides: Partial<Schemas['NotificationDto']> = {},
+): Schemas['NotificationDto'] {
+  return {
+    id: nextId(),
+    type: 'BID_SUBMITTED',
+    title: 'Bid placed',
+    body: 'Your bid in "Samsung Galaxy A55 auction" was placed. ETB 75 was charged to your wallet.',
+    data: { auctionId: anAuction().id },
+    read: false,
+    readAt: null,
+    createdAt: '2026-01-02T10:00:00.000Z',
+    ...overrides,
+  };
+}
+
+export function notifications(
+  items: Schemas['NotificationDto'][],
+  unread = items.filter((item) => !item.read).length,
+  total = items.length,
+): Schemas['NotificationPageDto'] {
+  return { items, total, unread, page: 1, limit: 20 };
+}

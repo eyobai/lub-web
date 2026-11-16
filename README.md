@@ -16,6 +16,9 @@ Built with React, TypeScript, Vite and Tailwind CSS. Mobile-first: it is meant t
 | Wallet                 | Balance, money on hold, frozen notice, history (newest first, older entries on request)             |
 | Bidding                | One or several amounts per request, a range of amounts, the total fee, a confirmation before paying |
 | My bids and results    | All my bids by auction; on an ended auction, whether I won and how each of my bids did              |
+| My wins                | My wins with their progress (confirmed, details, on its way, delivered), tracking, delivery details |
+| Recent winners         | Public list of published wins; the winner's phone number is masked by the server                    |
+| Notifications          | List (all / unread), unread count in the header, mark one or all as read                            |
 
 Bidding notes:
 
@@ -26,8 +29,14 @@ Bidding notes:
 - A request is all or nothing: if the server refuses one amount, nothing is placed or charged, and the
   page marks the refused amounts.
 
-Not built yet: paying in and withdrawing (the backend has no payment provider yet), my wins and delivery
-details, recent winners, notifications.
+Wins and notifications notes:
+
+- A winner can send delivery details once staff have confirmed the win, and change them until staff
+  confirm the details. After that the form is gone and the page says to contact support.
+- A notification opens the page it is about (my wins, the auction, the wallet, the account) and is marked
+  as read. The unread count is refreshed every minute.
+
+Not built yet: paying in and withdrawing (the backend has no payment provider yet).
 The admin screens will be a separate project.
 
 ## Running it
@@ -112,7 +121,8 @@ Things worth knowing:
 ## Live browser check
 
 `npm run test:live` registers a new user and walks through the site in Chrome: auction list and detail,
-registration, staying signed in, token renewal, a staff password reset with the forced change, and sign out.
+registration, staying signed in, token renewal, a staff password reset with the forced change, sign out,
+the wallet, placing bids, the result, notifications, delivery details for a win, and recent winners.
 It needs the backend, this site (`npm run preview` or `npm run dev`) and the demo data, plus
 `SEED_ADMIN_PHONE` / `SEED_ADMIN_PASSWORD`. It writes screenshots to `test-results/`.
 Local use only: it creates accounts and resets a password.

@@ -8,3 +8,6 @@ export function createQueryClient(): QueryClient {
     },
   });
 }
+
+/** First key of every query that is the same for everyone. All others belong to the signed-in user. */
+export const PUBLIC_QUERIES: readonly unknown[] = ['auctions', 'winners'];

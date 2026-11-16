@@ -68,18 +68,58 @@ process.on('uncaughtException', async (e) => {
   console.log(problems);
   process.exit(1);
 });
+const api = async (method, path, token, body) => {
+  const r = await fetch(API + path, {
+    method,
+    headers: {
+      'content-type': 'application/json',
+      'idempotency-key': randomUUID(),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const t = await r.text();
+  assert.ok(r.ok, `${method} ${path} ${r.status} ${t}`);
+  return t ? JSON.parse(t) : null;
+};
+const admin = (
+  await api('POST', '/auth/login', null, { phoneNumber: SEED_ADMIN_PHONE, password: SEED_ADMIN_PASSWORD })
+).tokens.accessToken;
+// The demo data's upcoming auction opens after five hours; make a new one if it already has.
+let upcoming = (await api('GET', '/auctions?status=SCHEDULED&limit=1')).items[0];
+if (!upcoming) {
+  const laptop = await api('POST', '/admin/products', admin, {
+    name: 'HP Pavilion 15',
+    marketValueMinor: '12000000',
+  });
+  upcoming = await api('POST', '/admin/auctions', admin, {
+    productId: laptop.id,
+    title: 'HP Pavilion 15 laptop',
+    bidFeeMinor: '7500',
+    minBidMinor: '100',
+    maxBidMinor: '100000',
+    bidStepMinor: '100',
+    noUniqueBidPolicy: 'REFUND_BID_FEES',
+    opensAt: new Date(Date.now() + 5 * 3_600_000).toISOString(),
+    closesAt: new Date(Date.now() + 5 * 86_400_000).toISOString(),
+  });
+  await api('POST', `/admin/auctions/${upcoming.id}/schedule`, admin);
+}
+
 // Auction list
 await page.goto(WEB);
 await page.getByRole('link', { name: /Win a Samsung Galaxy A55/ }).waitFor();
 assert.ok((await page.locator('main ul > li').count()) >= 2);
-const first = await page.locator('time').first().textContent();
-await page.waitForTimeout(2100);
-assert.notEqual(await page.locator('time').first().textContent(), first, 'countdown ticks');
+assert.match(await page.locator('time').first().textContent(), /^(\d+d \d\dh \d\dm|\d\d:\d\d:\d\d)$/);
 await shot('1-list-live');
-ok('list: running auctions with a ticking countdown');
+ok('list: running auctions with a countdown');
 
 await page.getByRole('tab', { name: 'Upcoming' }).click();
-await page.getByRole('link', { name: /HP Pavilion 15 laptop/ }).waitFor();
+await page.getByText('Opens in').first().waitFor();
+await page
+  .getByRole('link', { name: new RegExp(upcoming.title) })
+  .first()
+  .waitFor();
 assert.match(await page.locator('main').textContent(), /Opens in/);
 await page.getByRole('tab', { name: 'Ended' }).click();
 await page.getByRole('link', { name: /JBL Flip 6 speaker/ }).click();
@@ -150,23 +190,6 @@ assert.deepEqual(
 ok('expired and refused access tokens are renewed without signing out');
 
 // Staff reset -> forced change
-const api = async (method, path, token, body) => {
-  const r = await fetch(API + path, {
-    method,
-    headers: {
-      'content-type': 'application/json',
-      'idempotency-key': randomUUID(),
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const t = await r.text();
-  assert.ok(r.ok, `${method} ${path} ${r.status} ${t}`);
-  return t ? JSON.parse(t) : null;
-};
-const admin = (
-  await api('POST', '/auth/login', null, { phoneNumber: SEED_ADMIN_PHONE, password: SEED_ADMIN_PASSWORD })
-).tokens.accessToken;
 const userId = (await stored()).user.id;
 const reset = await api('POST', `/admin/users/${userId}/reset-password`, admin, {
   reason: 'Browser test: user forgot the password',
@@ -252,6 +275,10 @@ await page.getByRole('link', { name: 'Wallet', exact: true }).click();
 await page.getByText('Nothing has gone in or out of your wallet yet.').waitFor();
 assert.match(await page.getByRole('region', { name: 'Balance' }).innerText(), /ETB 0/);
 await page.goto(`${WEB}/auctions/${quick.id}`);
+// Under a day the countdown shows seconds, so it must move.
+const left = await page.locator('time').first().textContent();
+await page.waitForTimeout(2100);
+assert.notEqual(await page.locator('time').first().textContent(), left, 'countdown ticks');
 await page.getByLabel('Bid amount (ETB)').fill('3');
 await page.getByRole('button', { name: 'Add', exact: true }).click();
 await page.getByText('Your wallet has ETB 0, which does not cover ETB 75').waitFor();
@@ -309,6 +336,86 @@ assert.match(outcome, /Out of 6 bids\./);
 await page.getByRole('heading', { name: 'You won with ETB 3!' }).scrollIntoViewIfNeeded();
 await view('15-my-result');
 ok('when the auction closes the page shows the win and how each bid did');
+
+// Notifications, my wins and delivery details, recent winners
+const bell = page.getByRole('link', { name: /^Notifications/ });
+await page.getByRole('link', { name: /^Notifications: \d+ unread$/ }).waitFor({ timeout: 45_000 });
+await bell.click();
+await page.getByRole('link', { name: /You won!/ }).waitFor();
+assert.match(await page.locator('main').innerText(), /Bids placed[\s\S]*4 bids/);
+await view('16-notifications');
+const unreadBefore = Number((await bell.getAttribute('aria-label')).match(/\d+/)[0]);
+await page.getByRole('link', { name: /You won!/ }).click();
+await page.waitForURL(`${WEB}/wins`);
+const card = page.getByRole('article', { name: 'Browser test prize' });
+await card.getByText('Being checked').waitFor();
+await page.getByRole('link', { name: `Notifications: ${unreadBefore - 1} unread` }).waitFor();
+assert.equal(await card.getByRole('button').count(), 0, 'no delivery form before the win is confirmed');
+ok('the bell counts unread notifications; opening "You won!" marks it read and leads to my wins');
+
+const win = (await api('GET', `/admin/winners?userId=${userId}`, admin)).items[0];
+await api('POST', `/admin/winners/${win.id}/verify`, admin, { note: 'Browser test' });
+await page.reload();
+await card.getByText('Details needed').waitFor();
+await card.getByRole('button', { name: 'Send delivery details' }).click();
+assert.equal(await page.getByLabel("Recipient's full name").inputValue(), 'Browser Test');
+await page.getByLabel("Recipient's phone number").fill('12345');
+await page.getByRole('button', { name: 'Save delivery details' }).click();
+await page.getByText('Enter a valid phone number, for example 0911 234 567.').waitFor();
+await page.getByText('Enter the city or town.').waitFor();
+await page.getByLabel("Recipient's phone number").fill('0911 234 567');
+await page.getByLabel('City or town').fill('Addis Ababa');
+await page.getByLabel('Sub-city').fill('Bole');
+await page.getByLabel('Woreda').fill('03');
+await page.getByLabel('Landmark').fill('Near Edna Mall');
+await shot('17-delivery-form');
+await page.getByRole('button', { name: 'Save delivery details' }).click();
+await page.getByText('Your delivery details were saved.').waitFor();
+await card.getByText('Arranging delivery').waitFor();
+assert.match(await card.innerText(), /Browser Test[\s\S]*0911234567[\s\S]*Woreda 03, Bole, Addis Ababa/);
+const kept = (await api('GET', `/admin/winners/${win.id}`, admin)).delivery;
+assert.equal(kept.recipientPhone, '0911234567');
+assert.deepEqual(
+  { city: kept.address.city, subCity: kept.address.subCity, landmark: kept.address.landmark },
+  { city: 'Addis Ababa', subCity: 'Bole', landmark: 'Near Edna Mall' },
+);
+await shot('18-my-wins');
+ok('a confirmed winner sends delivery details: checked in the browser, saved by the server, shown back');
+
+await api('PATCH', `/admin/winners/${win.id}/delivery`, admin, { trackingInfo: 'EMS waybill 123456' });
+for (const status of ['CONTACTED', 'VERIFIED', 'DISPATCHED']) {
+  await api('POST', `/admin/winners/${win.id}/delivery/status`, admin, { status });
+}
+await api('POST', `/admin/winners/${win.id}/publish`, admin);
+await page.reload();
+await card.getByText('On its way', { exact: true }).first().waitFor();
+await card.getByText('EMS waybill 123456').waitFor();
+assert.equal(
+  await card.getByRole('button').count(),
+  0,
+  'details cannot be changed once staff confirmed them',
+);
+await shot('19-win-dispatched');
+await bell.click();
+await page
+  .getByRole('link', { name: /Prize delivery update/ })
+  .first()
+  .waitFor();
+await page.getByRole('button', { name: 'Mark all as read' }).click();
+await page.getByText('You have read everything.').waitFor();
+await page.getByRole('link', { name: 'Notifications', exact: true }).waitFor();
+await page.reload();
+await page.getByText('You have read everything.').waitFor();
+ok('delivery progress and tracking appear on my wins; mark all as read clears the bell');
+
+await page.getByRole('link', { name: 'Winners', exact: true }).click();
+await page.getByRole('heading', { name: 'Browser test prize' }).first().waitFor();
+const topWinner = await page.getByRole('listitem').first().innerText();
+assert.match(topWinner, /won with ETB 3/);
+assert.match(topWinner, new RegExp(quick.title));
+assert.ok(!topWinner.includes(phone.slice(1)), "the winner's full phone number is not shown");
+await shot('20-recent-winners');
+ok('a published win appears on recent winners with the phone number masked');
 
 // Unknown auction, and desktop layout
 await page.goto(`${WEB}/auctions/00000000-0000-4000-8000-000000000000`);
