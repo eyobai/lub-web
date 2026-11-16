@@ -58,8 +58,10 @@ export function PayAndBidButton({ auction: a, gold = false }: { auction: Auction
   const fee = formatMinor(a.bidFeeMinor, a.currency, a.minorUnits);
   if (a.status !== 'ACTIVE') return null;
   const look = cx(
-    'flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 font-semibold tracking-wide uppercase shadow-md transition-colors',
-    gold ? 'bg-brand-500 text-ink hover:bg-brand-400' : 'bg-[#2a1f17] text-brand-400 hover:bg-ink',
+    'flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 font-bold tracking-wide text-ink uppercase transition',
+    'bg-gradient-to-b from-brand-400 to-brand-500 hover:from-brand-200 hover:to-brand-400 active:scale-[0.99]',
+    // On a dark panel the button needs no shadow; on a white card it lifts off the page.
+    gold ? 'shadow-none' : 'shadow-[0_6px_16px_-4px_rgb(212_165_42/0.6)] ring-1 ring-brand-600/30',
   );
   const label = (
     <>

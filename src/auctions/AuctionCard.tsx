@@ -91,18 +91,22 @@ function AuctionTiming({ auction }: { auction: Auction }) {
   if (auction.status === 'ACTIVE' || upcoming) {
     const until = upcoming ? auction.opensAt : auction.closesAt;
     return (
-      <div className="flex w-full items-center gap-3 rounded-2xl bg-ink px-4 py-2.5 text-white">
-        <span className="text-brand-400">{CLOCK}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs text-white/60">{upcoming ? 'Opens in' : 'Closes in'}</p>
-          <p className="text-lg leading-tight font-bold text-brand-400">
+      <div className="flex w-full items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-200">
+          {CLOCK}
+        </span>
+        <div className="shrink-0 grow">
+          <p className="text-[0.7rem] font-semibold tracking-wide text-brand-700 uppercase">
+            {upcoming ? 'Opens in' : 'Closes in'}
+          </p>
+          <p className="text-lg leading-tight font-bold whitespace-nowrap text-ink">
             <Countdown until={until} />
           </p>
         </div>
-        <p className="text-right text-xs text-white/60">
+        <p className="min-w-0 shrink border-l border-brand-200 pl-3 text-right text-[0.7rem] leading-snug text-slate-500">
           {upcoming ? 'Opens' : 'Closes'}
           <br />
-          <time dateTime={until} className="font-semibold text-white">
+          <time dateTime={until} className="font-semibold text-slate-800">
             {formatDateTime(until)}
           </time>
         </p>
