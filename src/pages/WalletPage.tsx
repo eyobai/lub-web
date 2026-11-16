@@ -3,6 +3,8 @@ import { Alert, Button, Card, PageLoading } from '../components/ui';
 import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
+import { AddMoney } from '../wallet/AddMoney';
+import { useDepositOptions } from '../wallet/deposits';
 import { useWallet, useWalletTransactions, type WalletTransaction } from '../wallet/queries';
 import { usePageTitle } from '../lib/usePageTitle';
 
@@ -23,6 +25,7 @@ export function WalletPage() {
   usePageTitle('Wallet');
   const wallet = useWallet();
   const transactions = useWalletTransactions();
+  const options = useDepositOptions();
 
   if (wallet.isPending) return <PageLoading label="Loading wallet" />;
   if (wallet.isError) {
@@ -55,12 +58,19 @@ export function WalletPage() {
 
       {w.isFrozen && (
         <Alert tone="warning">
-          Your wallet is frozen. Money can still arrive, but you cannot bid with it. Please contact support.
+          Your wallet is frozen. You cannot bid or add money online. Please contact support.
         </Alert>
       )}
-      <Alert tone="info">
-        Paying in online is not available yet. To add money to your wallet, please contact support.
-      </Alert>
+      {options.data?.enabled && !w.isFrozen && options.data.currency === w.currency ? (
+        <AddMoney options={options.data} />
+      ) : (
+        options.data &&
+        !options.data.enabled && (
+          <Alert tone="info">
+            Paying in online is not available yet. To add money to your wallet, please contact support.
+          </Alert>
+        )
+      )}
 
       <section aria-labelledby="history-heading">
         <h2 id="history-heading" className="text-lg font-semibold">

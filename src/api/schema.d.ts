@@ -446,6 +446,190 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wallet/deposit-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether money can be added online, and the limits
+         * @description Ask this before showing an "add money" form.
+         */
+        get: operations["DepositsController_options"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wallet/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my deposits
+         * @description Newest first.
+         */
+        get: operations["DepositsController_list"];
+        put?: never;
+        /**
+         * Start adding money to my wallet
+         * @description Opens a payment at the provider and answers with `checkoutUrl`: send the user there to pay. No money is added by this call. The wallet is credited once the server has confirmed the payment with the provider; read the deposit again (`GET /wallet/deposits/{id}`) to see when that has happened. The provider sends the user back to the website at `/wallet/deposits/{id}`.
+         */
+        post: operations["DepositsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wallet/deposits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get one of my deposits
+         * @description While the deposit is PENDING the server asks the provider again (at most every few seconds), so this is the call to repeat on the page the user returns to after paying.
+         */
+        get: operations["DepositsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/chapa/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Chapa webhook
+         * @description Set this address as the webhook URL in the Chapa dashboard, with the same secret as CHAPA_WEBHOOK_SECRET. The request must carry a valid `x-chapa-signature` or `chapa-signature`. The event is stored as received, handled once, and the payment it names is verified with Chapa before any wallet is credited.
+         */
+        post: operations["ChapaHooksController_webhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/chapa/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Chapa callback
+         * @description Chapa calls this when a payment finishes, with `trx_ref`, `ref_id` and `status`. Only `trx_ref` is used, and only to verify that payment with Chapa. The answer is the same whether or not the reference is known.
+         */
+        get: operations["ChapaHooksController_callback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List deposits
+         * @description Newest first. `needsReview=true` lists the ones waiting for a person. Roles: SUPPORT, FINANCE, ADMIN.
+         */
+        get: operations["AdminDepositsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/deposits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get one deposit
+         * @description Roles: SUPPORT, FINANCE, ADMIN.
+         */
+        get: operations["AdminDepositsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/deposits/{id}/recheck": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask the provider about a deposit now
+         * @description For a user who paid but whose wallet was not credited. The wallet is credited only if the provider confirms a payment of the right amount; a deposit that already succeeded is returned unchanged. Roles: FINANCE.
+         */
+        post: operations["AdminDepositsController_recheck"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/deposits/{id}/resolve-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record that a flagged deposit has been dealt with
+         * @description Clears `reviewReason` and writes the note to the audit log. It moves no money: correct the wallet with a manual adjustment first if that is needed. Roles: FINANCE.
+         */
+        post: operations["AdminDepositsController_resolveReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/products": {
         parameters: {
             query?: never;
@@ -1736,6 +1920,172 @@ export interface components {
             totals: components["schemas"]["ReconciliationTotalDto"][];
             /** @description Empty when ok is true; at most 100 per kind */
             issues: components["schemas"]["ReconciliationIssueDto"][];
+        };
+        DepositOptionsDto: {
+            /** @description False when no payment provider is configured: starting a deposit is refused. */
+            enabled: boolean;
+            /** @example chapa */
+            provider: string | null;
+            /** @description True when the provider runs in test mode: no real money moves. */
+            testMode: boolean;
+            /** @example ETB */
+            currency: string;
+            /** @example 2 */
+            minorUnits: number;
+            /**
+             * @description Smallest single deposit. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 1000
+             */
+            minAmountMinor: string;
+            /**
+             * @description Largest single deposit. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 5000000
+             */
+            maxAmountMinor: string;
+        };
+        StartDepositDto: {
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 50000
+             */
+            amountMinor: string;
+        };
+        DepositDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description PENDING: waiting for the payer or the provider. SUCCEEDED: the wallet was credited. FAILED, CANCELLED, EXPIRED: no money was added.
+             * @enum {string}
+             */
+            status: "INITIATED" | "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
+            /** @example chapa */
+            provider: string;
+            /**
+             * @description Our reference for this payment, shown to the payer.
+             * @example LUB-7K2M9Q4T8X1B3N5P6R0V
+             */
+            reference: string;
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 50000
+             */
+            amountMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 500.00
+             */
+            amount: string;
+            /** @example ETB */
+            currency: string;
+            /** @example 2 */
+            minorUnits: number;
+            /** @description Provider page where the payer completes the payment. Only present while the deposit is PENDING. */
+            checkoutUrl: string | null;
+            /** @description Why no money was added, when the deposit did not succeed. */
+            failureReason: string | null;
+            /**
+             * Format: uuid
+             * @description The wallet transaction that credited the money, once SUCCEEDED.
+             */
+            walletTransactionId: string | null;
+            /**
+             * Format: date-time
+             * @description When the payment was confirmed.
+             */
+            confirmedAt: string | null;
+            /**
+             * Format: date-time
+             * @description After this time an unpaid deposit is given up on.
+             */
+            expiresAt: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        DepositPageDto: {
+            items: components["schemas"]["DepositDto"][];
+            total: number;
+            page: number;
+            limit: number;
+        };
+        WebhookAckDto: {
+            /** @example true */
+            received: boolean;
+        };
+        AdminDepositDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description PENDING: waiting for the payer or the provider. SUCCEEDED: the wallet was credited. FAILED, CANCELLED, EXPIRED: no money was added.
+             * @enum {string}
+             */
+            status: "INITIATED" | "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
+            /** @example chapa */
+            provider: string;
+            /**
+             * @description Our reference for this payment, shown to the payer.
+             * @example LUB-7K2M9Q4T8X1B3N5P6R0V
+             */
+            reference: string;
+            /**
+             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 50000
+             */
+            amountMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 500.00
+             */
+            amount: string;
+            /** @example ETB */
+            currency: string;
+            /** @example 2 */
+            minorUnits: number;
+            /** @description Provider page where the payer completes the payment. Only present while the deposit is PENDING. */
+            checkoutUrl: string | null;
+            /** @description Why no money was added, when the deposit did not succeed. */
+            failureReason: string | null;
+            /**
+             * Format: uuid
+             * @description The wallet transaction that credited the money, once SUCCEEDED.
+             */
+            walletTransactionId: string | null;
+            /**
+             * Format: date-time
+             * @description When the payment was confirmed.
+             */
+            confirmedAt: string | null;
+            /**
+             * Format: date-time
+             * @description After this time an unpaid deposit is given up on.
+             */
+            expiresAt: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            userId: string;
+            /** @example +251911223344 */
+            phoneNumber: string;
+            /** @description The provider's own reference, known once it confirms. */
+            providerReference: string | null;
+            /** @description Set when a person must look at this payment: the provider reported something that does not match, or a refund or reversal after the wallet was credited. No money is moved automatically in these cases. */
+            reviewReason: string | null;
+            /** Format: date-time */
+            lastCheckedAt: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AdminDepositPageDto: {
+            items: components["schemas"]["AdminDepositDto"][];
+            total: number;
+            page: number;
+            limit: number;
+        };
+        ResolveReviewDto: {
+            /**
+             * @description What was found and done. Stored in the audit log.
+             * @example Refund confirmed with Chapa; wallet debited by adjustment WTX-…
+             */
+            note: string;
         };
         ProductImageDto: {
             /** Format: uuid */
@@ -4233,6 +4583,538 @@ export interface operations {
             };
             /** @description FORBIDDEN — the signed-in user lacks the required role */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DepositsController_options: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositOptionsDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DepositsController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositPageDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DepositsController_start: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key for this deposit (e.g. a UUID). Retrying with the same key returns the same deposit with the response header `Idempotent-Replayed: true` instead of opening a second payment. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartDepositDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED, IDEMPOTENCY_KEY_REQUIRED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — staff accounts cannot add money; WALLET_FROZEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description DEPOSIT_AMOUNT_INVALID — outside the limits (details carry them); IDEMPOTENCY_KEY_REUSED */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description DEPOSIT_LIMIT_REACHED — too many deposits are waiting for payment */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description PAYMENT_PROVIDER_ERROR — the provider could not open the payment; nothing was taken */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description PAYMENTS_UNAVAILABLE — no payment provider is configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DepositsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — malformed id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such deposit of mine */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ChapaHooksController_webhook: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description HMAC-SHA256 of the secret with the secret */
+                "chapa-signature"?: string;
+                /** @description HMAC-SHA256 of the body with the secret */
+                "x-chapa-signature"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookAckDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — the body is not a JSON object */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description WEBHOOK_SIGNATURE_INVALID */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description SERVICE_BUSY — Chapa could not be asked; it will send the event again */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ChapaHooksController_callback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookAckDto"];
+                };
+            };
+        };
+    };
+    AdminDepositsController_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                status?: "INITIATED" | "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
+                userId?: string;
+                /** @description true: only deposits waiting for a person to review them. */
+                needsReview?: boolean;
+                /** @description Our reference (LUB-…) or the provider reference, exact match. */
+                reference?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDepositPageDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — a malformed id, query parameter or body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminDepositsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDepositDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — a malformed id, query parameter or body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such deposit */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminDepositsController_recheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDepositDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — a malformed id, query parameter or body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such deposit */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description PAYMENT_PROVIDER_ERROR — the provider could not be asked */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description PAYMENTS_UNAVAILABLE — no payment provider is configured */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminDepositsController_resolveReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveReviewDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDepositDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — a malformed id, query parameter or body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such deposit */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description CONFLICT — the deposit is not waiting for review */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -8,6 +8,7 @@ import { AccountPage } from './pages/AccountPage';
 import { AuctionDetailPage } from './pages/AuctionDetailPage';
 import { AuctionListPage } from './pages/AuctionListPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
+import { DepositPage } from './pages/DepositPage';
 import { MyBidsPage } from './pages/MyBidsPage';
 import { MyWinsPage } from './pages/MyWinsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -38,6 +39,7 @@ export function App({ queryClient }: { queryClient?: QueryClient }) {
             </Route>
             <Route element={<RequireAuth />}>
               <Route path="wallet" element={<WalletPage />} />
+              <Route path="wallet/deposits/:id" element={<DepositPage />} />
               <Route path="bids" element={<MyBidsPage />} />
               <Route path="wins" element={<MyWinsPage />} />
               <Route path="notifications" element={<NotificationsPage />} />

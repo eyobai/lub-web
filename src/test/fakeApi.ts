@@ -177,6 +177,43 @@ export function aTransaction(
   };
 }
 
+export function depositOptions(
+  overrides: Partial<Schemas['DepositOptionsDto']> = {},
+): Schemas['DepositOptionsDto'] {
+  return {
+    enabled: true,
+    provider: 'chapa',
+    testMode: false,
+    currency: 'ETB',
+    minorUnits: 2,
+    minAmountMinor: '1000',
+    maxAmountMinor: '5000000',
+    ...overrides,
+  };
+}
+
+/** A deposit of ETB 500 that is waiting for the payer. */
+export function aDeposit(overrides: Partial<Schemas['DepositDto']> = {}): Schemas['DepositDto'] {
+  const amountMinor = overrides.amountMinor ?? '50000';
+  return {
+    id: '77777777-7777-4777-8777-777777777777',
+    status: 'PENDING',
+    provider: 'chapa',
+    reference: 'LUB-ABCDEFGHJKMNPQRSTVWX',
+    amount: major(amountMinor),
+    currency: 'ETB',
+    minorUnits: 2,
+    checkoutUrl: 'https://checkout.chapa.co/checkout/payment/abc123',
+    failureReason: null,
+    walletTransactionId: null,
+    confirmedAt: null,
+    expiresAt: '2026-01-02T12:00:00.000Z',
+    createdAt: '2026-01-02T10:00:00.000Z',
+    ...overrides,
+    amountMinor,
+  };
+}
+
 export function aMyBid(
   amountMinor: string,
   overrides: Partial<Schemas['MyBidDto']> = {},

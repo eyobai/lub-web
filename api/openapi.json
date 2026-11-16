@@ -1618,6 +1618,786 @@
         ]
       }
     },
+    "/api/v1/wallet/deposit-options": {
+      "get": {
+        "description": "Ask this before showing an \"add money\" form.",
+        "operationId": "DepositsController_options",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositOptionsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Whether money can be added online, and the limits",
+        "tags": [
+          "Wallet"
+        ]
+      }
+    },
+    "/api/v1/wallet/deposits": {
+      "post": {
+        "description": "Opens a payment at the provider and answers with `checkoutUrl`: send the user there to pay. No money is added by this call. The wallet is credited once the server has confirmed the payment with the provider; read the deposit again (`GET /wallet/deposits/{id}`) to see when that has happened. The provider sends the user back to the website at `/wallet/deposits/{id}`.",
+        "operationId": "DepositsController_start",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Unique key for this deposit (e.g. a UUID). Retrying with the same key returns the same deposit with the response header `Idempotent-Replayed: true` instead of opening a second payment.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDepositDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED, IDEMPOTENCY_KEY_REQUIRED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — staff accounts cannot add money; WALLET_FROZEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "DEPOSIT_AMOUNT_INVALID — outside the limits (details carry them); IDEMPOTENCY_KEY_REUSED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "DEPOSIT_LIMIT_REACHED — too many deposits are waiting for payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PAYMENT_PROVIDER_ERROR — the provider could not open the payment; nothing was taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PAYMENTS_UNAVAILABLE — no payment provider is configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start adding money to my wallet",
+        "tags": [
+          "Wallet"
+        ]
+      },
+      "get": {
+        "description": "Newest first.",
+        "operationId": "DepositsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my deposits",
+        "tags": [
+          "Wallet"
+        ]
+      }
+    },
+    "/api/v1/wallet/deposits/{id}": {
+      "get": {
+        "description": "While the deposit is PENDING the server asks the provider again (at most every few seconds), so this is the call to repeat on the page the user returns to after paying.",
+        "operationId": "DepositsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — malformed id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such deposit of mine",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one of my deposits",
+        "tags": [
+          "Wallet"
+        ]
+      }
+    },
+    "/api/v1/payments/chapa/webhook": {
+      "post": {
+        "description": "Set this address as the webhook URL in the Chapa dashboard, with the same secret as CHAPA_WEBHOOK_SECRET. The request must carry a valid `x-chapa-signature` or `chapa-signature`. The event is stored as received, handled once, and the payment it names is verified with Chapa before any wallet is credited.",
+        "operationId": "ChapaHooksController_webhook",
+        "parameters": [
+          {
+            "name": "chapa-signature",
+            "in": "header",
+            "description": "HMAC-SHA256 of the secret with the secret",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-chapa-signature",
+            "in": "header",
+            "description": "HMAC-SHA256 of the body with the secret",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAckDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — the body is not a JSON object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "WEBHOOK_SIGNATURE_INVALID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_BUSY — Chapa could not be asked; it will send the event again",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Chapa webhook",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/api/v1/payments/chapa/callback": {
+      "get": {
+        "description": "Chapa calls this when a payment finishes, with `trx_ref`, `ref_id` and `status`. Only `trx_ref` is used, and only to verify that payment with Chapa. The answer is the same whether or not the reference is known.",
+        "operationId": "ChapaHooksController_callback",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAckDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Chapa callback",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/api/v1/admin/deposits": {
+      "get": {
+        "description": "Newest first. `needsReview=true` lists the ones waiting for a person. Roles: SUPPORT, FINANCE, ADMIN.",
+        "operationId": "AdminDepositsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INITIATED",
+                "PENDING",
+                "SUCCEEDED",
+                "FAILED",
+                "CANCELLED",
+                "EXPIRED"
+              ]
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "needsReview",
+            "required": false,
+            "in": "query",
+            "description": "true: only deposits waiting for a person to review them.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "reference",
+            "required": false,
+            "in": "query",
+            "description": "Our reference (LUB-…) or the provider reference, exact match.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDepositPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — a malformed id, query parameter or body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List deposits",
+        "tags": [
+          "Admin: Payments"
+        ]
+      }
+    },
+    "/api/v1/admin/deposits/{id}": {
+      "get": {
+        "description": "Roles: SUPPORT, FINANCE, ADMIN.",
+        "operationId": "AdminDepositsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDepositDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — a malformed id, query parameter or body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such deposit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get one deposit",
+        "tags": [
+          "Admin: Payments"
+        ]
+      }
+    },
+    "/api/v1/admin/deposits/{id}/recheck": {
+      "post": {
+        "description": "For a user who paid but whose wallet was not credited. The wallet is credited only if the provider confirms a payment of the right amount; a deposit that already succeeded is returned unchanged. Roles: FINANCE.",
+        "operationId": "AdminDepositsController_recheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDepositDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — a malformed id, query parameter or body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such deposit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PAYMENT_PROVIDER_ERROR — the provider could not be asked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PAYMENTS_UNAVAILABLE — no payment provider is configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask the provider about a deposit now",
+        "tags": [
+          "Admin: Payments"
+        ]
+      }
+    },
+    "/api/v1/admin/deposits/{id}/resolve-review": {
+      "post": {
+        "description": "Clears `reviewReason` and writes the note to the audit log. It moves no money: correct the wallet with a manual adjustment first if that is needed. Roles: FINANCE.",
+        "operationId": "AdminDepositsController_resolveReview",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDepositDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — a malformed id, query parameter or body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such deposit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONFLICT — the deposit is not waiting for review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record that a flagged deposit has been dealt with",
+        "tags": [
+          "Admin: Payments"
+        ]
+      }
+    },
     "/api/v1/admin/products": {
       "get": {
         "description": "Roles: SUPPORT, FINANCE, ADMIN. Newest first.",
@@ -5956,7 +6736,11 @@
     },
     {
       "name": "Wallet",
-      "description": "Balance and transaction history of the signed-in user"
+      "description": "Balance, transaction history and deposits of the signed-in user"
+    },
+    {
+      "name": "Payments",
+      "description": "Addresses the payment provider calls; not for client applications"
     },
     {
       "name": "Auctions",
@@ -6001,6 +6785,10 @@
     {
       "name": "Admin: Wallets",
       "description": "Back-office wallet views, manual adjustments, freezing and ledger reconciliation"
+    },
+    {
+      "name": "Admin: Payments",
+      "description": "Back-office view of deposits, re-checking one with the provider, and review flags"
     },
     {
       "name": "Health",
@@ -6757,6 +7545,366 @@
           "entries",
           "totals",
           "issues"
+        ]
+      },
+      "DepositOptionsDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "False when no payment provider is configured: starting a deposit is refused."
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "example": "chapa"
+          },
+          "testMode": {
+            "type": "boolean",
+            "description": "True when the provider runs in test mode: no real money moves."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ETB"
+          },
+          "minorUnits": {
+            "type": "number",
+            "example": 2
+          },
+          "minAmountMinor": {
+            "type": "string",
+            "example": "1000",
+            "description": "Smallest single deposit. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "maxAmountMinor": {
+            "type": "string",
+            "example": "5000000",
+            "description": "Largest single deposit. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          }
+        },
+        "required": [
+          "enabled",
+          "provider",
+          "testMode",
+          "currency",
+          "minorUnits",
+          "minAmountMinor",
+          "maxAmountMinor"
+        ]
+      },
+      "StartDepositDto": {
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "type": "string",
+            "example": "50000",
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          }
+        },
+        "required": [
+          "amountMinor"
+        ]
+      },
+      "DepositDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "INITIATED",
+              "PENDING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "description": "PENDING: waiting for the payer or the provider. SUCCEEDED: the wallet was credited. FAILED, CANCELLED, EXPIRED: no money was added."
+          },
+          "provider": {
+            "type": "string",
+            "example": "chapa"
+          },
+          "reference": {
+            "type": "string",
+            "example": "LUB-7K2M9Q4T8X1B3N5P6R0V",
+            "description": "Our reference for this payment, shown to the payer."
+          },
+          "amountMinor": {
+            "type": "string",
+            "example": "50000",
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "amount": {
+            "type": "string",
+            "example": "500.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ETB"
+          },
+          "minorUnits": {
+            "type": "number",
+            "example": 2
+          },
+          "checkoutUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider page where the payer completes the payment. Only present while the deposit is PENDING."
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why no money was added, when the deposit did not succeed."
+          },
+          "walletTransactionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The wallet transaction that credited the money, once SUCCEEDED."
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment was confirmed."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "After this time an unpaid deposit is given up on."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "provider",
+          "reference",
+          "amountMinor",
+          "amount",
+          "currency",
+          "minorUnits",
+          "checkoutUrl",
+          "failureReason",
+          "walletTransactionId",
+          "confirmedAt",
+          "expiresAt",
+          "createdAt"
+        ]
+      },
+      "DepositPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepositDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "WebhookAckDto": {
+        "type": "object",
+        "properties": {
+          "received": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "received"
+        ]
+      },
+      "AdminDepositDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "INITIATED",
+              "PENDING",
+              "SUCCEEDED",
+              "FAILED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "description": "PENDING: waiting for the payer or the provider. SUCCEEDED: the wallet was credited. FAILED, CANCELLED, EXPIRED: no money was added."
+          },
+          "provider": {
+            "type": "string",
+            "example": "chapa"
+          },
+          "reference": {
+            "type": "string",
+            "example": "LUB-7K2M9Q4T8X1B3N5P6R0V",
+            "description": "Our reference for this payment, shown to the payer."
+          },
+          "amountMinor": {
+            "type": "string",
+            "example": "50000",
+            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "amount": {
+            "type": "string",
+            "example": "500.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ETB"
+          },
+          "minorUnits": {
+            "type": "number",
+            "example": 2
+          },
+          "checkoutUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provider page where the payer completes the payment. Only present while the deposit is PENDING."
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why no money was added, when the deposit did not succeed."
+          },
+          "walletTransactionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "The wallet transaction that credited the money, once SUCCEEDED."
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment was confirmed."
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "After this time an unpaid deposit is given up on."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "+251911223344"
+          },
+          "providerReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "The provider's own reference, known once it confirms."
+          },
+          "reviewReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set when a person must look at this payment: the provider reported something that does not match, or a refund or reversal after the wallet was credited. No money is moved automatically in these cases."
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "provider",
+          "reference",
+          "amountMinor",
+          "amount",
+          "currency",
+          "minorUnits",
+          "checkoutUrl",
+          "failureReason",
+          "walletTransactionId",
+          "confirmedAt",
+          "expiresAt",
+          "createdAt",
+          "userId",
+          "phoneNumber",
+          "providerReference",
+          "reviewReason",
+          "lastCheckedAt",
+          "updatedAt"
+        ]
+      },
+      "AdminDepositPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminDepositDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ResolveReviewDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Refund confirmed with Chapa; wallet debited by adjustment WTX-…",
+            "minLength": 5,
+            "maxLength": 500,
+            "description": "What was found and done. Stored in the audit log."
+          }
+        },
+        "required": [
+          "note"
         ]
       },
       "ProductImageDto": {
