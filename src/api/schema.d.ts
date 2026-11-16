@@ -1942,6 +1942,16 @@ export interface components {
              * @example 5000000
              */
             maxAmountMinor: string;
+            /**
+             * @description Mobile wallets that can be charged without leaving the site (`charge.method` when starting a deposit). Empty: only Chapa's checkout page.
+             * @example [
+             *       "telebirr",
+             *       "mpesa",
+             *       "cbebirr",
+             *       "ebirr"
+             *     ]
+             */
+            directChargeMethods: string[];
         };
         BidToPayDto: {
             /**
@@ -1960,6 +1970,18 @@ export interface components {
              */
             auctionId: string;
         };
+        ChargeDto: {
+            /**
+             * @description One of `directChargeMethods` from the deposit options.
+             * @example telebirr
+             */
+            method: string;
+            /**
+             * @description The wallet's phone number (0911…, +251911…). Defaults to the account's own number.
+             * @example 0911223344
+             */
+            phoneNumber?: string;
+        };
         StartDepositDto: {
             /**
              * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision. With `bid`, it must equal the bid fee times the number of amounts.
@@ -1968,6 +1990,8 @@ export interface components {
             amountMinor: string;
             /** @description Pay and bid: this payment is for these bids. They are checked before the payment opens; once it is confirmed the money goes into the wallet and the bids are placed from it. If they are refused by then (the auction closed, for example) the money stays in the wallet. The smallest-deposit limit does not apply. */
             bid?: components["schemas"]["BidToPayDto"];
+            /** @description Pay without leaving the site: instead of opening Chapa's checkout page (`checkoutUrl`), the wallet sends the payer a request to approve on their phone. Read the deposit again until it is SUCCEEDED or closed. */
+            charge?: components["schemas"]["ChargeDto"];
         };
         PaidBidDto: {
             /** Format: uuid */
@@ -2032,6 +2056,11 @@ export interface components {
             minorUnits: number;
             /** @description Provider page where the payer completes the payment. Only present while the deposit is PENDING. */
             checkoutUrl: string | null;
+            /**
+             * @description Direct charge: the wallet asked to send a request to the payer's phone. Null for a checkout-page payment.
+             * @example telebirr
+             */
+            chargeMethod: string | null;
             /** @description Why no money was added, when the deposit did not succeed. */
             failureReason: string | null;
             /**
@@ -2095,6 +2124,11 @@ export interface components {
             minorUnits: number;
             /** @description Provider page where the payer completes the payment. Only present while the deposit is PENDING. */
             checkoutUrl: string | null;
+            /**
+             * @description Direct charge: the wallet asked to send a request to the payer's phone. Null for a checkout-page payment.
+             * @example telebirr
+             */
+            chargeMethod: string | null;
             /** @description Why no money was added, when the deposit did not succeed. */
             failureReason: string | null;
             /**
@@ -4793,7 +4827,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description PAYMENT_PROVIDER_ERROR — the provider could not open the payment; nothing was taken */
+            /** @description PAYMENT_PROVIDER_ERROR — the provider could not open the payment, or (with `charge`, details.directCharge) could not send the request to that phone; nothing was taken */
             502: {
                 headers: {
                     [name: string]: unknown;

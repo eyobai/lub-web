@@ -76,16 +76,31 @@ describe('pay and bid', () => {
     expect(fake.callsTo(START)).toHaveLength(0);
   });
 
-  it('opens a Chapa payment for exactly the fees when the wallet is short, and goes to it', async () => {
+  it('sends the payment request to the phone and waits on this page until the bids are placed', async () => {
+    let reads = 0;
+    const charged = aDeposit({ amountMinor: '15000', checkoutUrl: null, chargeMethod: 'telebirr' });
+    const bid = { auctionId: ID, amountsMinor: ['400', '700'], amounts: ['4.00', '7.00'], error: null };
     const fake = signedIn({
       [WALLET]: [200, aWallet({ availableMinor: '1000', available: '10.00' })],
-      [START]: [201, DEPOSIT],
+      [START]: [201, charged],
+      // Pending at first, then the payer approves on the phone.
+      [ONE]: () =>
+        ++reads < 2
+          ? [200, { ...charged, bid: { ...bid, state: 'WAITING', submissionId: null } }]
+          : [200, { ...charged, status: 'SUCCEEDED', bid: { ...bid, state: 'PLACED', submissionId: 's' } }],
     });
     const { user } = renderApp('/');
     const sheet = await openSheet(user);
 
     expect(within(sheet).getByRole('radio', { name: /Wallet/ })).toBeDisabled();
-    expect(within(sheet).getByRole('radio', { name: /Chapa/ })).toBeChecked();
+    expect(within(sheet).getByRole('radio', { name: /telebirr/ })).toBeChecked();
+    expect(within(sheet).getByRole('radio', { name: /M-Pesa/ })).toBeInTheDocument();
+    // The account's own number, ready to change.
+    const phone = within(sheet).getByLabelText('telebirr phone number');
+    expect(phone).toHaveValue('0911234567');
+    await user.clear(phone);
+    await user.type(phone, '+251 922 334455');
+
     await user.click(within(sheet).getByRole('switch', { name: 'Bid on several amounts' }));
     for (const amount of ['4', '7']) {
       await user.type(within(sheet).getByLabelText('Add an amount'), amount);
@@ -93,13 +108,66 @@ describe('pay and bid', () => {
     }
     await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 150 & bid' }));
 
-    await vi.waitFor(() => expect(leaveTo).toHaveBeenCalledWith(DEPOSIT.checkoutUrl));
+    expect(await within(sheet).findByText('Approve the payment on your phone')).toBeInTheDocument();
     expect(fake.callsTo(START)[0].body).toEqual({
       amountMinor: '15000',
       bid: { auctionId: ID, amountsMinor: ['400', '700'] },
+      charge: { method: 'telebirr', phoneNumber: '0922334455' },
     });
-    expect(fake.callsTo(START)[0].idempotencyKey).toBeTruthy();
+    expect(await within(sheet).findByText('2 bids placed', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(
+      within(sheet).getByText('You paid ETB 150 with telebirr and bid ETB 4, ETB 7. Good luck!'),
+    ).toBeInTheDocument();
+    expect(leaveTo).not.toHaveBeenCalled();
     expect(fake.callsTo(PLACE)).toHaveLength(0);
+  }, 10_000);
+
+  it('asks for a phone number that can be charged', async () => {
+    const fake = signedIn({ [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00' })] });
+    const { user } = renderApp('/');
+    const sheet = await openSheet(user);
+    await user.click(within(sheet).getByRole('radio', { name: /M-Pesa/ }));
+    await user.type(within(sheet).getByLabelText('Your bid amount'), '4');
+    await user.clear(within(sheet).getByLabelText('M-Pesa phone number'));
+    await user.type(within(sheet).getByLabelText('M-Pesa phone number'), '0111');
+    await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' }));
+    expect(within(sheet).getByText('Enter your M-Pesa number, such as 0911223344.')).toBeInTheDocument();
+    expect(fake.callsTo(START)).toHaveLength(0);
+  });
+
+  it('says when the phone declined, and lets the payer try again', async () => {
+    const charged = aDeposit({ amountMinor: '7500', checkoutUrl: null, chargeMethod: 'telebirr' });
+    signedIn({
+      [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00' })],
+      [START]: [201, charged],
+      [ONE]: [200, { ...charged, status: 'FAILED' }],
+    });
+    const { user } = renderApp('/');
+    const sheet = await openSheet(user);
+    await user.type(within(sheet).getByLabelText('Your bid amount'), '4');
+    await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' }));
+
+    expect(await within(sheet).findByText('Payment not completed')).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('button', { name: 'Try again' }));
+    expect(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' })).toBeInTheDocument();
+  });
+
+  it("falls back to Chapa's page only when no mobile wallet can be charged here", async () => {
+    const fake = signedIn({
+      [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00' })],
+      [OPTIONS]: [200, depositOptions({ directChargeMethods: [] })],
+      [START]: [201, DEPOSIT],
+    });
+    const { user } = renderApp('/');
+    const sheet = await openSheet(user);
+    expect(within(sheet).getByRole('radio', { name: /Chapa/ })).toBeChecked();
+    await user.type(within(sheet).getByLabelText('Your bid amount'), '4');
+    await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' }));
+    await vi.waitFor(() => expect(leaveTo).toHaveBeenCalledWith(DEPOSIT.checkoutUrl));
+    expect(fake.callsTo(START)[0].body).toEqual({
+      amountMinor: '7500',
+      bid: { auctionId: ID, amountsMinor: ['400'] },
+    });
   });
 
   it('checks the amount before paying, and explains a refusal without server wording', async () => {

@@ -188,6 +188,7 @@ export function depositOptions(
     minorUnits: 2,
     minAmountMinor: '1000',
     maxAmountMinor: '5000000',
+    directChargeMethods: ['telebirr', 'mpesa', 'cbebirr', 'ebirr'],
     ...overrides,
   };
 }
@@ -204,6 +205,7 @@ export function aDeposit(overrides: Partial<Schemas['DepositDto']> = {}): Schema
     currency: 'ETB',
     minorUnits: 2,
     checkoutUrl: 'https://checkout.chapa.co/checkout/payment/abc123',
+    chargeMethod: null,
     failureReason: null,
     walletTransactionId: null,
     confirmedAt: null,

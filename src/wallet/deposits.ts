@@ -110,14 +110,23 @@ export function useStartBidPayment(auctionId: string) {
   const attempt = useRef<{ key: string; request: string } | null>(null);
 
   return useMutation({
-    mutationFn: async ({ amountMinor, amountsMinor }: { amountMinor: string; amountsMinor: string[] }) => {
-      const request = `${amountMinor}|${amountsMinor.join(',')}`;
+    mutationFn: async ({
+      amountMinor,
+      amountsMinor,
+      charge,
+    }: {
+      amountMinor: string;
+      amountsMinor: string[];
+      /** Pay on the phone without leaving the site; without it Chapa's checkout page is used. */
+      charge?: { method: string; phoneNumber: string };
+    }) => {
+      const request = `${amountMinor}|${amountsMinor.join(',')}|${charge?.method ?? ''}|${charge?.phoneNumber ?? ''}`;
       if (attempt.current?.request !== request) attempt.current = { key: newIdempotencyKey(), request };
       try {
         const deposit = await unwrap(
           api.POST('/api/v1/wallet/deposits', {
             params: { header: { 'Idempotency-Key': attempt.current.key } },
-            body: { amountMinor, bid: { auctionId, amountsMinor } },
+            body: { amountMinor, bid: { auctionId, amountsMinor }, charge },
           }),
         );
         attempt.current = null;
@@ -229,4 +238,21 @@ export function depositErrorMessage(error: unknown, options: DepositOptions): st
     default:
       return 'The payment could not be started. No money was taken. Please try again.';
   }
+}
+
+/** How each mobile wallet is named to people. Chapa's own key is shown for one not listed here. */
+const WALLET_NAMES: Record<string, string> = {
+  telebirr: 'telebirr',
+  mpesa: 'M-Pesa',
+  cbebirr: 'CBE Birr',
+  ebirr: 'e-Birr',
+  enat_bank: 'Enat Bank',
+};
+
+export const walletName = (method: string): string => WALLET_NAMES[method] ?? method;
+
+/** A wallet number as typed (0911…, 911…, +251911…), in the 09/07 form; null if it is not a mobile number. */
+export function walletPhone(input: string): string | null {
+  const match = /^(?:\+?251|0)?([79]\d{8})$/.exec(input.replace(/[\s-]/g, ''));
+  return match ? `0${match[1]}` : null;
 }

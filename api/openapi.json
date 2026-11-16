@@ -1753,7 +1753,7 @@
             }
           },
           "502": {
-            "description": "PAYMENT_PROVIDER_ERROR — the provider could not open the payment; nothing was taken",
+            "description": "PAYMENT_PROVIDER_ERROR — the provider could not open the payment, or (with `charge`, details.directCharge) could not send the request to that phone; nothing was taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -7590,6 +7590,19 @@
             "type": "string",
             "example": "5000000",
             "description": "Largest single deposit. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "directChargeMethods": {
+            "example": [
+              "telebirr",
+              "mpesa",
+              "cbebirr",
+              "ebirr"
+            ],
+            "description": "Mobile wallets that can be charged without leaving the site (`charge.method` when starting a deposit). Empty: only Chapa's checkout page.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -7599,7 +7612,8 @@
           "currency",
           "minorUnits",
           "minAmountMinor",
-          "maxAmountMinor"
+          "maxAmountMinor",
+          "directChargeMethods"
         ]
       },
       "BidToPayDto": {
@@ -7631,6 +7645,24 @@
           "auctionId"
         ]
       },
+      "ChargeDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "example": "telebirr",
+            "description": "One of `directChargeMethods` from the deposit options."
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "0911223344",
+            "description": "The wallet's phone number (0911…, +251911…). Defaults to the account's own number."
+          }
+        },
+        "required": [
+          "method"
+        ]
+      },
       "StartDepositDto": {
         "type": "object",
         "properties": {
@@ -7644,6 +7676,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/BidToPayDto"
+              }
+            ]
+          },
+          "charge": {
+            "description": "Pay without leaving the site: instead of opening Chapa's checkout page (`checkoutUrl`), the wallet sends the payer a request to approve on their phone. Read the deposit again until it is SUCCEEDED or closed.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargeDto"
               }
             ]
           }
@@ -7762,6 +7802,12 @@
             "nullable": true,
             "description": "Provider page where the payer completes the payment. Only present while the deposit is PENDING."
           },
+          "chargeMethod": {
+            "type": "string",
+            "nullable": true,
+            "example": "telebirr",
+            "description": "Direct charge: the wallet asked to send a request to the payer's phone. Null for a checkout-page payment."
+          },
           "failureReason": {
             "type": "string",
             "nullable": true,
@@ -7809,6 +7855,7 @@
           "currency",
           "minorUnits",
           "checkoutUrl",
+          "chargeMethod",
           "failureReason",
           "walletTransactionId",
           "confirmedAt",
@@ -7906,6 +7953,12 @@
             "nullable": true,
             "description": "Provider page where the payer completes the payment. Only present while the deposit is PENDING."
           },
+          "chargeMethod": {
+            "type": "string",
+            "nullable": true,
+            "example": "telebirr",
+            "description": "Direct charge: the wallet asked to send a request to the payer's phone. Null for a checkout-page payment."
+          },
           "failureReason": {
             "type": "string",
             "nullable": true,
@@ -7980,6 +8033,7 @@
           "currency",
           "minorUnits",
           "checkoutUrl",
+          "chargeMethod",
           "failureReason",
           "walletTransactionId",
           "confirmedAt",

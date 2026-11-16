@@ -10,13 +10,23 @@ import { Alert, Spinner } from '../components/ui';
 import { cx } from '../lib/cx';
 import { leaveTo } from '../lib/leave';
 import { formatMinor } from '../lib/money';
-import { checkoutAddress, useDepositOptions, useStartBidPayment } from '../wallet/deposits';
+import {
+  bidsPending,
+  checkoutAddress,
+  isWaiting,
+  useDeposit,
+  useDepositOptions,
+  useStartBidPayment,
+  walletName,
+  walletPhone,
+} from '../wallet/deposits';
 import { useWallet } from '../wallet/queries';
 import { parseBidAmount, sortAmounts, type AmountProblem } from './amounts';
 import { bidErrorMessage, refusedAmounts } from './errors';
 import { usePlaceBids, type BidSubmission } from './queries';
 
-type Method = 'wallet' | 'chapa';
+/** 'wallet', 'checkout' (Chapa's own page, only when no mobile wallet can be charged here), or a mobile wallet. */
+type Method = string;
 
 const TICKET =
   'M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1zm10-4v2m0 4v2m0 4v2';
@@ -92,6 +102,10 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
   const [placed, setPlaced] = useState<BidSubmission | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [moreText, setMoreText] = useState(false);
+  const [phone, setPhone] = useState(() => walletPhone(user?.phoneNumber ?? '') ?? '');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  /** A payment sent to the phone, which the sheet now waits on. */
+  const [charged, setCharged] = useState<{ id: string; method: string; phone: string } | null>(null);
 
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
@@ -141,16 +155,14 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
     wallet.data && wallet.data.currency === a.currency ? BigInt(wallet.data.availableMinor) : null;
   const walletUsable = balance !== null && !wallet.data?.isFrozen && balance >= total;
   const chapaUsable = options.data?.enabled === true && options.data.currency === a.currency;
-  const method: Method | null =
-    chosen === 'wallet' && walletUsable
-      ? 'wallet'
-      : chosen === 'chapa' && chapaUsable
-        ? 'chapa'
-        : walletUsable
-          ? 'wallet'
-          : chapaUsable
-            ? 'chapa'
-            : null;
+  const mobileWallets = chapaUsable ? (options.data?.directChargeMethods ?? []) : [];
+  const usable: Method[] = [
+    ...(walletUsable ? ['wallet'] : []),
+    ...mobileWallets,
+    ...(chapaUsable && mobileWallets.length === 0 ? ['checkout'] : []),
+  ];
+  const method: Method | null = chosen && usable.includes(chosen) ? chosen : (usable[0] ?? null);
+  const onPhone = method !== null && mobileWallets.includes(method);
 
   const error = placeBids.error ?? startPayment.error;
   const refused = new Set(refusedAmounts(error));
@@ -197,6 +209,11 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
       return;
     }
     if (!method) return;
+    const mobile = onPhone ? walletPhone(phone) : null;
+    if (onPhone && !mobile) {
+      setPhoneError(`Enter your ${walletName(method)} number, such as 0911223344.`);
+      return;
+    }
     const amountsMinor = toBid.map(String);
     if (method === 'wallet') {
       placeBids.mutate(amountsMinor, {
@@ -209,9 +226,17 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
       return;
     }
     startPayment.mutate(
-      { amountMinor: total.toString(), amountsMinor },
+      {
+        amountMinor: total.toString(),
+        amountsMinor,
+        charge: onPhone && mobile ? { method, phoneNumber: mobile } : undefined,
+      },
       {
         onSuccess: (deposit) => {
+          if (deposit.chargeMethod && mobile) {
+            setCharged({ id: deposit.id, method: deposit.chargeMethod, phone: mobile });
+            return;
+          }
           const address = checkoutAddress(deposit);
           if (!address) return;
           setLeaving(true);
@@ -284,6 +309,15 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
 
           {staff ? (
             <Alert tone="info">Staff accounts cannot place bids.</Alert>
+          ) : charged ? (
+            <ApproveOnPhone
+              {...charged}
+              money={money}
+              onRetry={() => {
+                setCharged(null);
+                reset();
+              }}
+            />
           ) : placed ? (
             <div role="status" className="space-y-3 rounded-3xl bg-emerald-50 px-5 py-4 text-emerald-900">
               <p className="text-lg font-bold">
@@ -445,23 +479,82 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                           : `Your balance of ${money(balance)} does not cover ${money(total)}.`
                   }
                 />
-                {options.data?.enabled && (
+                {mobileWallets.map((key) => (
+                  <MethodOption
+                    key={key}
+                    name={`${titleId}-method`}
+                    checked={method === key}
+                    disabled={false}
+                    onSelect={() => {
+                      setChosen(key);
+                      setPhoneError(null);
+                      reset();
+                    }}
+                    title={walletName(key)}
+                    detail="You approve the payment on your phone. No need to leave this page."
+                  />
+                ))}
+                {usable.includes('checkout') && (
                   <MethodOption
                     name={`${titleId}-method`}
-                    checked={method === 'chapa'}
-                    disabled={!chapaUsable}
-                    onSelect={() => setChosen('chapa')}
+                    checked={method === 'checkout'}
+                    disabled={false}
+                    onSelect={() => setChosen('checkout')}
                     title="Chapa"
-                    detail="telebirr, CBE Birr, M-Pesa or a bank card. You pay on Chapa's page and come straight back."
+                    detail="telebirr, CBE Birr, M-Pesa or a bank card, on Chapa's payment page."
                   />
                 )}
               </fieldset>
+
+              {onPhone && method && (
+                <div>
+                  <label htmlFor={`${amountId}-phone`} className="block font-semibold text-slate-800">
+                    {walletName(method)} phone number
+                  </label>
+                  <p id={`${amountId}-phone-hint`} className="text-sm text-slate-500">
+                    The payment request is sent to this number.
+                  </p>
+                  <input
+                    id={`${amountId}-phone`}
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="0911223344"
+                    value={phone}
+                    aria-invalid={phoneError ? true : undefined}
+                    aria-describedby={`${amountId}-phone-hint${phoneError ? ` ${amountId}-phone-error` : ''}`}
+                    onChange={(event) => {
+                      setPhone(event.target.value);
+                      setPhoneError(null);
+                      reset();
+                    }}
+                    className={cx(
+                      'mt-2 block w-full rounded-full border-2 bg-white px-5 py-3.5 text-lg tabular-nums shadow-sm outline-none focus:border-ink',
+                      phoneError ? 'border-red-500' : 'border-slate-200',
+                    )}
+                  />
+                  {phoneError && (
+                    <p id={`${amountId}-phone-error`} className="mt-1 text-sm text-red-700">
+                      {phoneError}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <Alert>
                   {isApiError(error, 'DEPOSIT_AMOUNT_INVALID')
                     ? 'The bid fee has changed. Close this and open it again to see the new fee. Nothing was charged.'
-                    : bidErrorMessage(error, a)}
+                    : isApiError(error, 'PAYMENT_PROVIDER_ERROR') && method && onPhone
+                      ? `The payment request could not be sent to ${walletPhone(phone) ?? 'that number'}. Check that it is your ${walletName(method)} number and try again. No money was taken.`
+                      : isApiError(
+                            error,
+                            'PAYMENT_PROVIDER_ERROR',
+                            'PAYMENTS_UNAVAILABLE',
+                            'DEPOSIT_LIMIT_REACHED',
+                          )
+                        ? 'The payment could not be started. No money was taken. Please try again in a moment.'
+                        : bidErrorMessage(error, a)}
                 </Alert>
               )}
               {!method && balance !== null && !options.isPending && (
@@ -477,7 +570,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
           )}
         </div>
 
-        {!staff && !placed && (
+        {!staff && !placed && !charged && (
           <div className="border-t border-slate-200 bg-[#fdfcfa] px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
@@ -491,7 +584,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
             </button>
             <p className="mt-2 text-center text-xs text-slate-500">
               Bid fees are non-refundable. Bids cannot be changed or withdrawn.
-              {method === 'chapa' &&
+              {method !== 'wallet' &&
                 ' If bidding closes before your payment is confirmed, the money goes to your wallet.'}
             </p>
           </div>
@@ -499,6 +592,90 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** After a payment request was sent to the phone: waits for the approval, then says what happened to the bids. */
+function ApproveOnPhone({
+  id,
+  method,
+  phone,
+  money,
+  onRetry,
+}: {
+  id: string;
+  method: string;
+  phone: string;
+  money: (minor: string) => string;
+  onRetry: () => void;
+}) {
+  const deposit = useDeposit(id);
+  const d = deposit.data;
+  const name = walletName(method);
+
+  if (!d || isWaiting(d)) {
+    return (
+      <div role="status" className="space-y-3 rounded-3xl bg-brand-50 px-5 py-5 text-center">
+        <Spinner className="mx-auto h-8 w-8 text-brand-600" />
+        <p className="text-lg font-bold">Approve the payment on your phone</p>
+        <p className="text-sm text-slate-700">
+          {d
+            ? `${name} sent a request for ${money(d.amountMinor)} to ${phone}.`
+            : `Sending the request to ${phone}…`}{' '}
+          Enter your {name} PIN on your phone to pay. This updates by itself once the payment is confirmed.
+        </p>
+      </div>
+    );
+  }
+  if (bidsPending(d)) {
+    return (
+      <div role="status" className="space-y-2 rounded-3xl bg-brand-50 px-5 py-5 text-center">
+        <Spinner className="mx-auto h-8 w-8 text-brand-600" />
+        <p className="text-lg font-bold">Payment received, placing your bids…</p>
+      </div>
+    );
+  }
+  if (d.status === 'SUCCEEDED' && d.bid?.state === 'PLACED') {
+    return (
+      <div role="status" className="space-y-2 rounded-3xl bg-emerald-50 px-5 py-4 text-emerald-900">
+        <p className="text-lg font-bold">
+          {d.bid.amounts.length === 1 ? 'Bid placed' : `${d.bid.amounts.length} bids placed`}
+        </p>
+        <p className="text-sm">
+          You paid {money(d.amountMinor)} with {name} and bid {d.bid.amountsMinor.map(money).join(', ')}. Good
+          luck!
+        </p>
+      </div>
+    );
+  }
+  if (d.status === 'SUCCEEDED') {
+    return (
+      <div role="alert" className="space-y-2 rounded-3xl bg-amber-50 px-5 py-4 text-amber-900">
+        <p className="text-lg font-bold">Payment received, but the bids were not placed</p>
+        <p className="text-sm">
+          {d.bid?.error ? `${d.bid.error.replace(/\.?$/, '.')} ` : ''}Your {money(d.amountMinor)} is in your
+          wallet, so you can bid again from there.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div role="alert" className="space-y-3 rounded-3xl bg-red-50 px-5 py-4 text-red-900">
+      <p className="text-lg font-bold">Payment not completed</p>
+      <p className="text-sm">
+        {d.status === 'EXPIRED'
+          ? 'The request was not approved in time.'
+          : 'The payment was declined or cancelled on the phone.'}{' '}
+        No money was taken and no bid was placed.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-full bg-white px-4 py-2 text-sm font-semibold"
+      >
+        Try again
+      </button>
+    </div>
   );
 }
 
