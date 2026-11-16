@@ -4,10 +4,12 @@ import { errorMessage, isApiError } from '../api/errors';
 import { useAuth } from '../auth/useAuth';
 import { Alert, Button, Card, Field } from '../components/ui';
 import { emailError, fullNameError, passwordError, phoneError } from '../lib/validation';
+import { usePageTitle } from '../lib/usePageTitle';
 
 type Errors = Partial<Record<'phone' | 'password' | 'confirm' | 'fullName' | 'email', string | null>>;
 
 export function RegisterPage() {
+  usePageTitle('Create your account');
   const { register } = useAuth();
   const location = useLocation();
   const [form, setForm] = useState({ phoneNumber: '', password: '', confirm: '', fullName: '', email: '' });

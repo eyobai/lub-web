@@ -4,6 +4,7 @@ import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { useWallet, useWalletTransactions, type WalletTransaction } from '../wallet/queries';
+import { usePageTitle } from '../lib/usePageTitle';
 
 const TYPE_LABELS: Record<WalletTransaction['type'], string> = {
   DEPOSIT: 'Deposit',
@@ -19,6 +20,7 @@ const TYPE_LABELS: Record<WalletTransaction['type'], string> = {
 const DESCRIBED: ReadonlySet<WalletTransaction['type']> = new Set(['BID_FEE', 'REFUND']);
 
 export function WalletPage() {
+  usePageTitle('Wallet');
   const wallet = useWallet();
   const transactions = useWalletTransactions();
 

@@ -1,10 +1,13 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { config } from '../config';
 import { cx } from '../lib/cx';
 import { formatMoney } from '../lib/money';
+import { useOnline } from '../lib/useOnline';
 import { useUnreadCount } from '../notifications/queries';
 import { useWallet } from '../wallet/queries';
+import { ErrorBoundary } from './ErrorBoundary';
 import { ButtonLink } from './ui';
 
 const ICONS = {
@@ -24,8 +27,30 @@ const USER_LINKS = [
   { to: '/account', label: 'Account', icon: 'account', end: false },
 ] as const;
 
+/**
+ * A new page starts at its top, with the keyboard and screen reader placed on it, as after a full page load.
+ * Going back or forward is left alone, and so is the first page, which the browser has already handled.
+ */
+function usePageStart(): React.RefObject<HTMLElement | null> {
+  const main = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  const how = useNavigationType();
+  const shown = useRef(pathname);
+  useEffect(() => {
+    if (shown.current === pathname) return;
+    shown.current = pathname;
+    if (how === 'POP') return;
+    window.scrollTo({ top: 0 });
+    main.current?.focus({ preventScroll: true });
+  }, [pathname, how]);
+  return main;
+}
+
 export function AppShell() {
   const { user } = useAuth();
+  const online = useOnline();
+  const main = usePageStart();
+  const { pathname } = useLocation();
   return (
     // Signed-in phones get a tab bar fixed to the bottom edge; the page leaves room for it.
     <div className={cx('flex min-h-dvh flex-col', user && 'pb-16 sm:pb-0')}>
@@ -96,8 +121,20 @@ export function AppShell() {
           )}
         </div>
       </header>
-      <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-        <Outlet />
+      {!online && (
+        <p role="status" className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-900">
+          You are offline. What you see may be out of date, and nothing can be sent until you reconnect.
+        </p>
+      )}
+      <main
+        id="main"
+        ref={main}
+        tabIndex={-1}
+        className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 outline-none"
+      >
+        <ErrorBoundary key={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-4 text-center text-xs text-slate-500">

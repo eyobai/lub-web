@@ -9,6 +9,7 @@ import { formatMoney } from '../lib/money';
 import { DeliveryDetailsForm } from '../wins/DeliveryDetailsForm';
 import { formatAddress, hasDeliveryDetails, STEPS, stepsDone, winStatus } from '../wins/delivery';
 import { useMyWins, WINS_PAGE_SIZE, type MyWin } from '../wins/queries';
+import { usePageTitle } from '../lib/usePageTitle';
 
 const BADGE_TONES = {
   info: 'bg-sky-100 text-sky-900',
@@ -18,6 +19,7 @@ const BADGE_TONES = {
 } as const;
 
 export function MyWinsPage() {
+  usePageTitle('My wins');
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const wins = useMyWins(page);

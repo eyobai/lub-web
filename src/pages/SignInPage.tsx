@@ -5,6 +5,7 @@ import { useAuth } from '../auth/useAuth';
 import { session, type SignOutReason } from '../auth/session';
 import { Alert, Button, Card, Field } from '../components/ui';
 import { phoneError } from '../lib/validation';
+import { usePageTitle } from '../lib/usePageTitle';
 
 const SIGNED_OUT_NOTICE: Record<SignOutReason, string> = {
   expired: 'You were signed out. Please sign in again.',
@@ -13,6 +14,7 @@ const SIGNED_OUT_NOTICE: Record<SignOutReason, string> = {
 };
 
 export function SignInPage() {
+  usePageTitle('Sign in');
   const { signIn } = useAuth();
   const location = useLocation();
   const [notice] = useState(() => session.takeSignOutReason());

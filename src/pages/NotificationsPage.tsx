@@ -11,8 +11,10 @@ import {
   useNotifications,
   type Notification,
 } from '../notifications/queries';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export function NotificationsPage() {
+  usePageTitle('Notifications');
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const unreadOnly = params.get('show') === 'unread';

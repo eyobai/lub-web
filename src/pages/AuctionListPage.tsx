@@ -4,6 +4,7 @@ import { AuctionCard } from '../auctions/AuctionCard';
 import { AUCTION_TABS, PAGE_SIZE, useAuctions, type AuctionTab } from '../auctions/queries';
 import { Alert, Button, PageLoading, Pagination } from '../components/ui';
 import { cx } from '../lib/cx';
+import { usePageTitle } from '../lib/usePageTitle';
 
 const EMPTY: Record<AuctionTab['key'], string> = {
   live: 'No auctions are running right now. Check the upcoming ones.',
@@ -12,6 +13,7 @@ const EMPTY: Record<AuctionTab['key'], string> = {
 };
 
 export function AuctionListPage() {
+  usePageTitle();
   const [params, setParams] = useSearchParams();
   const tab = AUCTION_TABS.find((t) => t.key === params.get('show')) ?? AUCTION_TABS[0];
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);

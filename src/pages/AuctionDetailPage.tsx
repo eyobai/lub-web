@@ -13,6 +13,7 @@ import { Alert, Button, ButtonLink, Card, PageLoading } from '../components/ui';
 import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
+import { usePageTitle } from '../lib/usePageTitle';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,6 +23,7 @@ export function AuctionDetailPage() {
 }
 
 function NotFound() {
+  usePageTitle('Auction not found');
   return (
     <div className="py-16 text-center">
       <h1 className="text-2xl font-bold">Auction not found</h1>
@@ -39,10 +41,12 @@ function AuctionDetail({ id }: { id: string }) {
   const auction = useAuction(id);
   const over = auction.data?.status === 'COMPLETED';
   const result = useAuctionResult(id, over);
+  const missing = auction.isError && isApiError(auction.error, 'NOT_FOUND', 'VALIDATION_FAILED');
+  usePageTitle(auction.data?.title ?? (missing ? 'Auction not found' : null));
 
   if (auction.isPending) return <PageLoading label="Loading auction" />;
   if (auction.isError) {
-    if (isApiError(auction.error, 'NOT_FOUND', 'VALIDATION_FAILED')) return <NotFound />;
+    if (missing) return <NotFound />;
     return (
       <div className="space-y-3">
         <Alert>{errorMessage(auction.error)}</Alert>

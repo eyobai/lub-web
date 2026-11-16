@@ -6,6 +6,7 @@ import { Alert, Button, ButtonLink, Card, PageLoading, Pagination } from '../com
 import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
+import { usePageTitle } from '../lib/usePageTitle';
 
 /** Bids arrive newest first; neighbours from the same auction are shown under one heading. */
 function byAuction(bids: MyBid[]): MyBid[][] {
@@ -19,6 +20,7 @@ function byAuction(bids: MyBid[]): MyBid[][] {
 }
 
 export function MyBidsPage() {
+  usePageTitle('My bids');
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const bids = useMyBids(page);

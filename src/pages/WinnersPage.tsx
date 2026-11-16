@@ -6,9 +6,11 @@ import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { useRecentWinners, WINNERS_PAGE_SIZE } from '../wins/queries';
+import { usePageTitle } from '../lib/usePageTitle';
 
 /** Winners our team has confirmed, newest first. Phone numbers arrive with the middle digits hidden. */
 export function WinnersPage() {
+  usePageTitle('Recent winners');
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const winners = useRecentWinners(page);
@@ -59,7 +61,7 @@ export function WinnersPage() {
                       </span>
                     </p>
                     <p className="text-xs text-slate-500">
-                      <Link to={`/auctions/${winner.auctionId}`} className="text-brand-700 hover:underline">
+                      <Link to={`/auctions/${winner.auctionId}`} className="text-brand-700 underline">
                         {winner.auctionTitle}
                       </Link>{' '}
                       · <time dateTime={winner.publishedAt}>{formatDateTime(winner.publishedAt)}</time>

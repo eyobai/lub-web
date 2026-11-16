@@ -39,6 +39,14 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       contentSecurityPolicy(env.VITE_API_BASE_URL || 'http://localhost:3000'),
     ],
+    build: {
+      rolldownOptions: {
+        output: {
+          // Libraries change far less often than the site, so returning visitors keep them cached across releases.
+          advancedChunks: { groups: [{ name: 'vendor', test: /node_modules/ }] },
+        },
+      },
+    },
     server: { port: 5173, strictPort: true, proxy },
     preview: {
       port: 5173,

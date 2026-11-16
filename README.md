@@ -5,7 +5,7 @@ backend (`lub-auction-backend`) and talks to it only through the HTTP API.
 
 Built with React, TypeScript, Vite and Tailwind CSS. Mobile-first: it is meant to be used in a phone browser.
 
-## What is built so far
+## What is built
 
 | Area                   | Pages                                                                                               |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
@@ -35,6 +35,19 @@ Wins and notifications notes:
   confirm the details. After that the form is gone and the page says to contact support.
 - A notification opens the page it is about (my wins, the auction, the wallet, the account) and is marked
   as read. The unread count is refreshed every minute.
+
+Across the whole site:
+
+- **Tab titles**: every page names the browser tab, for example "Wallet · LUB Auction"; an auction page uses
+  the auction's title.
+- **Moving between pages**: a new page starts at its top with the keyboard and screen reader placed on it.
+  Going back returns to where the user was.
+- **Offline**: a notice appears while the device has no connection. Pages already seen stay readable, and
+  data is fetched again when the connection returns.
+- **A page that fails**: a fault in one page shows "Something went wrong" with a reload button in place of
+  that page; the header and navigation keep working.
+- **Home screen**: the site has a web app manifest and icons, so "Add to Home screen" on a phone gives it its
+  own icon and opens it without the browser's address bar. It does not work without a connection.
 
 Not built yet: paying in and withdrawing (the backend has no payment provider yet).
 The admin screens will be a separate project.
@@ -99,7 +112,11 @@ src/
   auctions/   auction queries and auction components
   components/ app shell and shared UI pieces
   pages/      one file per page
-  lib/        money, clock, validation helpers
+  bids/       bid form, amount checks, bid queries
+  wallet/     wallet queries
+  wins/       win and winner queries, delivery form and its checks
+  notifications/ notification queries and where each one leads
+  lib/        money, clock, validation helpers, tab title, online state
   test/       test helpers (fake API, app renderer)
 ```
 
@@ -122,26 +139,105 @@ Things worth knowing:
 
 `npm run test:live` registers a new user and walks through the site in Chrome: auction list and detail,
 registration, staying signed in, token renewal, a staff password reset with the forced change, sign out,
-the wallet, placing bids, the result, notifications, delivery details for a win, and recent winners.
+the wallet, placing bids, the result, notifications, delivery details for a win, recent winners, tab
+titles, and losing the connection. It then runs the axe-core accessibility rules (WCAG 2.1 A and AA) on
+15 pages and fails on any fault.
 It needs the backend, this site (`npm run preview` or `npm run dev`) and the demo data, plus
 `SEED_ADMIN_PHONE` / `SEED_ADMIN_PASSWORD`. It writes screenshots to `test-results/`.
 Local use only: it creates accounts and resets a password.
 
 ## Deployment
 
-`npm run build` produces static files in `dist/`. Serve them from any static host with:
+`npm run build` produces static files in `dist/`. There is no server-side part: any static host works.
 
-- every unknown path answered with `index.html` (the site uses client-side routes such as `/auctions/<id>`);
-- HTTPS;
-- `VITE_API_BASE_URL` set at build time to the public backend address;
-- the site's address added to the backend's `CORS_ORIGINS`.
+### Recommended: the site and the API on one address
 
-Alternatively, put the API behind the site's own address with a reverse proxy (`/api` → backend) and build
-with `VITE_API_BASE_URL=/`. Then no CORS setting is needed. To try this locally:
+Put a reverse proxy in front of both, so `https://example.com/` is the site and `https://example.com/api/`
+is the backend. No CORS setting is needed, and visitors only ever talk to one address.
+
+1. Build with `VITE_API_BASE_URL=/ npm run build`.
+2. Copy `dist/` to the server.
+3. Configure the web server as in [`deploy/nginx.conf.example`](deploy/nginx.conf.example).
+4. Run the backend with `TRUST_PROXY=true`, so its rate limits see the visitor's address and not the proxy's.
+
+To try the same arrangement locally without nginx:
 
 ```bash
 VITE_API_BASE_URL=/ npm run build
 API_PROXY_TARGET=http://localhost:3000 npm run preview
 ```
 
-The build adds a Content-Security-Policy to `index.html` that only allows requests to the configured backend.
+### Alternative: the site on a static host, the API elsewhere
+
+1. Build with `VITE_API_BASE_URL=https://api.example.com npm run build` (no trailing slash, no `/api/v1`).
+2. Add the site's address to the backend's `CORS_ORIGINS`.
+3. Configure the host as described below.
+
+`VITE_API_BASE_URL` is fixed into the files at build time. Changing the backend address means building again.
+
+### What the web server must do
+
+| Requirement                                      | Why                                                                                           |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| HTTPS only                                       | Passwords and sign-in tokens are sent on every request                                        |
+| Unknown paths answer with `index.html`           | Pages such as `/auctions/<id>` exist only in the browser; without this a reload gives a 404   |
+| `/assets/*` cached for a year, `immutable`       | Those file names change with their content                                                    |
+| `index.html` sent with `Cache-Control: no-cache` | Otherwise visitors keep an old release until their cache expires                              |
+| `X-Frame-Options: DENY`                          | Stops other sites from showing this one inside a frame; it cannot be set from the page itself |
+| `X-Content-Type-Options: nosniff`                | Files are only ever treated as the type the server declares                                   |
+| gzip or brotli compression                       | The scripts are 117 kB compressed and about 385 kB without                                    |
+
+The build adds a Content-Security-Policy to `index.html`: scripts and styles only from the site itself, and
+requests only to the site and the configured backend.
+
+### Releasing a new version
+
+1. `npm run check` passes.
+2. Build, then upload `dist/assets/` first and `index.html` last, and keep the previous release's files in
+   `assets/` for a day. A visitor with the site open still has the old `index.html`, which asks for the old
+   files.
+3. Open the site, sign in, and check the browser console for errors.
+
+If the backend API changed, release the backend first; see "Keeping in step with the backend".
+
+## Size and loading
+
+Measured on the production build:
+
+| File          | Compressed | Contents                       |
+| ------------- | ---------- | ------------------------------ |
+| `vendor-*.js` | 94 kB      | React and the other libraries  |
+| `index-*.js`  | 23 kB      | The site's own code, all pages |
+| `index-*.css` | 6 kB       | Styles                         |
+
+The libraries are a separate file so that a release which only changes the site's code leaves them cached.
+The pages are deliberately not split into one file each: all of them together are 23 kB, and splitting
+would make each first visit to a page wait for another download.
+
+## Hand-off notes
+
+What has and has not been checked:
+
+- **Checked**: 136 unit and page tests; the live browser check in Chrome against the real backend, at phone
+  size (390 px wide); layouts at 320, 390 and 1280 px; automated accessibility rules on 15 pages; the
+  example nginx configuration (without its HTTPS part) with nginx 1.28.
+- **Not checked**: Safari, Firefox and Samsung Internet; real phones; a screen reader used by a person
+  (automated rules find only part of what a person would); slow or unreliable mobile networks beyond a
+  simulated loss of connection; the HTTPS part of the nginx example.
+
+Known limits:
+
+- English only.
+- No paying in or withdrawing: the wallet page tells users to contact support.
+- No "forgot password": staff reset a password and the user must then choose a new one.
+- The unread notification count is refreshed every minute, not instantly, and there are no push notifications.
+- Sign-in tokens are kept in the browser's local storage. The Content-Security-Policy above is what protects
+  them, so do not add third-party scripts (analytics, chat widgets) without reviewing it.
+- Notification texts are written by the backend and shown as they arrive.
+
+Before going live:
+
+- Replace every secret in the backend's `.env` and follow the backend's own deployment notes.
+- Decide the support contact shown to users; the pages currently say "contact support" without a number.
+- Replace the placeholder icon (`public/favicon.svg`, `public/icon-*.png`, `public/apple-touch-icon.png`).
+- Try the site on the phones and browsers your users have.

@@ -8,7 +8,8 @@
 import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 
 const WEB = (process.env.WEB_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
 const API = `${(process.env.API_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '')}/api/v1`;
@@ -23,6 +24,15 @@ const phoneId = live.items.find((a) => a.title === 'Win a Samsung Galaxy A55')?.
 assert.ok(phoneId, 'Demo data is missing: run npm run seed:demo first');
 const phone = `09${Math.floor(10000000 + Math.random() * 89999999)}`;
 const ok = (name) => console.log('PASS', name);
+const AXE = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
+/** Automated accessibility rules (WCAG 2.1 A and AA) that the page on screen breaks. */
+async function accessibilityFaults(target) {
+  await target.evaluate(AXE);
+  const { violations } = await target.evaluate(() =>
+    window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] }),
+  );
+  return violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
+}
 
 const browser = CHROME_CDP_URL
   ? await chromium.connectOverCDP(CHROME_CDP_URL)
@@ -416,6 +426,69 @@ assert.match(topWinner, new RegExp(quick.title));
 assert.ok(!topWinner.includes(phone.slice(1)), "the winner's full phone number is not shown");
 await shot('20-recent-winners');
 ok('a published win appears on recent winners with the phone number masked');
+
+// Tab titles, moving between pages, and losing the connection
+assert.equal(await page.title(), 'Recent winners · LUB Auction');
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+await page.getByRole('link', { name: 'Wallet', exact: true }).click();
+await page.getByRole('heading', { name: 'Wallet' }).waitFor();
+assert.equal(await page.title(), 'Wallet · LUB Auction');
+assert.equal(await page.evaluate(() => window.scrollY), 0);
+assert.equal(await page.evaluate(() => document.activeElement?.id), 'main');
+await page.goto(`${WEB}/auctions/${quick.id}`);
+await page.waitForFunction((title) => document.title === `${title} · LUB Auction`, quick.title);
+ok('each page names the tab, and a new page starts at the top with the keyboard on it');
+
+await context.setOffline(true);
+await page.getByText('You are offline.').waitFor();
+await page.getByRole('link', { name: 'My bids', exact: true }).click();
+await page.getByRole('heading', { name: 'My bids' }).waitFor();
+await view('21-offline');
+await context.setOffline(false);
+await page.getByText('You are offline.').waitFor({ state: 'detached' });
+await page.getByRole('heading', { name: quick.title }).first().waitFor();
+problems.splice(0, problems.length, ...problems.filter((p) => !/ERR_INTERNET_DISCONNECTED/.test(p)));
+ok('offline: a notice appears, pages still open, and the data returns with the connection');
+
+// Accessibility rules on every page, signed in and as a visitor
+const faults = {};
+for (const path of [
+  '/',
+  `/auctions/${phoneId}`,
+  `/auctions/${quick.id}`,
+  '/winners',
+  '/bids',
+  '/wallet',
+  '/wins',
+  '/notifications',
+  '/account',
+  '/change-password',
+  '/no-such-page',
+]) {
+  await page.goto(`${WEB}${path}`);
+  await page.getByRole('heading', { level: 1 }).waitFor();
+  await page
+    .getByText(/^Loading .*…$/)
+    .first()
+    .waitFor({ state: 'detached' });
+  const found = await accessibilityFaults(page);
+  if (found.length) faults[path] = found;
+}
+const visitorContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const visitor = await visitorContext.newPage();
+for (const path of ['/', '/sign-in', '/register', '/winners']) {
+  await visitor.goto(`${WEB}${path}`);
+  await visitor.getByRole('heading', { level: 1 }).waitFor();
+  await visitor
+    .getByText(/^Loading .*…$/)
+    .first()
+    .waitFor({ state: 'detached' });
+  const found = await accessibilityFaults(visitor);
+  if (found.length) faults[`visitor ${path}`] = found;
+}
+await visitorContext.close();
+assert.deepEqual(faults, {});
+ok('no automated accessibility faults on 15 pages');
 
 // Unknown auction, and desktop layout
 await page.goto(`${WEB}/auctions/00000000-0000-4000-8000-000000000000`);

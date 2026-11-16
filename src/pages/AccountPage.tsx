@@ -4,8 +4,10 @@ import { errorMessage } from '../api/errors';
 import { useAuth } from '../auth/useAuth';
 import { Alert, Button, ButtonLink, Card } from '../components/ui';
 import { formatDateTime } from '../lib/clock';
+import { usePageTitle } from '../lib/usePageTitle';
 
 export function AccountPage() {
+  usePageTitle('Your account');
   const { user, signOut, signOutEverywhere } = useAuth();
   const location = useLocation();
   const passwordChanged = (location.state as { passwordChanged?: boolean } | null)?.passwordChanged === true;

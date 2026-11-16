@@ -5,6 +5,7 @@ import { useAuth } from '../auth/useAuth';
 import { returnPath } from '../auth/returnPath';
 import { Alert, Button, Card, Field } from '../components/ui';
 import { passwordError } from '../lib/validation';
+import { usePageTitle } from '../lib/usePageTitle';
 
 type Errors = Partial<Record<'current' | 'next' | 'confirm', string | null>>;
 
@@ -13,6 +14,7 @@ export function ChangePasswordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const forced = user?.mustChangePassword ?? false;
+  usePageTitle(forced ? 'Choose a new password' : 'Change password');
   const [form, setForm] = useState({ current: '', next: '', confirm: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [failure, setFailure] = useState<string | null>(null);
