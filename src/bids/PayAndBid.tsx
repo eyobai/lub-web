@@ -481,21 +481,28 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                           : `Your balance of ${money(balance)} does not cover ${money(total)}.`
                   }
                 />
-                {mobileWallets.map((key) => (
-                  <MethodOption
-                    key={key}
-                    name={`${titleId}-method`}
-                    checked={method === key}
-                    disabled={false}
-                    onSelect={() => {
-                      setChosen(key);
-                      setPhoneError(null);
-                      reset();
-                    }}
-                    title={walletName(key)}
-                    detail="You approve the payment on your phone. No need to leave this page."
-                  />
-                ))}
+                {mobileWallets.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {mobileWallets.map((key) => (
+                      <WalletTile
+                        key={key}
+                        method={key}
+                        name={`${titleId}-method`}
+                        checked={method === key}
+                        onSelect={() => {
+                          setChosen(key);
+                          setPhoneError(null);
+                          reset();
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {mobileWallets.length > 0 && (
+                  <p className="px-1 text-xs text-slate-500">
+                    With a mobile wallet you approve the payment on your phone, without leaving this page.
+                  </p>
+                )}
                 {usable.includes('checkout') && (
                   <MethodOption
                     name={`${titleId}-method`}
@@ -678,6 +685,86 @@ function ApproveOnPhone({
         Try again
       </button>
     </div>
+  );
+}
+
+/** Brand colour behind a wallet's initials, shown until its logo file is added. */
+const WALLET_TINT: Record<string, string> = {
+  telebirr: 'bg-[#0b78c1] text-white',
+  mpesa: 'bg-[#3fae49] text-white',
+  cbebirr: 'bg-[#6a2c91] text-white',
+  ebirr: 'bg-[#e8a317] text-ink',
+};
+
+/**
+ * A wallet's logo: `/payments/<method>.png` in the public folder (the provider's official artwork). Until that
+ * file exists, or if it fails to load, a coloured badge with the wallet's initials stands in.
+ */
+function WalletLogo({ method }: { method: string }) {
+  const [missing, setMissing] = useState(false);
+  if (missing) {
+    const initials = walletName(method)
+      .replace(/[^A-Za-z ]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word[0].toUpperCase())
+      .join('')
+      .slice(0, 2);
+    return (
+      <span
+        aria-hidden="true"
+        className={cx(
+          'flex h-12 w-12 items-center justify-center rounded-2xl text-base font-bold',
+          WALLET_TINT[method] ?? 'bg-slate-200 text-slate-700',
+        )}
+      >
+        {initials}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={`/payments/${method}.png`}
+      alt=""
+      onError={() => setMissing(true)}
+      className="h-12 w-auto max-w-[7.5rem] object-contain"
+    />
+  );
+}
+
+/** One mobile wallet as a tile: its logo, its name, and a tick when chosen. */
+function WalletTile({
+  method,
+  name,
+  checked,
+  onSelect,
+}: {
+  method: string;
+  name: string;
+  checked: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <label
+      className={cx(
+        'relative flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-3xl border-2 bg-white px-3 py-3 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600',
+        checked ? 'border-ink bg-brand-50' : 'border-slate-200 hover:border-slate-300',
+      )}
+    >
+      <input type="radio" name={name} checked={checked} onChange={onSelect} className="sr-only" />
+      <WalletLogo method={method} />
+      <span className="text-sm font-semibold">{walletName(method)}</span>
+      {checked && (
+        <span
+          aria-hidden="true"
+          className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-3 w-3">
+            <path d="m5 12 5 5 9-10" />
+          </svg>
+        </span>
+      )}
+    </label>
   );
 }
 
