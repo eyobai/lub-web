@@ -249,12 +249,6 @@ WEB_APP_URL=http://localhost:5173
 
 It does not cover Chapa's webhook (the backend's own tests do) or Chapa's real payment page.
 
-### Trying Add money by hand, without a Chapa account
-
-The backend has a stand-in for Chapa with a clickable checkout page: `npm run chapa:sim` in the backend
-project (its README has the `.env` lines). The site follows that plain-http payment page only while the
-site itself is open on `localhost`; anywhere else, a payment page must be https.
-
 ## Hand-off notes
 
 What has and has not been checked:

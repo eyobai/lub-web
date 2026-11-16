@@ -148,23 +148,11 @@ export function quickAmounts(options: DepositOptions): string[] {
   return QUICK_AMOUNTS.filter((amount) => parseDepositAmount(amount, options).ok);
 }
 
-const THIS_MACHINE = ['localhost', '127.0.0.1', '[::1]'];
-
-/**
- * The payment page may only be an https address: the server's answer is not followed anywhere else. The one
- * exception is the backend's local Chapa simulator, a plain-http page on this machine, and only while the
- * site itself is open on this machine.
- */
-export function checkoutAddress(
-  deposit: Pick<Deposit, 'checkoutUrl'>,
-  siteHost: string = window.location.hostname,
-): string | null {
+/** The payment page may only be an https address: the server's answer is not followed anywhere else. */
+export function checkoutAddress(deposit: Pick<Deposit, 'checkoutUrl'>): string | null {
   if (!deposit.checkoutUrl) return null;
   try {
-    const url = new URL(deposit.checkoutUrl);
-    if (url.protocol === 'https:') return deposit.checkoutUrl;
-    const local = url.protocol === 'http:' && THIS_MACHINE.includes(url.hostname);
-    return local && THIS_MACHINE.includes(siteHost) ? deposit.checkoutUrl : null;
+    return new URL(deposit.checkoutUrl).protocol === 'https:' ? deposit.checkoutUrl : null;
   } catch {
     return null;
   }
