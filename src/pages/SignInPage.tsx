@@ -43,7 +43,7 @@ export function SignInPage() {
   return (
     <div className="mx-auto max-w-md">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold">Sign in</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
         <form onSubmit={submit} noValidate className="mt-5 space-y-4">
           {notice && !failure && <Alert tone="warning">{SIGNED_OUT_NOTICE[notice]}</Alert>}
           {failure && <Alert>{failure}</Alert>}

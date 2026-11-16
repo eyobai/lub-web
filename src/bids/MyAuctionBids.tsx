@@ -92,7 +92,7 @@ function MyResult({ result, money }: { result: MyAuctionResult; money: (minor: s
           <li
             key={bid.id}
             className={cx(
-              'flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm',
+              'flex items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-sm',
               OUTCOME[bid.outcome].className,
             )}
           >

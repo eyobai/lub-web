@@ -11,37 +11,64 @@ export function AuctionCard({ auction }: { auction: Auction }) {
   return (
     <Link
       to={`/auctions/${auction.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-4xl bg-white p-2 shadow-[0_1px_2px_rgb(22_21_19/0.04)] transition-shadow hover:shadow-[0_8px_24px_rgb(22_21_19/0.08)]"
     >
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-3xl">
         <ProductImage
           url={image?.url}
           alt={image?.altText ?? auction.product.name}
-          className="aspect-[4/3] w-full"
+          className="aspect-[16/10] w-full transition-transform duration-300 group-hover:scale-[1.02]"
         />
-        <div className="absolute left-3 top-3">
+        <div className="absolute top-3 left-3">
           <StatusBadge status={auction.status} />
         </div>
+        <div className="absolute right-3 bottom-3 rounded-2xl bg-ink/90 px-3 py-1.5 text-right text-white">
+          <p className="text-[0.65rem] text-white/70">Fee per bid</p>
+          <p className="text-base leading-tight font-bold tabular-nums">
+            {formatMoney(auction.bidFee, auction.currency)}
+          </p>
+        </div>
       </div>
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex flex-1 flex-col gap-3 px-3 pt-3 pb-2">
         <div>
-          <h2 className="line-clamp-2 font-semibold text-slate-900 group-hover:text-brand-800">
-            {auction.title}
-          </h2>
+          <h2 className="line-clamp-2 text-lg leading-snug font-bold text-ink">{auction.title}</h2>
           <p className="mt-0.5 text-sm text-slate-500">
             Worth {formatMoney(auction.product.marketValue, auction.product.currency)}
           </p>
         </div>
-        <dl className="mt-auto grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-          <div>
-            <dt className="text-slate-500">Fee per bid</dt>
-            <dd className="font-semibold">{formatMoney(auction.bidFee, auction.currency)}</dd>
+        <dl className="mt-auto flex flex-wrap items-center gap-2 text-sm">
+          <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+            <dt className="sr-only">Bids placed</dt>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+              className="h-4 w-4 text-brand-600"
+            >
+              <path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1zm10-4v2m0 4v2m0 4v2" />
+            </svg>
+            <dd className="font-semibold tabular-nums">
+              {auction.totalBidCount.toLocaleString()}
+              <span className="font-normal text-slate-500">
+                {' '}
+                {auction.totalBidCount === 1 ? 'bid' : 'bids'}
+              </span>
+            </dd>
           </div>
-          <div>
-            <dt className="text-slate-500">Bids placed</dt>
-            <dd className="font-semibold tabular-nums">{auction.totalBidCount.toLocaleString()}</dd>
-          </div>
-          <div className="col-span-2 rounded-lg bg-slate-50 px-3 py-2">
+          <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+              className="h-4 w-4 text-slate-500"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
             <AuctionTiming auction={auction} />
           </div>
         </dl>
@@ -56,7 +83,7 @@ function AuctionTiming({ auction }: { auction: Auction }) {
       return (
         <>
           <dt className="text-slate-500">Closes in</dt>
-          <dd className="font-semibold text-brand-800">
+          <dd className="font-semibold text-ink">
             <Countdown until={auction.closesAt} />
           </dd>
         </>
@@ -65,7 +92,7 @@ function AuctionTiming({ auction }: { auction: Auction }) {
       return (
         <>
           <dt className="text-slate-500">Opens in</dt>
-          <dd className="font-semibold text-sky-800">
+          <dd className="font-semibold text-ink">
             <Countdown until={auction.opensAt} />
           </dd>
         </>

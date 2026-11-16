@@ -23,7 +23,7 @@ export function WinnersPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold">Recent winners</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Recent winners</h1>
       <p className="mt-1 text-sm text-slate-600">
         Each of them won with the lowest amount nobody else bid. Wins are listed once our team has confirmed
         them.
@@ -39,32 +39,64 @@ export function WinnersPage() {
             </Button>
           </div>
         ) : winners.data.items.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
+          <p className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
             {page > 1 ? 'There is nothing on this page.' : 'No winners have been announced yet.'}
           </p>
         ) : (
-          <ul className={cx('space-y-3', winners.isPlaceholderData && 'opacity-60')}>
+          <ul className={cx('space-y-4', winners.isPlaceholderData && 'opacity-60')}>
             {winners.data.items.map((winner) => (
               <li key={winner.id}>
-                <Card className="flex gap-3 p-4">
-                  <ProductImage
-                    url={winner.productImageUrl ?? undefined}
-                    alt={winner.productName}
-                    className="h-16 w-16 shrink-0 rounded-xl"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h2 className="font-semibold break-words">{winner.productName}</h2>
+                <Card className="overflow-hidden p-2">
+                  <div className="relative overflow-hidden rounded-3xl">
+                    <ProductImage
+                      url={winner.productImageUrl ?? undefined}
+                      alt={winner.productName}
+                      className="aspect-[16/9] w-full"
+                    />
+                    <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1 text-[0.7rem] font-bold tracking-wide text-ink uppercase">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5"
+                      >
+                        <path d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0zm0 2H4a3 3 0 0 0 3 4m10-4h3a3 3 0 0 1-3 4" />
+                      </svg>
+                      Winner
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="absolute right-3 bottom-3 rounded-2xl bg-ink/90 px-3 py-1.5 text-right text-white"
+                    >
+                      <span className="block text-[0.65rem] text-white/70">Winning bid</span>
+                      <span className="block text-lg leading-tight font-bold tabular-nums">
+                        {formatMoney(winner.amount, winner.currency)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="min-w-0 space-y-2 px-3 pt-3 pb-2">
+                    <h2 className="text-lg leading-snug font-bold break-words">{winner.productName}</h2>
                     <p className="text-sm text-slate-600">
                       <span className="font-semibold text-slate-900">{winner.winnerLabel}</span> won with{' '}
                       <span className="font-semibold text-slate-900 tabular-nums">
                         {formatMoney(winner.amount, winner.currency)}
                       </span>
                     </p>
-                    <p className="text-xs text-slate-500">
-                      <Link to={`/auctions/${winner.auctionId}`} className="text-brand-700 underline">
+                    <p className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <Link
+                        to={`/auctions/${winner.auctionId}`}
+                        className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-800 hover:bg-slate-200"
+                      >
                         {winner.auctionTitle}
-                      </Link>{' '}
-                      · <time dateTime={winner.publishedAt}>{formatDateTime(winner.publishedAt)}</time>
+                      </Link>
+                      <span>
+                        Announced{' '}
+                        <time dateTime={winner.publishedAt}>{formatDateTime(winner.publishedAt)}</time>
+                      </span>
                     </p>
                   </div>
                 </Card>

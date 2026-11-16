@@ -63,7 +63,9 @@ export function ChangePasswordPage() {
   return (
     <div className="mx-auto max-w-md">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold">{forced ? 'Choose a new password' : 'Change password'}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {forced ? 'Choose a new password' : 'Change password'}
+        </h1>
         <form onSubmit={submit} noValidate className="mt-5 space-y-4">
           {forced && (
             <Alert tone="info">

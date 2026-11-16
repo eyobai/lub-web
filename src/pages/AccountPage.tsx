@@ -28,7 +28,7 @@ export function AccountPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <h1 className="text-2xl font-bold">Your account</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Your account</h1>
       {passwordChanged && <Alert tone="info">Your password was changed.</Alert>}
       {failure && <Alert>{failure}</Alert>}
       <Card className="p-5">

@@ -44,13 +44,22 @@ export function WalletPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <h1 className="text-2xl font-bold">Wallet</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Wallet</h1>
 
-      <section aria-label="Balance" className="rounded-2xl bg-brand-700 px-5 py-6 text-white">
-        <p className="text-sm text-brand-50">Available balance</p>
-        <p className="text-3xl font-bold tabular-nums">{formatMoney(w.available, w.currency)}</p>
+      <section
+        aria-label="Balance"
+        className="relative overflow-hidden rounded-4xl bg-ink px-6 py-7 text-white"
+      >
+        <div
+          aria-hidden="true"
+          className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand-500/25 blur-2xl"
+        />
+        <p className="relative text-sm text-white/70">Available balance</p>
+        <p className="relative mt-1 text-4xl font-bold tracking-tight text-brand-400 tabular-nums">
+          {formatMoney(w.available, w.currency)}
+        </p>
         {w.heldMinor !== '0' && (
-          <p className="mt-1 text-sm text-brand-50">
+          <p className="relative mt-1 text-sm text-white/70">
             On hold: <span className="tabular-nums">{formatMoney(w.held, w.currency)}</span>
           </p>
         )}
@@ -90,7 +99,7 @@ export function WalletPage() {
             </Button>
           </div>
         ) : rows.length === 0 ? (
-          <p className="mt-3 rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">
+          <p className="mt-3 rounded-4xl border border-dashed border-slate-300 px-4 py-10 text-center text-slate-500">
             Nothing has gone in or out of your wallet yet.
           </p>
         ) : (

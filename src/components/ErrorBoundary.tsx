@@ -20,7 +20,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     if (!this.state.failed) return this.props.children;
     return (
       <div role="alert" className="py-16 text-center">
-        <h1 className="text-2xl font-bold">Something went wrong</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Something went wrong</h1>
         <p className="mt-2 text-slate-600">
           This page could not be shown. Reload it, and if that does not help, please try again later.
         </p>

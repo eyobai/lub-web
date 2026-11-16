@@ -59,7 +59,7 @@ export function RegisterPage() {
   return (
     <div className="mx-auto max-w-md">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold">Create your account</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
         <p className="mt-1 text-sm text-slate-600">You only need a phone number and a password.</p>
         <form onSubmit={submit} noValidate className="mt-5 space-y-4">
           {failure && <Alert>{failure}</Alert>}

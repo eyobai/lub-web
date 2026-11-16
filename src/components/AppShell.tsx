@@ -53,7 +53,7 @@ export function AppShell() {
   const { pathname } = useLocation();
   return (
     // Signed-in phones get a tab bar fixed to the bottom edge; the page leaves room for it.
-    <div className={cx('flex min-h-dvh flex-col', user && 'pb-16 sm:pb-0')}>
+    <div className={cx('flex min-h-dvh flex-col', user && 'pb-20 sm:pb-0')}>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-30 focus:rounded focus:bg-white focus:px-3 focus:py-2"
@@ -61,9 +61,9 @@ export function AppShell() {
         Skip to content
       </a>
       {/* No backdrop filter here: it would pin the fixed tab bar to the header instead of the screen. */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
-          <Link to="/" className="flex items-center gap-2 font-bold text-brand-800">
+      <header className="sticky top-0 z-10 rounded-b-4xl bg-white shadow-[0_2px_12px_rgb(22_21_19/0.05)]">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
+          <Link to="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-ink">
             <img src="/favicon.svg" alt="" className="h-7 w-7" />
             <span
               className={cx(
@@ -90,8 +90,8 @@ export function AppShell() {
                 className={({ isActive }) =>
                   cx(
                     // On narrow phones a visitor has the logo for this; the space goes to Sign in and Register.
-                    'hidden rounded-lg px-2.5 py-2 min-[26rem]:block sm:px-3',
-                    isActive ? 'bg-brand-50 text-brand-800' : 'text-slate-600 hover:bg-slate-100',
+                    'hidden rounded-full px-3 py-2 min-[26rem]:block sm:px-4',
+                    isActive ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-100',
                   )
                 }
               >
@@ -101,8 +101,8 @@ export function AppShell() {
                 to="/winners"
                 className={({ isActive }) =>
                   cx(
-                    'hidden rounded-lg px-2.5 py-2 min-[32rem]:block sm:px-3',
-                    isActive ? 'bg-brand-50 text-brand-800' : 'text-slate-600 hover:bg-slate-100',
+                    'hidden rounded-full px-3 py-2 min-[32rem]:block sm:px-4',
+                    isActive ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-100',
                   )
                 }
               >
@@ -110,7 +110,7 @@ export function AppShell() {
               </NavLink>
               <Link
                 to="/sign-in"
-                className="rounded-lg px-2.5 py-2 text-slate-600 hover:bg-slate-100 sm:px-3"
+                className="rounded-full px-3 py-2 text-slate-600 hover:bg-slate-100 sm:px-4"
               >
                 Sign in
               </Link>
@@ -136,10 +136,13 @@ export function AppShell() {
           <Outlet />
         </ErrorBoundary>
       </main>
-      <footer className="border-t border-slate-200 bg-white">
+      <footer>
         <div className="mx-auto max-w-5xl px-4 py-4 text-center text-xs text-slate-500">
           The lowest bid that nobody else placed wins. Every bid costs a fixed fee.{' '}
-          <Link to="/winners" className="font-semibold text-brand-700 hover:underline">
+          <Link
+            to="/winners"
+            className="font-semibold text-slate-900 underline decoration-brand-500 decoration-2 underline-offset-2"
+          >
             Recent winners
           </Link>
         </div>
@@ -153,7 +156,7 @@ function UserNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-slate-200 bg-white text-xs font-medium sm:static sm:flex sm:items-center sm:gap-1 sm:border-0 sm:text-sm"
+      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 rounded-t-4xl bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[0.7rem] font-medium shadow-[0_-4px_20px_rgb(22_21_19/0.08)] sm:static sm:flex sm:items-center sm:gap-1 sm:rounded-none sm:p-0 sm:text-sm sm:shadow-none"
     >
       {USER_LINKS.map((link) => (
         <NavLink
@@ -162,8 +165,10 @@ function UserNav() {
           end={link.end}
           className={({ isActive }) =>
             cx(
-              'flex flex-col items-center gap-0.5 px-1 py-2 whitespace-nowrap sm:rounded-lg sm:px-3',
-              isActive ? 'text-brand-800 sm:bg-brand-50' : 'text-slate-600 hover:bg-slate-100',
+              'flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 whitespace-nowrap transition-colors sm:px-4 sm:py-2',
+              isActive
+                ? 'bg-slate-200 font-semibold text-ink sm:bg-ink sm:text-white'
+                : 'text-slate-600 hover:bg-slate-100',
             )
           }
         >
@@ -195,8 +200,8 @@ function NotificationsLink() {
       aria-label={unread > 0 ? `Notifications: ${unread} unread` : 'Notifications'}
       className={({ isActive }) =>
         cx(
-          'relative rounded-full p-2',
-          isActive ? 'bg-brand-50 text-brand-800' : 'text-slate-600 hover:bg-slate-100',
+          'relative rounded-full bg-slate-100 p-2.5',
+          isActive ? 'bg-ink text-white' : 'text-slate-700 hover:bg-slate-200',
         )
       }
     >
@@ -232,7 +237,7 @@ function Balance() {
     <Link
       to="/wallet"
       aria-label={`Balance: ${amount}`}
-      className="rounded-full border border-brand-100 bg-brand-50 px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-brand-800 tabular-nums hover:bg-brand-100"
+      className="rounded-full bg-brand-500 px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-ink tabular-nums hover:bg-brand-400"
     >
       {amount}
     </Link>

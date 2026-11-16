@@ -26,7 +26,7 @@ function NotFound() {
   usePageTitle('Auction not found');
   return (
     <div className="py-16 text-center">
-      <h1 className="text-2xl font-bold">Auction not found</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Auction not found</h1>
       <p className="mt-2 text-slate-600">It may have been removed, or the link is wrong.</p>
       <ButtonLink to="/" className="mt-6">
         See all auctions
@@ -63,15 +63,18 @@ function AuctionDetail({ id }: { id: string }) {
 
   return (
     <article>
-      <Link to="/" className="text-sm font-medium text-brand-700 hover:underline">
-        ← All auctions
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-[0_1px_2px_rgb(22_21_19/0.04)] hover:bg-slate-100"
+      >
+        <span aria-hidden="true">←</span> All auctions
       </Link>
       <div className="mt-3 grid gap-6 lg:grid-cols-2">
         <Gallery auction={a} />
         <div className="space-y-5">
           <header>
             <StatusBadge status={a.status} />
-            <h1 className="mt-2 text-2xl font-bold">{a.title}</h1>
+            <h1 className="mt-3 text-3xl leading-tight font-bold tracking-tight">{a.title}</h1>
             <p className="mt-1 text-slate-600">
               {[a.product.brand, a.product.model].filter(Boolean).join(' · ') || a.product.name}
               {' · '}worth {formatMoney(a.product.marketValue, a.product.currency)}
@@ -82,9 +85,9 @@ function AuctionDetail({ id }: { id: string }) {
           {user && a.status === 'ACTIVE' && <BidPanel auction={a} />}
           {user && <MyAuctionBids auction={a} />}
 
-          <Card className="p-4">
-            <h2 className="font-semibold">Bidding rules</h2>
-            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          <Card className="p-5">
+            <h2 className="font-bold">Bidding rules</h2>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
               <Fact label="Fee per bid">{formatMoney(a.bidFee, a.currency)}</Fact>
               <Fact label="Bids placed">
                 <span className="tabular-nums">{a.totalBidCount.toLocaleString()}</span>
@@ -98,7 +101,9 @@ function AuctionDetail({ id }: { id: string }) {
               <Fact label="Opens">{formatDateTime(a.opensAt)}</Fact>
               <Fact label="Closes">{formatDateTime(a.closesAt)}</Fact>
             </dl>
-            <p className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-600">{noUniqueBidText(a)}</p>
+            <p className="mt-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
+              {noUniqueBidText(a)}
+            </p>
           </Card>
         </div>
       </div>
@@ -120,8 +125,8 @@ function AuctionDetail({ id }: { id: string }) {
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <dt className="text-slate-500">{label}</dt>
+    <div className="rounded-2xl bg-slate-100 px-4 py-2.5">
+      <dt className="text-xs text-slate-500">{label}</dt>
       <dd className="font-semibold">{children}</dd>
     </div>
   );
@@ -147,7 +152,7 @@ function Gallery({ auction }: { auction: Auction }) {
       <ProductImage
         url={current?.url}
         alt={current?.altText ?? auction.product.name}
-        className="aspect-[4/3] w-full rounded-2xl border border-slate-200"
+        className="aspect-[4/3] w-full rounded-4xl"
       />
       {images.length > 1 && (
         <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -159,8 +164,8 @@ function Gallery({ auction }: { auction: Auction }) {
                 aria-label={`Show picture ${index + 1} of ${images.length}`}
                 aria-current={index === selected}
                 className={cx(
-                  'block overflow-hidden rounded-lg border-2',
-                  index === selected ? 'border-brand-600' : 'border-transparent',
+                  'block overflow-hidden rounded-2xl border-2',
+                  index === selected ? 'border-ink' : 'border-transparent',
                 )}
               >
                 <ProductImage url={image.url} alt="" className="h-16 w-20" />
@@ -188,9 +193,9 @@ function StatePanel({
   switch (a.status) {
     case 'ACTIVE':
       return (
-        <Card className="border-brand-100 bg-brand-50 p-4">
-          <p className="text-sm text-brand-800">Closes in</p>
-          <p className="text-3xl font-bold text-brand-800">
+        <Card className="bg-ink p-5 text-white">
+          <p className="text-sm text-white/70">Closes in</p>
+          <p className="text-4xl font-bold tracking-tight text-brand-400">
             <Countdown until={a.closesAt} onElapsed={onElapsed} />
           </p>
           {!user && (
@@ -201,7 +206,7 @@ function StatePanel({
               <Link
                 to="/register"
                 state={{ from: location.pathname }}
-                className="text-sm font-semibold text-brand-700 hover:underline"
+                className="text-sm font-semibold text-white underline decoration-brand-500 decoration-2 underline-offset-2"
               >
                 Create an account
               </Link>
@@ -211,16 +216,16 @@ function StatePanel({
       );
     case 'SCHEDULED':
       return (
-        <Card className="border-sky-100 bg-sky-50 p-4">
-          <p className="text-sm text-sky-900">Bidding opens in</p>
-          <p className="text-3xl font-bold text-sky-900">
+        <Card className="p-5">
+          <p className="text-sm text-slate-500">Bidding opens in</p>
+          <p className="text-4xl font-bold tracking-tight text-ink">
             <Countdown until={a.opensAt} onElapsed={onElapsed} />
           </p>
         </Card>
       );
     case 'CLOSING':
       return (
-        <Card className="border-amber-200 bg-amber-50 p-4">
+        <Card className="bg-brand-50 p-5">
           <p className="font-semibold text-amber-900">Bidding has closed</p>
           <p className="mt-1 text-sm text-amber-900">
             The result is being worked out. This page updates by itself.
@@ -231,7 +236,7 @@ function StatePanel({
       return <ResultPanel result={result} />;
     default:
       return (
-        <Card className="border-red-200 bg-red-50 p-4">
+        <Card className="bg-red-50 p-5">
           <p className="font-semibold text-red-800">This auction was cancelled</p>
           <p className="mt-1 text-sm text-red-800">Bid fees are refunded to the bidders' wallets.</p>
         </Card>
@@ -242,7 +247,7 @@ function StatePanel({
 function ResultPanel({ result }: { result: AuctionResult | null | undefined }) {
   if (!result) {
     return (
-      <Card className="p-4">
+      <Card className="p-5">
         <p className="font-semibold">This auction has ended</p>
         <p className="mt-1 text-sm text-slate-600">The result will appear here shortly.</p>
       </Card>
@@ -250,17 +255,37 @@ function ResultPanel({ result }: { result: AuctionResult | null | undefined }) {
   }
   if (result.outcome === 'WINNER_FOUND' && result.winningAmount !== null) {
     return (
-      <Card className="border-accent-400 bg-amber-50 p-4">
-        <p className="text-sm text-amber-900">Winning bid: the lowest amount bid exactly once</p>
-        <p className="text-3xl font-bold text-amber-900">
-          {formatMoney(result.winningAmount, result.currency)}
-        </p>
-        <p className="mt-1 text-sm text-amber-900">Out of {result.totalBids.toLocaleString()} bids.</p>
+      <Card className="flex items-center gap-4 bg-ink p-5 text-white">
+        <span
+          aria-hidden="true"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-500 text-ink"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-7 w-7"
+          >
+            <path d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0zm0 2H4a3 3 0 0 0 3 4m10-4h3a3 3 0 0 1-3 4" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold tracking-wide text-brand-400 uppercase">
+            Winning bid: the lowest amount bid exactly once
+          </p>
+          <p className="text-3xl font-bold tracking-tight">
+            {formatMoney(result.winningAmount, result.currency)}
+          </p>
+          <p className="text-sm text-white/70">Out of {result.totalBids.toLocaleString()} bids.</p>
+        </div>
       </Card>
     );
   }
   return (
-    <Card className="p-4">
+    <Card className="p-5">
       <p className="font-semibold">This auction ended without a winner</p>
       <p className="mt-1 text-sm text-slate-600">
         {result.outcome === 'NO_BIDS'
@@ -285,9 +310,9 @@ function Specifications({ specifications }: { specifications: Auction['product']
   return (
     <section className="mt-8">
       <h2 className="text-lg font-semibold">Specifications</h2>
-      <dl className="mt-2 divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white text-sm">
+      <dl className="mt-2 divide-y divide-slate-100 rounded-3xl bg-white text-sm">
         {rows.map(([key, value]) => (
-          <div key={key} className="grid grid-cols-3 gap-3 px-4 py-2.5">
+          <div key={key} className="grid grid-cols-3 gap-3 px-5 py-3">
             <dt className="text-slate-500">{key}</dt>
             <dd className="col-span-2 font-medium break-words">
               {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}

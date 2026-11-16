@@ -30,15 +30,24 @@ export function AuctionListPage() {
 
   return (
     <>
-      <section className="rounded-2xl bg-brand-700 px-5 py-6 text-white">
-        <h1 className="text-2xl font-bold">Lowest unique bid wins</h1>
-        <p className="mt-1 max-w-xl text-sm text-brand-50">
+      <section className="relative overflow-hidden rounded-4xl bg-ink px-6 py-7 text-white">
+        <div
+          aria-hidden="true"
+          className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand-500/25 blur-2xl"
+        />
+        <p className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1 text-[0.7rem] font-bold tracking-wide text-ink uppercase">
+          How it works
+        </p>
+        <h1 className="relative mt-3 text-3xl font-bold tracking-tight">
+          Lowest <span className="text-brand-400">unique</span> bid wins
+        </h1>
+        <p className="relative mt-2 max-w-xl text-sm text-white/70">
           Pick an amount nobody else picks. When the auction closes, the lowest amount that was bid exactly
           once wins the prize.
         </p>
       </section>
 
-      <div role="tablist" aria-label="Auctions" className="mt-5 flex gap-1 rounded-xl bg-slate-200/70 p-1">
+      <div role="tablist" aria-label="Auctions" className="mt-5 flex gap-1 rounded-full bg-slate-200/80 p-1">
         {AUCTION_TABS.map((t) => (
           <button
             key={t.key}
@@ -47,8 +56,8 @@ export function AuctionListPage() {
             aria-selected={t.key === tab.key}
             onClick={() => go(t, 1)}
             className={cx(
-              'flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
-              t.key === tab.key ? 'bg-white text-brand-800 shadow-sm' : 'text-slate-600 hover:text-slate-900',
+              'flex-1 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors',
+              t.key === tab.key ? 'bg-ink text-white shadow-sm' : 'text-slate-600 hover:text-slate-900',
             )}
           >
             {t.label}
@@ -67,7 +76,7 @@ export function AuctionListPage() {
             </Button>
           </div>
         ) : auctions.data.items.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
+          <p className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
             {page > 1 ? 'There is nothing on this page.' : EMPTY[tab.key]}
           </p>
         ) : (

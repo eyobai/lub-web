@@ -3,11 +3,12 @@ import { Link, type LinkProps } from 'react-router-dom';
 import { cx } from '../lib/cx';
 
 const BUTTON_BASE =
-  'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 const BUTTON_VARIANTS = {
-  primary: 'bg-brand-700 text-white hover:bg-brand-800',
-  secondary: 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-100',
-  danger: 'border border-red-200 bg-white text-red-700 hover:bg-red-50',
+  primary: 'bg-brand-500 text-ink shadow-sm hover:bg-brand-400',
+  dark: 'bg-ink text-white hover:bg-slate-800',
+  secondary: 'bg-slate-200/80 text-slate-900 hover:bg-slate-300/80',
+  danger: 'bg-red-50 text-red-700 hover:bg-red-100',
 } as const;
 
 type Variant = keyof typeof BUTTON_VARIANTS;
@@ -74,7 +75,7 @@ export function Field({ label, hint, error, className, ...rest }: FieldProps) {
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cx(
-          'block w-full rounded-lg border bg-white px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400',
+          'block w-full rounded-2xl border bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none',
           error ? 'border-red-500' : 'border-slate-300',
         )}
       />
@@ -109,7 +110,7 @@ export function Alert({
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
-      className={cx('rounded-lg border px-4 py-3 text-sm', ALERT_TONES[tone])}
+      className={cx('rounded-2xl border px-4 py-3 text-sm', ALERT_TONES[tone])}
     >
       {children}
     </div>
@@ -118,7 +119,16 @@ export function Alert({
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cx('rounded-2xl border border-slate-200 bg-white shadow-sm', className)}>{children}</div>
+    <div
+      className={cx(
+        'rounded-3xl shadow-[0_1px_2px_rgb(22_21_19/0.04)]',
+        // A card given its own background (a dark or tinted panel) does not also get the white one.
+        !/(^|\s)bg-/.test(className ?? '') && 'bg-white',
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 

@@ -37,7 +37,7 @@ export function NotificationsPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
         {unread > 0 && (
           <Button variant="secondary" onClick={() => markAll.mutate()} busy={markAll.isPending}>
             Mark all as read
@@ -58,7 +58,7 @@ export function NotificationsPage() {
       <div
         role="group"
         aria-label="Which notifications to show"
-        className="mt-4 flex gap-1 rounded-xl bg-slate-200/70 p-1"
+        className="mt-4 flex gap-1 rounded-full bg-slate-200/80 p-1"
       >
         {[
           { label: 'All', value: false },
@@ -70,9 +70,9 @@ export function NotificationsPage() {
             aria-pressed={option.value === unreadOnly}
             onClick={() => go(option.value, 1)}
             className={cx(
-              'flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+              'flex-1 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors',
               option.value === unreadOnly
-                ? 'bg-white text-brand-800 shadow-sm'
+                ? 'bg-ink text-white shadow-sm'
                 : 'text-slate-600 hover:text-slate-900',
             )}
           >
@@ -96,7 +96,7 @@ export function NotificationsPage() {
             </Button>
           </div>
         ) : notifications.data.items.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
+          <p className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
             {page > 1
               ? 'There is nothing on this page.'
               : unreadOnly

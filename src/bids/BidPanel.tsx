@@ -133,8 +133,8 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
 
   if (confirming) {
     return (
-      <Card className="space-y-3 p-4">
-        <h2 className="font-semibold">Place {plural(amounts.length, 'bid')}?</h2>
+      <Card className="space-y-3 p-5">
+        <h2 className="text-lg font-bold">Place {plural(amounts.length, 'bid')}?</h2>
         <p className="text-sm font-semibold tabular-nums">{amounts.map(money).join(', ')}</p>
         <p className="text-sm text-slate-700">
           {money(total)} will be taken from your wallet
@@ -142,7 +142,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
         </p>
         {place.error && <Alert>{bidErrorMessage(place.error, a)}</Alert>}
         <div className="flex flex-wrap gap-3">
-          <Button onClick={submit} busy={place.isPending}>
+          <Button onClick={submit} busy={place.isPending} className="flex-1 py-3 text-base">
             {place.error ? 'Try again' : `Pay ${money(total)} and bid`}
           </Button>
           <Button variant="secondary" onClick={() => setConfirming(false)} disabled={place.isPending}>
@@ -154,10 +154,10 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   }
 
   return (
-    <Card className="space-y-4 p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="font-semibold">Place your bids</h2>
-        <p className="text-sm text-slate-600">
+    <Card className="space-y-4 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <h2 className="text-lg font-bold">Place your bids</h2>
+        <p className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600">
           Wallet:{' '}
           <Link to="/wallet" className="font-semibold text-brand-700 hover:underline">
             {wallet.data
@@ -195,7 +195,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
           error={entryError}
           hint={`Each bid costs ${money(a.bidFeeMinor)}.`}
         />
-        <Button type="submit" variant="secondary" className="mt-6 py-3">
+        <Button type="submit" variant="dark" className="mt-6 py-3.5">
           Add
         </Button>
       </form>
@@ -205,7 +205,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
           type="button"
           aria-expanded={rangeOpen}
           onClick={() => setRangeOpen(!rangeOpen)}
-          className="text-sm font-semibold text-brand-700 hover:underline"
+          className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-200"
         >
           {rangeOpen ? 'Hide range' : 'Add a range of amounts'}
         </button>
@@ -236,7 +236,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
                   setRangeError(null);
                 }}
               />
-              <Button type="submit" variant="secondary" className="mt-6 py-3 whitespace-nowrap">
+              <Button type="submit" variant="dark" className="mt-6 py-3.5 whitespace-nowrap">
                 Add range
               </Button>
             </div>
@@ -263,7 +263,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
                   'flex items-center gap-1 rounded-full border py-1 pr-1 pl-3 text-sm font-semibold tabular-nums',
                   refused.has(amount.toString())
                     ? 'border-red-300 bg-red-50 text-red-800'
-                    : 'border-brand-100 bg-brand-50 text-brand-800',
+                    : 'border-brand-200 bg-brand-50 text-brand-800',
                 )}
               >
                 {money(amount)}
@@ -292,7 +292,11 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
             </Alert>
           )}
           <div className="flex flex-wrap gap-3">
-            <Button onClick={() => setConfirming(true)} disabled={short || frozen}>
+            <Button
+              onClick={() => setConfirming(true)}
+              disabled={short || frozen}
+              className="flex-1 py-3 text-base"
+            >
               Review {plural(amounts.length, 'bid')}
             </Button>
             <Button variant="secondary" onClick={() => change([])}>

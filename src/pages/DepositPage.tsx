@@ -32,7 +32,7 @@ export function DepositPage() {
     const missing = isApiError(deposit.error, 'NOT_FOUND', 'VALIDATION_FAILED');
     return (
       <div className="mx-auto max-w-xl space-y-3">
-        <h1 className="text-2xl font-bold">Payment</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Payment</h1>
         <Alert>{missing ? 'We could not find this payment.' : errorMessage(deposit.error)}</Alert>
         {missing ? (
           <ButtonLink to="/wallet" variant="secondary">
@@ -50,7 +50,7 @@ export function DepositPage() {
   const d = deposit.data;
   return (
     <div className="mx-auto max-w-xl space-y-5">
-      <h1 className="text-2xl font-bold">Payment</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Payment</h1>
       <Card className="space-y-4 p-5">
         <Outcome deposit={d} />
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 border-t border-slate-100 pt-4 text-sm">
@@ -106,7 +106,7 @@ function Outcome({ deposit }: { deposit: Deposit }) {
         {address && (
           <a
             href={address}
-            className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            className="inline-flex min-h-11 items-center rounded-full bg-slate-200/80 px-5 text-sm font-semibold text-slate-900 hover:bg-slate-300/80"
           >
             I have not paid yet: open the payment page
           </a>
