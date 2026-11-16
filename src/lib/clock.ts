@@ -33,11 +33,10 @@ export function timeLeft(until: string, now: number = serverClock.now()): TimeLe
 
 const two = (n: number) => String(n).padStart(2, '0');
 
-/** "2d 03h 12m" above a day, "03:12:45" below. */
+/** "03:12:45", with the days in front when there are any: "2 days 03:12:45". Ticks every second. */
 export function formatTimeLeft(t: TimeLeft): string {
-  return t.days > 0
-    ? `${t.days}d ${two(t.hours)}h ${two(t.minutes)}m`
-    : `${two(t.hours)}:${two(t.minutes)}:${two(t.seconds)}`;
+  const clock = `${two(t.hours)}:${two(t.minutes)}:${two(t.seconds)}`;
+  return t.days > 0 ? `${t.days} ${t.days === 1 ? 'day' : 'days'} ${clock}` : clock;
 }
 
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

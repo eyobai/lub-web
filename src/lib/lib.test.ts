@@ -41,7 +41,8 @@ describe('timeLeft', () => {
   });
 
   it('formats with days above a day and as a clock below', () => {
-    expect(formatTimeLeft(timeLeft('2026-01-03T03:04:05.000Z', at))).toBe('2d 03h 04m');
+    expect(formatTimeLeft(timeLeft('2026-01-03T03:04:05.000Z', at))).toBe('2 days 03:04:05');
+    expect(formatTimeLeft(timeLeft('2026-01-02T03:04:05.000Z', at))).toBe('1 day 03:04:05');
     expect(formatTimeLeft(timeLeft('2026-01-01T03:04:05.000Z', at))).toBe('03:04:05');
   });
 });
