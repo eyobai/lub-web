@@ -264,8 +264,9 @@ What has and has not been checked:
 Known limits:
 
 - English only.
-- Adding money goes through Chapa and has only been run against a simulated Chapa, not Chapa itself.
-  Real payments need the backend's live-mode steps first (see the backend's deployment notes).
+- Adding money goes through Chapa. With a live key, the hand-over to Chapa's real payment page was checked;
+  a paid deposit has only been run against a simulated Chapa. See the backend's deployment notes before
+  opening deposits to the public.
 - No withdrawing money.
 - No "forgot password": staff reset a password and the user must then choose a new one.
 - The unread notification count is refreshed every minute, not instantly, and there are no push notifications.
