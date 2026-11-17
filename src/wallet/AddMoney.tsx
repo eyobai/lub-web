@@ -66,7 +66,7 @@ export function AddMoney({ options }: { options: DepositOptions }) {
           type="button"
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
-          className="flex items-center gap-2 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 px-5 py-3 font-bold text-ink shadow-[0_6px_16px_-4px_rgb(212_165_42/0.6)]"
+          className="flex items-center gap-2 rounded-full bg-gradient-to-b from-brand-500 to-brand-600 px-5 py-3 font-bold text-white shadow-[0_6px_16px_-4px_rgb(5_150_105/0.45)]"
         >
           <Icon d={WALLET_ICON} />
           {t('Top up wallet')}
@@ -145,7 +145,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
         onClick={() => submit()}
         disabled={busy}
         aria-busy={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 px-5 py-4 text-lg font-bold tracking-wide text-ink uppercase disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-brand-500 to-brand-600 px-5 py-4 text-lg font-bold tracking-wide text-white uppercase disabled:opacity-50"
       >
         {busy && <Spinner className="h-5 w-5" />}
         {leaving
@@ -284,13 +284,13 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
                     className={cx(
                       'flex min-h-11 flex-col items-center rounded-3xl border px-4 py-1.5 leading-tight',
                       selected
-                        ? 'border-brand-600 bg-brand-500 text-ink'
+                        ? 'border-brand-600 bg-brand-500 text-white'
                         : 'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200',
                     )}
                   >
                     <span className="font-bold">{formatMoney(amount, options.currency)}</span>
                     {options.bonusPercent > 0 && (
-                      <span className={cx('text-xs', selected ? 'text-ink/70' : 'text-slate-500')}>
+                      <span className={cx('text-xs', selected ? 'text-white/80' : 'text-slate-500')}>
                         +{money(bonusFor(minor, options))}
                       </span>
                     )}

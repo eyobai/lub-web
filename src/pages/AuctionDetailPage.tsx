@@ -265,7 +265,7 @@ function ResultPanel({ result }: { result: AuctionResult | null | undefined }) {
       <Card className="flex items-center gap-4 bg-ink p-5 text-white">
         <span
           aria-hidden="true"
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-500 text-ink"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white"
         >
           <svg
             viewBox="0 0 24 24"

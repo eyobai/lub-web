@@ -40,10 +40,10 @@ export function PayAndBidButton({ auction: a, gold = false }: { auction: Auction
   const fee = formatMinor(a.bidFeeMinor, a.currency, a.minorUnits);
   if (a.status !== 'ACTIVE') return null;
   const look = cx(
-    'flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 font-bold tracking-wide text-ink uppercase transition',
-    'bg-gradient-to-b from-brand-400 to-brand-500 hover:from-brand-200 hover:to-brand-400 active:scale-[0.99]',
+    'flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 font-bold tracking-wide text-white uppercase transition',
+    'bg-gradient-to-b from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 active:scale-[0.99]',
     // On a dark panel the button needs no shadow; on a white card it lifts off the page.
-    gold ? 'shadow-none' : 'shadow-[0_6px_16px_-4px_rgb(212_165_42/0.6)] ring-1 ring-brand-600/30',
+    gold ? 'shadow-none' : 'shadow-[0_6px_16px_-4px_rgb(5_150_105/0.45)] ring-1 ring-brand-600/30',
   );
   const label = (
     <>
@@ -597,7 +597,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
               onClick={pay}
               disabled={!method || busy}
               aria-busy={busy}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-5 py-4 text-lg font-semibold tracking-wide text-ink uppercase transition-colors hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-5 py-4 text-lg font-semibold tracking-wide text-white uppercase transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy && <Spinner className="h-5 w-5" />}
               {leaving ? t('Opening Chapa…') : t('Pay {total} & bid', { total: money(total) })}

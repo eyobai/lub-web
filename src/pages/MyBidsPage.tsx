@@ -61,7 +61,7 @@ export function MyBidsPage() {
           </div>
           <span
             aria-hidden="true"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-ink"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-white"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
               <path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1zm10-4v2m0 4v2m0 4v2" />

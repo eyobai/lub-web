@@ -56,7 +56,7 @@ export function WinnersPage() {
                       alt={winner.productName}
                       className="aspect-[16/9] w-full"
                     />
-                    <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1 text-[0.7rem] font-bold tracking-wide text-ink uppercase">
+                    <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1 text-[0.7rem] font-bold tracking-wide text-white uppercase">
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"

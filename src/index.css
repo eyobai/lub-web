@@ -10,16 +10,17 @@
 @theme {
   --font-sans: 'Outfit Variable', 'Noto Sans Ethiopic Variable', ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #fbf6e7;
-  --color-brand-100: #f4e7c2;
-  --color-brand-200: #ead28a;
-  --color-brand-400: #e0b546;
-  --color-brand-500: #d4a52a;
-  --color-brand-600: #b98d1c;
-  --color-brand-700: #94700f;
-  --color-brand-800: #6f540c;
-  --color-accent-400: #e0b546;
-  --color-accent-500: #d4a52a;
+  /* Emerald green: buttons, the balance, live badges and highlights. White text on 500 and darker. */
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-200: #a7f3d0;
+  --color-brand-400: #34d399;
+  --color-brand-500: #059669;
+  --color-brand-600: #047857;
+  --color-brand-700: #046c4e;
+  --color-brand-800: #065f46;
+  --color-accent-400: #34d399;
+  --color-accent-500: #059669;
 
   --color-ink: #161513;
   --color-cream: #f3f1ec;

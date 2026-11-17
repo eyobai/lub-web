@@ -6,7 +6,7 @@ import { t } from '../i18n/i18n';
 const BUTTON_BASE =
   'inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
 const BUTTON_VARIANTS = {
-  primary: 'bg-brand-500 text-ink shadow-sm hover:bg-brand-400',
+  primary: 'bg-brand-500 text-white shadow-sm hover:bg-brand-600',
   dark: 'bg-ink text-white hover:bg-slate-800',
   secondary: 'bg-slate-200/80 text-slate-900 hover:bg-slate-300/80',
   danger: 'bg-red-50 text-red-700 hover:bg-red-100',

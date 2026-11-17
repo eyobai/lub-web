@@ -245,7 +245,7 @@ function Balance() {
     <Link
       to="/wallet"
       aria-label={t('Balance: {amount}', { amount })}
-      className="rounded-full bg-brand-500 px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-ink tabular-nums hover:bg-brand-400"
+      className="rounded-full bg-brand-500 px-3.5 py-2 text-sm font-semibold whitespace-nowrap text-white tabular-nums hover:bg-brand-600"
     >
       {amount}
     </Link>

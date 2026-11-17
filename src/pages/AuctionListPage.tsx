@@ -37,7 +37,7 @@ export function AuctionListPage() {
           aria-hidden="true"
           className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand-500/25 blur-2xl"
         />
-        <p className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1 text-[0.7rem] font-bold tracking-wide text-ink uppercase">
+        <p className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1 text-[0.7rem] font-bold tracking-wide text-white uppercase">
           {t('How it works')}
         </p>
         <h1 className="relative mt-3 text-3xl font-bold tracking-tight">
