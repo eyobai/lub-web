@@ -6,7 +6,7 @@ import { Alert, Button, Card, Field } from '../components/ui';
 import { cx } from '../lib/cx';
 import { formatMinor } from '../lib/money';
 import { useWallet } from '../wallet/queries';
-import { amountsBetween, parseBidAmount, sortAmounts, type AmountProblem } from './amounts';
+import { parseBidAmount, sortAmounts, type AmountProblem } from './amounts';
 import { bidErrorMessage, refusedAmounts } from './errors';
 import { isUnconfirmed, useMyBidsInAuction, usePlaceBids, type BidSubmission } from './queries';
 
@@ -23,10 +23,6 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   const [amounts, setAmounts] = useState<bigint[]>([]);
   const [entry, setEntry] = useState('');
   const [entryError, setEntryError] = useState<string | null>(null);
-  const [rangeOpen, setRangeOpen] = useState(false);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [rangeError, setRangeError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [placed, setPlaced] = useState<BidSubmission | null>(null);
 
@@ -89,26 +85,6 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
     setEntryError(null);
     setEntry('');
     change([...amounts, parsed.minor]);
-  }
-
-  function addRange(event: FormEvent) {
-    event.preventDefault();
-    const low = parseBidAmount(from, a);
-    const high = parseBidAmount(to, a);
-    if (!low.ok) return setRangeError(`From: ${problemText(low.problem)}`);
-    if (!high.ok) return setRangeError(`To: ${problemText(high.problem)}`);
-    const all = amountsBetween(low.minor, high.minor, a, 1000);
-    const fresh = all?.filter((amount) => !amounts.includes(amount) && !alreadyBid.has(amount.toString()));
-    if (!fresh || fresh.length > Math.max(room, 0)) {
-      return setRangeError(`That range is too long. ${roomText()}`);
-    }
-    if (fresh.length === 0) {
-      return setRangeError('Every amount in that range is already in your list or already bid.');
-    }
-    setRangeError(null);
-    setFrom('');
-    setTo('');
-    change([...amounts, ...fresh]);
   }
 
   function submit() {
@@ -199,59 +175,6 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
           Add
         </Button>
       </form>
-
-      <div>
-        <button
-          type="button"
-          aria-expanded={rangeOpen}
-          onClick={() => setRangeOpen(!rangeOpen)}
-          className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-200"
-        >
-          {rangeOpen ? 'Hide range' : 'Add a range of amounts'}
-        </button>
-        {rangeOpen && (
-          <form onSubmit={addRange} noValidate className="mt-2 space-y-2">
-            <div className="flex items-start gap-2">
-              <Field
-                label="From"
-                required
-                className="flex-1"
-                inputMode="decimal"
-                autoComplete="off"
-                value={from}
-                onChange={(event) => {
-                  setFrom(event.target.value);
-                  setRangeError(null);
-                }}
-              />
-              <Field
-                label="To"
-                required
-                className="flex-1"
-                inputMode="decimal"
-                autoComplete="off"
-                value={to}
-                onChange={(event) => {
-                  setTo(event.target.value);
-                  setRangeError(null);
-                }}
-              />
-              <Button type="submit" variant="dark" className="mt-6 py-3.5 whitespace-nowrap">
-                Add range
-              </Button>
-            </div>
-            {rangeError ? (
-              <p role="alert" className="text-sm text-red-700">
-                {rangeError}
-              </p>
-            ) : (
-              <p className="text-sm text-slate-500">
-                Adds every allowed amount between the two, one bid each.
-              </p>
-            )}
-          </form>
-        )}
-      </div>
 
       {amounts.length > 0 && (
         <div className="space-y-3 border-t border-slate-100 pt-4">

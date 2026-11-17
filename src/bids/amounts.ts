@@ -23,16 +23,6 @@ export function parseBidAmount(input: string, rules: BidRules): ParsedAmount {
   return { ok: true, minor };
 }
 
-/** Every allowed amount from `from` to `to` inclusive, or null if that is more than `limit` amounts. */
-export function amountsBetween(from: bigint, to: bigint, rules: BidRules, limit: number): bigint[] | null {
-  const step = BigInt(rules.bidStepMinor);
-  const [low, high] = from <= to ? [from, to] : [to, from];
-  if ((high - low) / step + 1n > BigInt(limit)) return null;
-  const amounts: bigint[] = [];
-  for (let amount = low; amount <= high; amount += step) amounts.push(amount);
-  return amounts;
-}
-
 export function sortAmounts(amounts: Iterable<bigint>): bigint[] {
   return [...amounts].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }

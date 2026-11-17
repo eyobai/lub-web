@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatMinor, fromMinor, toMinor } from '../lib/money';
-import { amountsBetween, newIdempotencyKey, parseBidAmount, sortAmounts } from './amounts';
+import { newIdempotencyKey, parseBidAmount, sortAmounts } from './amounts';
 
 const rules = { minorUnits: 2, minBidMinor: '100', maxBidMinor: '100000', bidStepMinor: '100' };
 
@@ -69,20 +69,6 @@ describe('parseBidAmount', () => {
       ok: true,
       minor: 400n,
     });
-  });
-});
-
-describe('amountsBetween', () => {
-  it('lists every step, in either direction, ends included', () => {
-    expect(amountsBetween(300n, 600n, rules, 10)).toEqual([300n, 400n, 500n, 600n]);
-    expect(amountsBetween(600n, 300n, rules, 10)).toEqual([300n, 400n, 500n, 600n]);
-    expect(amountsBetween(300n, 300n, rules, 10)).toEqual([300n]);
-  });
-
-  it('refuses a range longer than the limit without building it', () => {
-    expect(amountsBetween(100n, 500n, rules, 5)).toHaveLength(5);
-    expect(amountsBetween(100n, 600n, rules, 5)).toBeNull();
-    expect(amountsBetween(100n, 10n ** 30n, rules, 1000)).toBeNull();
   });
 });
 

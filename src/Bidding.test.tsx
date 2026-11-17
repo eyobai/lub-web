@@ -226,26 +226,12 @@ describe('placing bids', () => {
     expect(fake.callsTo(PLACE)).toHaveLength(0);
   });
 
-  it('adds a range, leaving out amounts already bid, and refuses one that is too long', async () => {
-    signedIn({
-      [DETAIL]: [200, anAuction({ maxBidsPerRequest: 5 })],
-      [MINE]: [200, myBids([aMyBid('500')])],
-    });
+  it('stops at the most bids one request may place, and offers no range of amounts', async () => {
+    signedIn({ [DETAIL]: [200, anAuction({ maxBidsPerRequest: 5 })] });
     const { user } = renderApp(`/auctions/${ID}`);
-    await screen.findByText('Your bids in this auction (1)');
-    await user.click(screen.getByRole('button', { name: 'Add a range of amounts' }));
-
-    await user.type(screen.getByLabelText('From'), '1');
-    await user.type(screen.getByLabelText('To'), '50');
-    await user.click(screen.getByRole('button', { name: 'Add range' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('That range is too long. You can add 5 more bids.');
-
-    await user.clear(screen.getByLabelText('From'));
-    await user.clear(screen.getByLabelText('To'));
-    await user.type(screen.getByLabelText('From'), '7');
-    await user.type(screen.getByLabelText('To'), '3');
-    await user.click(screen.getByRole('button', { name: 'Add range' }));
+    for (const amount of ['7', '3', '4', '6']) await add(user, amount);
     expect(toPlace().map((li) => li.textContent)).toEqual(['ETB 3×', 'ETB 4×', 'ETB 6×', 'ETB 7×']);
+    expect(screen.queryByRole('button', { name: 'Add a range of amounts' })).not.toBeInTheDocument();
 
     await add(user, '20');
     await add(user, '21');
