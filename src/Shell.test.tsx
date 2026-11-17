@@ -11,13 +11,13 @@ describe('browser tab title', () => {
   it('is the site name on the home page and names every other page', async () => {
     fakeApi({ [AUCTIONS]: [200, aPage([anAuction()])], [WINNERS]: [200, winners()] });
     const { user } = renderApp('/');
-    await waitFor(() => expect(document.title).toBe('LUB Auction'));
+    await waitFor(() => expect(document.title).toBe('LyuBid'));
 
     await user.click(screen.getByRole('link', { name: 'Winners' }));
-    await waitFor(() => expect(document.title).toBe('Recent winners · LUB Auction'));
+    await waitFor(() => expect(document.title).toBe('Recent winners · LyuBid'));
 
     await user.click(screen.getByRole('link', { name: 'Sign in' }));
-    await waitFor(() => expect(document.title).toBe('Sign in · LUB Auction'));
+    await waitFor(() => expect(document.title).toBe('Sign in · LyuBid'));
   });
 
   it('names an auction page after the auction, and says so when there is none', async () => {
@@ -28,17 +28,17 @@ describe('browser tab title', () => {
       [`GET /api/v1/auctions/${missing}`]: apiError(404, 'NOT_FOUND'),
     });
     const first = renderApp(`/auctions/${auction.id}`);
-    await waitFor(() => expect(document.title).toBe('Win a Samsung Galaxy A55 · LUB Auction'));
+    await waitFor(() => expect(document.title).toBe('Win a Samsung Galaxy A55 · LyuBid'));
     first.unmount();
 
     renderApp(`/auctions/${missing}`);
-    await waitFor(() => expect(document.title).toBe('Auction not found · LUB Auction'));
+    await waitFor(() => expect(document.title).toBe('Auction not found · LyuBid'));
   });
 
   it('names an unknown address', async () => {
     fakeApi({});
     renderApp('/no-such-page');
-    await waitFor(() => expect(document.title).toBe('Page not found · LUB Auction'));
+    await waitFor(() => expect(document.title).toBe('Page not found · LyuBid'));
   });
 });
 

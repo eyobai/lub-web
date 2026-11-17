@@ -291,7 +291,7 @@ describe('the page Chapa sends the user back to', () => {
       'href',
       DEPOSIT.checkoutUrl,
     );
-    expect(document.title).toBe('Payment · LUB Auction');
+    expect(document.title).toBe('Payment · LyuBid');
 
     await vi.advanceTimersByTimeAsync(DEPOSIT_POLL_MS);
     await waitFor(() => expect(fake.callsTo(ONE).length).toBeGreaterThanOrEqual(2));
