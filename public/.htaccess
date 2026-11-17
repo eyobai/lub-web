@@ -1,0 +1,40 @@
+# For Apache hosting (cPanel). Copied into dist/ by the build; upload it with the rest of dist/.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Always HTTPS, except the files cPanel's AutoSSL uses to get the certificate.
+  RewriteCond %{REQUEST_URI} !^/\.well-known/
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # Every address that is not a real file is a page of the site: answer with index.html, so a page can be
+  # reloaded or opened from a link (for example /wallet or /auctions/…).
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "no-referrer"
+  # The page cannot be shown inside another site's frame (a meta tag cannot say this; the server must).
+  Header always set X-Frame-Options "DENY"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  # Pages: check for a newer copy on every visit, so a new release is picked up at once.
+  Header set Cache-Control "no-cache"
+  # Files under /assets/ change name whenever they change, so browsers may keep them for good.
+  <If "%{REQUEST_URI} =~ m#^/assets/#">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
