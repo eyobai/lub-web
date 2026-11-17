@@ -27,3 +27,4 @@ dist-ssr
 .env.local
 test-results
 playwright-report
+dump.rdb
