@@ -255,6 +255,7 @@ export const am: Record<string, string> = {
   'Save new password': 'አዲሱን የይለፍ ቃል አስቀምጥ',
   'See all auctions': 'ሁሉንም ጨረታዎች ይመልከቱ',
   'See all your bids': 'ሁሉንም ጨረታዎችዎን ይመልከቱ',
+  'See details': 'ዝርዝሩን ይመልከቱ',
   'See auctions': 'ጨረታዎችን ይመልከቱ',
   'See my bids': 'ጨረታዎቼን አሳይ',
   'See my wins': 'ድሎቼን አሳይ',

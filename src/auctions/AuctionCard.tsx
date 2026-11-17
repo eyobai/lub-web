@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { PayAndBidButton } from '../bids/PayAndBid';
 import { formatDateTime } from '../lib/clock';
@@ -10,66 +11,81 @@ import { t } from '../i18n/i18n';
 
 export function AuctionCard({ auction }: { auction: Auction }) {
   const image = auction.product.images[0];
+  const titleId = useId();
   return (
-    <div className="flex flex-col overflow-hidden rounded-4xl bg-white p-2 shadow-[0_1px_2px_rgb(22_21_19/0.04)] transition-shadow hover:shadow-[0_8px_24px_rgb(22_21_19/0.08)]">
-      <Link to={`/auctions/${auction.id}`} className="group flex flex-1 flex-col rounded-3xl">
-        <div className="relative overflow-hidden rounded-3xl">
-          <ProductImage
-            url={image?.url}
-            alt={image?.altText ?? auction.product.name}
-            className="aspect-[16/10] w-full transition-transform duration-300 group-hover:scale-[1.02]"
-          />
-          <div className="absolute top-3 left-3">
-            <StatusBadge status={auction.status} />
-          </div>
-          <div className="absolute right-3 bottom-3 rounded-2xl bg-ink/90 px-3 py-1.5 text-right text-white">
-            <p className="text-[0.65rem] text-white/70">{t('Fee per bid')}</p>
-            <p className="text-base leading-tight font-bold tabular-nums">
-              {formatMoney(auction.bidFee, auction.currency)}
-            </p>
-          </div>
+    // Not a link: on a live auction "Pay & bid" is the one thing to do, and a second way in confused people.
+    <article
+      aria-labelledby={titleId}
+      className="flex flex-col overflow-hidden rounded-4xl bg-white p-2 shadow-[0_1px_2px_rgb(22_21_19/0.04)]"
+    >
+      <div className="relative overflow-hidden rounded-3xl">
+        <ProductImage
+          url={image?.url}
+          alt={image?.altText ?? auction.product.name}
+          className="aspect-[16/10] w-full"
+        />
+        <div className="absolute top-3 left-3">
+          <StatusBadge status={auction.status} />
         </div>
-        <div className="flex flex-1 flex-col gap-3 px-3 pt-3 pb-2">
-          <div>
-            <h2 className="line-clamp-2 text-lg leading-snug font-bold text-ink">{auction.title}</h2>
-            <p className="mt-0.5 text-sm text-slate-500">
-              {t('Worth {amount}', {
-                amount: formatMoney(auction.product.marketValue, auction.product.currency),
-              })}
-            </p>
+        <div className="absolute right-3 bottom-3 rounded-2xl bg-ink/90 px-3 py-1.5 text-right text-white">
+          <p className="text-[0.65rem] text-white/70">{t('Fee per bid')}</p>
+          <p className="text-base leading-tight font-bold tabular-nums">
+            {formatMoney(auction.bidFee, auction.currency)}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col gap-3 px-3 pt-3 pb-2">
+        <div>
+          <h2 id={titleId} className="line-clamp-2 text-lg leading-snug font-bold text-ink">
+            {auction.title}
+          </h2>
+          <p className="mt-0.5 text-sm text-slate-500">
+            {t('Worth {amount}', {
+              amount: formatMoney(auction.product.marketValue, auction.product.currency),
+            })}
+          </p>
+        </div>
+        <dl className="mt-auto flex flex-wrap items-center gap-2 text-sm">
+          <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+            <dt className="sr-only">{t('Bids placed')}</dt>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+              className="h-4 w-4 text-brand-600"
+            >
+              <path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1zm10-4v2m0 4v2m0 4v2" />
+            </svg>
+            <dd className="font-semibold tabular-nums">
+              {auction.totalBidCount.toLocaleString()}
+              <span className="font-normal text-slate-500">
+                {' '}
+                {auction.totalBidCount === 1 ? t('bid') : t('bids')}
+              </span>
+            </dd>
           </div>
-          <dl className="mt-auto flex flex-wrap items-center gap-2 text-sm">
-            <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-              <dt className="sr-only">{t('Bids placed')}</dt>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-                className="h-4 w-4 text-brand-600"
-              >
-                <path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 0 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1zm10-4v2m0 4v2m0 4v2" />
-              </svg>
-              <dd className="font-semibold tabular-nums">
-                {auction.totalBidCount.toLocaleString()}
-                <span className="font-normal text-slate-500">
-                  {' '}
-                  {auction.totalBidCount === 1 ? t('bid') : t('bids')}
-                </span>
-              </dd>
-            </div>
-          </dl>
           <AuctionTiming auction={auction} />
-        </div>
-      </Link>
-      {auction.status === 'ACTIVE' && (
+        </dl>
+      </div>
+      {auction.status === 'ACTIVE' ? (
         <div className="px-3 pt-1 pb-3">
           <PayAndBidButton auction={auction} />
           <p className="mt-2 text-center text-xs text-slate-500">{t('Bid fee is non-refundable')}</p>
         </div>
+      ) : (
+        // No bidding here, so the only way on is to the auction's page (its result, or when it opens).
+        <div className="px-3 pt-1 pb-3">
+          <Link
+            to={`/auctions/${auction.id}`}
+            className="block rounded-full bg-slate-100 px-5 py-3 text-center text-sm font-semibold text-slate-800 hover:bg-slate-200"
+          >
+            {t('See details')}
+          </Link>
+        </div>
       )}
-    </div>
+    </article>
   );
 }
 
@@ -81,41 +97,37 @@ const CLOCK = (
     strokeWidth="2"
     strokeLinecap="round"
     aria-hidden="true"
-    className="h-5 w-5 shrink-0"
+    className="h-4 w-4 shrink-0"
   >
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 2" />
   </svg>
 );
 
-/** A running auction counts down to its close, an upcoming one to its opening. */
+/** A running auction counts down to its close, an upcoming one to its opening: a small pill beside the bid count. */
 function AuctionTiming({ auction }: { auction: Auction }) {
   const upcoming = auction.status === 'SCHEDULED';
   if (auction.status === 'ACTIVE' || upcoming) {
     const until = upcoming ? auction.opensAt : auction.closesAt;
     return (
-      <div className="flex w-full items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-200">
-          {CLOCK}
-        </span>
-        <div className="shrink-0 grow">
-          <p className="text-[0.7rem] font-semibold tracking-wide text-brand-700 uppercase">
-            {upcoming ? t('Opens in') : t('Closes in')}
-          </p>
-          <p className="text-lg leading-tight font-bold whitespace-nowrap text-ink">
-            <Countdown until={until} />
-          </p>
-        </div>
+      <div className="flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5">
+        <span className="text-brand-600">{CLOCK}</span>
+        <dt className="text-xs text-brand-700">{upcoming ? t('Opens in') : t('Closes in')}</dt>
+        <dd className="font-semibold whitespace-nowrap text-ink">
+          <Countdown until={until} />
+        </dd>
       </div>
     );
   }
   return (
-    <p className="flex items-center gap-1.5 self-start rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-500">
+    <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-slate-500">
       {CLOCK}
-      {auction.status === 'CLOSING' ? t('Bidding closed') : t('Ended')}
-      <time dateTime={auction.closesAt} className="font-semibold text-ink">
-        {formatDateTime(auction.closesAt)}
-      </time>
-    </p>
+      <dt>{auction.status === 'CLOSING' ? t('Bidding closed') : t('Ended')}</dt>
+      <dd>
+        <time dateTime={auction.closesAt} className="font-semibold text-ink">
+          {formatDateTime(auction.closesAt)}
+        </time>
+      </dd>
+    </div>
   );
 }

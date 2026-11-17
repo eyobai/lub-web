@@ -286,8 +286,14 @@ describe('auction list', () => {
     const fake = fakeApi({ [AUCTIONS]: [200, aPage([anAuction()])] });
     renderApp('/');
 
-    const card = await screen.findByRole('link', { name: /Samsung Galaxy A55 auction/ });
-    expect(card).toHaveAttribute('href', `/auctions/${ID}`);
+    const card = await screen.findByRole('article', { name: 'Samsung Galaxy A55 auction' });
+    // A live auction's card is not a link itself: Pay & bid is its one action (for a visitor, it leads to sign in).
+    expect(
+      within(card)
+        .getAllByRole('link')
+        .map((l) => l.textContent),
+    ).toEqual(['Pay ETB 75 & bid']);
+    expect(within(card).getByRole('link', { name: 'Pay ETB 75 & bid' })).toHaveAttribute('href', '/sign-in');
     expect(within(card).getByText('ETB 75')).toBeInTheDocument();
     expect(within(card).getByText('1,234')).toBeInTheDocument();
     expect(within(card).getByText('Worth ETB 65,000')).toBeInTheDocument();
@@ -318,7 +324,7 @@ describe('auction list', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Ended' }));
 
-    expect(await screen.findByRole('link', { name: /Finished one/ })).toBeInTheDocument();
+    expect(await screen.findByRole('article', { name: 'Finished one' })).toBeInTheDocument();
     expect(address()).toBe('/?show=ended');
     expect(screen.getByRole('tab', { name: 'Ended' })).toHaveAttribute('aria-selected', 'true');
     expect(Object.fromEntries(fake.calls.at(-1)!.query)).toMatchObject({
@@ -354,7 +360,18 @@ describe('auction list', () => {
     fail = false;
     await user.click(screen.getByRole('button', { name: 'Try again' }));
 
-    expect(await screen.findByRole('link', { name: /Samsung Galaxy A55 auction/ })).toBeInTheDocument();
+    expect(await screen.findByRole('article', { name: 'Samsung Galaxy A55 auction' })).toBeInTheDocument();
+  });
+
+  it('gives an ended auction a way to its details instead of Pay & bid', async () => {
+    fakeApi({ [AUCTIONS]: [200, aPage([anAuction({ status: 'COMPLETED' })])] });
+    renderApp('/?show=ended');
+    const card = await screen.findByRole('article', { name: 'Samsung Galaxy A55 auction' });
+    expect(within(card).getByRole('link', { name: 'See details' })).toHaveAttribute(
+      'href',
+      `/auctions/${ID}`,
+    );
+    expect(within(card).queryByRole('link', { name: /Pay/ })).not.toBeInTheDocument();
   });
 });
 
