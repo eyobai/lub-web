@@ -6,6 +6,7 @@ import { Countdown } from './Countdown';
 import { ProductImage } from './ProductImage';
 import type { Auction } from './queries';
 import { StatusBadge } from './StatusBadge';
+import { t } from '../i18n/i18n';
 
 export function AuctionCard({ auction }: { auction: Auction }) {
   const image = auction.product.images[0];
@@ -22,7 +23,7 @@ export function AuctionCard({ auction }: { auction: Auction }) {
             <StatusBadge status={auction.status} />
           </div>
           <div className="absolute right-3 bottom-3 rounded-2xl bg-ink/90 px-3 py-1.5 text-right text-white">
-            <p className="text-[0.65rem] text-white/70">Fee per bid</p>
+            <p className="text-[0.65rem] text-white/70">{t('Fee per bid')}</p>
             <p className="text-base leading-tight font-bold tabular-nums">
               {formatMoney(auction.bidFee, auction.currency)}
             </p>
@@ -32,12 +33,14 @@ export function AuctionCard({ auction }: { auction: Auction }) {
           <div>
             <h2 className="line-clamp-2 text-lg leading-snug font-bold text-ink">{auction.title}</h2>
             <p className="mt-0.5 text-sm text-slate-500">
-              Worth {formatMoney(auction.product.marketValue, auction.product.currency)}
+              {t('Worth {amount}', {
+                amount: formatMoney(auction.product.marketValue, auction.product.currency),
+              })}
             </p>
           </div>
           <dl className="mt-auto flex flex-wrap items-center gap-2 text-sm">
             <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-              <dt className="sr-only">Bids placed</dt>
+              <dt className="sr-only">{t('Bids placed')}</dt>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -52,7 +55,7 @@ export function AuctionCard({ auction }: { auction: Auction }) {
                 {auction.totalBidCount.toLocaleString()}
                 <span className="font-normal text-slate-500">
                   {' '}
-                  {auction.totalBidCount === 1 ? 'bid' : 'bids'}
+                  {auction.totalBidCount === 1 ? t('bid') : t('bids')}
                 </span>
               </dd>
             </div>
@@ -63,7 +66,7 @@ export function AuctionCard({ auction }: { auction: Auction }) {
       {auction.status === 'ACTIVE' && (
         <div className="px-3 pt-1 pb-3">
           <PayAndBidButton auction={auction} />
-          <p className="mt-2 text-center text-xs text-slate-500">Bid fee is non-refundable</p>
+          <p className="mt-2 text-center text-xs text-slate-500">{t('Bid fee is non-refundable')}</p>
         </div>
       )}
     </div>
@@ -97,7 +100,7 @@ function AuctionTiming({ auction }: { auction: Auction }) {
         </span>
         <div className="shrink-0 grow">
           <p className="text-[0.7rem] font-semibold tracking-wide text-brand-700 uppercase">
-            {upcoming ? 'Opens in' : 'Closes in'}
+            {upcoming ? t('Opens in') : t('Closes in')}
           </p>
           <p className="text-lg leading-tight font-bold whitespace-nowrap text-ink">
             <Countdown until={until} />
@@ -109,7 +112,7 @@ function AuctionTiming({ auction }: { auction: Auction }) {
   return (
     <p className="flex items-center gap-1.5 self-start rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-500">
       {CLOCK}
-      {auction.status === 'CLOSING' ? 'Bidding closed' : 'Ended'}
+      {auction.status === 'CLOSING' ? t('Bidding closed') : t('Ended')}
       <time dateTime={auction.closesAt} className="font-semibold text-ink">
         {formatDateTime(auction.closesAt)}
       </time>

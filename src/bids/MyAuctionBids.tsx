@@ -5,14 +5,16 @@ import { cx } from '../lib/cx';
 import { formatMinor } from '../lib/money';
 import { sortAmounts } from './amounts';
 import { useMyAuctionResult, useMyBidsInAuction, type MyAuctionResult } from './queries';
+import { t, tk } from '../i18n/i18n';
+import { tRich } from '../i18n/rich';
 
 const OUTCOME: Record<MyAuctionResult['bids'][number]['outcome'], { label: string; className: string }> = {
-  WINNING: { label: 'Won', className: 'border-accent-400 bg-amber-50 text-amber-900' },
+  WINNING: { label: tk('Won'), className: 'border-accent-400 bg-amber-50 text-amber-900' },
   UNIQUE_NOT_LOWEST: {
-    label: 'Unique, but not the lowest',
+    label: tk('Unique, but not the lowest'),
     className: 'border-sky-200 bg-sky-50 text-sky-900',
   },
-  NOT_UNIQUE: { label: 'Also bid by others', className: 'border-slate-200 bg-slate-50 text-slate-700' },
+  NOT_UNIQUE: { label: tk('Also bid by others'), className: 'border-slate-200 bg-slate-50 text-slate-700' },
 };
 
 /** The signed-in user's own bids in an auction, and how each one did once the auction has ended. */
@@ -28,7 +30,9 @@ export function MyAuctionBids({ auction: a }: { auction: Auction }) {
   const amounts = sortAmounts(bids.data.items.map((bid) => BigInt(bid.amountMinor)));
   return (
     <Card className="p-4">
-      <h2 className="font-semibold">Your bids in this auction ({bids.data.total.toLocaleString()})</h2>
+      <h2 className="font-semibold">
+        {t('Your bids in this auction ({count})', { count: bids.data.total.toLocaleString() })}
+      </h2>
       <ul className="mt-3 flex flex-wrap gap-2">
         {amounts.map((amount, index) => (
           <li
@@ -41,19 +45,21 @@ export function MyAuctionBids({ auction: a }: { auction: Auction }) {
       </ul>
       {bids.data.total > bids.data.items.length && (
         <p className="mt-3 text-sm text-slate-600">
-          These are your latest {bids.data.items.length} bids.{' '}
+          {t('These are your latest {count} bids.', { count: bids.data.items.length })}{' '}
           <Link to="/bids" className="font-semibold text-brand-700 hover:underline">
-            See all your bids
+            {t('See all your bids')}
           </Link>
         </p>
       )}
       {a.status === 'CANCELLED' && (
         <p className="mt-3 text-sm text-slate-600">
-          The fees for these bids are returned to your{' '}
-          <Link to="/wallet" className="font-semibold text-brand-700 hover:underline">
-            wallet
-          </Link>
-          .
+          {tRich('The fees for these bids are returned to your {wallet}.', {
+            wallet: (
+              <Link to="/wallet" className="font-semibold text-brand-700 hover:underline">
+                {t('wallet')}
+              </Link>
+            ),
+          })}
         </p>
       )}
     </Card>
@@ -66,14 +72,17 @@ function MyResult({ result, money }: { result: MyAuctionResult; money: (minor: s
   return (
     <Card className={cx('p-4', result.won && 'border-accent-400')}>
       <h2 className="font-semibold">
-        {result.won && winning ? `You won with ${money(winning.amountMinor)}!` : 'Your bids in this auction'}
+        {result.won && winning
+          ? t('You won with {amount}!', { amount: money(winning.amountMinor) })
+          : t('Your bids in this auction')}
       </h2>
       {result.won ? (
         <p className="mt-1 text-sm text-slate-700">
-          Your bid was the lowest amount nobody else chose. We will confirm the result, then ask you where to
-          deliver your prize.{' '}
+          {t(
+            'Your bid was the lowest amount nobody else chose. We will confirm the result, then ask you where to deliver your prize.',
+          )}{' '}
           <Link to="/wins" className="font-semibold text-brand-700 hover:underline">
-            See my wins
+            {t('See my wins')}
           </Link>
         </p>
       ) : (
@@ -81,10 +90,10 @@ function MyResult({ result, money }: { result: MyAuctionResult; money: (minor: s
           {result.outcome === 'NO_UNIQUE_BID'
             ? result.appliedNoUniquePolicy === 'REFUND_BID_FEES'
               ? result.bidFeesRefundedAt
-                ? 'Nobody won. Your bid fees were returned to your wallet.'
-                : 'Nobody won. Your bid fees are being returned to your wallet.'
-              : 'Nobody won: every amount was bid more than once.'
-            : 'None of your bids won this time.'}
+                ? t('Nobody won. Your bid fees were returned to your wallet.')
+                : t('Nobody won. Your bid fees are being returned to your wallet.')
+              : t('Nobody won: every amount was bid more than once.')
+            : t('None of your bids won this time.')}
         </p>
       )}
       <ul className="mt-3 space-y-2">
@@ -97,7 +106,7 @@ function MyResult({ result, money }: { result: MyAuctionResult; money: (minor: s
             )}
           >
             <span className="font-semibold tabular-nums">{money(bid.amountMinor)}</span>
-            <span>{OUTCOME[bid.outcome].label}</span>
+            <span>{t(OUTCOME[bid.outcome].label)}</span>
           </li>
         ))}
       </ul>

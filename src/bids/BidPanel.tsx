@@ -9,9 +9,9 @@ import { useWallet } from '../wallet/queries';
 import { parseBidAmount, sortAmounts, type AmountProblem } from './amounts';
 import { bidErrorMessage, refusedAmounts } from './errors';
 import { isUnconfirmed, useMyBidsInAuction, usePlaceBids, type BidSubmission } from './queries';
+import { t, tCount } from '../i18n/i18n';
 
-const plural = (count: number, word: string) =>
-  `${count.toLocaleString()} ${count === 1 ? word : `${word}s`}`;
+const bids = (count: number) => tCount(count, '{count} bid', '{count} bids');
 
 /** Choosing amounts, seeing what they cost, and placing them. Shown to signed-in users while an auction runs. */
 export function BidPanel({ auction: a }: { auction: Auction }) {
@@ -35,7 +35,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   const refused = useMemo(() => new Set(refusedAmounts(place.error)), [place.error]);
 
   if (user?.roles.some((role) => role !== 'USER')) {
-    return <Alert tone="info">Staff accounts cannot place bids.</Alert>;
+    return <Alert tone="info">{t('Staff accounts cannot place bids.')}</Alert>;
   }
 
   const leftForUser =
@@ -50,21 +50,24 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   const problemText = (problem: AmountProblem): string => {
     switch (problem) {
       case 'below':
-        return `The lowest allowed bid is ${money(a.minBidMinor)}.`;
+        return t('The lowest allowed bid is {amount}.', { amount: money(a.minBidMinor) });
       case 'above':
-        return `The highest allowed bid is ${money(a.maxBidMinor)}.`;
+        return t('The highest allowed bid is {amount}.', { amount: money(a.maxBidMinor) });
       case 'step':
-        return `Bids go up in steps of ${money(a.bidStepMinor)}, starting at ${money(a.minBidMinor)}.`;
+        return t('Bids go up in steps of {step}, starting at {min}.', {
+          step: money(a.bidStepMinor),
+          min: money(a.minBidMinor),
+        });
       default:
-        return 'Enter an amount such as 4 or 4.50.';
+        return t('Enter an amount such as 4 or 4.50.');
     }
   };
   const roomText = () =>
     room <= 0
       ? leftForUser !== null && leftForUser <= a.maxBidsPerRequest
-        ? `This auction allows ${plural(a.maxBidsPerUser ?? 0, 'bid')} per person.`
-        : `You can place at most ${plural(a.maxBidsPerRequest, 'bid')} at a time.`
-      : `You can add ${plural(room, 'more bid')}.`;
+        ? t('This auction allows {bids} per person.', { bids: bids(a.maxBidsPerUser ?? 0) })
+        : t('You can place at most {bids} at a time.', { bids: bids(a.maxBidsPerRequest) })
+      : tCount(room, 'You can add {count} more bid.', 'You can add {count} more bids.');
 
   const change = (next: bigint[]) => {
     setAmounts(sortAmounts(next));
@@ -77,9 +80,11 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
     const parsed = parseBidAmount(entry, a);
     if (!parsed.ok) return setEntryError(problemText(parsed.problem));
     if (amounts.includes(parsed.minor))
-      return setEntryError(`${money(parsed.minor)} is already in your list.`);
+      return setEntryError(t('{amount} is already in your list.', { amount: money(parsed.minor) }));
     if (alreadyBid.has(parsed.minor.toString())) {
-      return setEntryError(`You have already bid ${money(parsed.minor)} in this auction.`);
+      return setEntryError(
+        t('You have already bid {amount} in this auction.', { amount: money(parsed.minor) }),
+      );
     }
     if (room <= 0) return setEntryError(roomText());
     setEntryError(null);
@@ -102,7 +107,9 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   if (leftForUser === 0 && !placed) {
     return (
       <Alert tone="info">
-        You have placed all {plural(a.maxBidsPerUser ?? 0, 'bid')} allowed per person in this auction.
+        {t('You have placed all {bids} allowed per person in this auction.', {
+          bids: bids(a.maxBidsPerUser ?? 0),
+        })}
       </Alert>
     );
   }
@@ -110,19 +117,24 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   if (confirming) {
     return (
       <Card className="space-y-3 p-5">
-        <h2 className="text-lg font-bold">Place {plural(amounts.length, 'bid')}?</h2>
+        <h2 className="text-lg font-bold">{t('Place {bids}?', { bids: bids(amounts.length) })}</h2>
         <p className="text-sm font-semibold tabular-nums">{amounts.map(money).join(', ')}</p>
         <p className="text-sm text-slate-700">
-          {money(total)} will be taken from your wallet
-          {balance !== null && <> (balance {money(balance)})</>}. Bids cannot be changed or withdrawn.
+          {balance !== null
+            ? t('{total} will be taken from your wallet (balance {balance}).', {
+                total: money(total),
+                balance: money(balance),
+              })
+            : t('{total} will be taken from your wallet.', { total: money(total) })}{' '}
+          {t('Bids cannot be changed or withdrawn.')}
         </p>
         {place.error && <Alert>{bidErrorMessage(place.error, a)}</Alert>}
         <div className="flex flex-wrap gap-3">
           <Button onClick={submit} busy={place.isPending} className="flex-1 py-3 text-base">
-            {place.error ? 'Try again' : `Pay ${money(total)} and bid`}
+            {place.error ? t('Try again') : t('Pay {total} and bid', { total: money(total) })}
           </Button>
           <Button variant="secondary" onClick={() => setConfirming(false)} disabled={place.isPending}>
-            Back
+            {t('Back')}
           </Button>
         </div>
       </Card>
@@ -132,9 +144,9 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
   return (
     <Card className="space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h2 className="text-lg font-bold">Place your bids</h2>
+        <h2 className="text-lg font-bold">{t('Place your bids')}</h2>
         <p className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600">
-          Wallet:{' '}
+          {t('Wallet:')}{' '}
           <Link to="/wallet" className="font-semibold text-brand-700 hover:underline">
             {wallet.data
               ? formatMinor(wallet.data.spendableMinor, wallet.data.currency, wallet.data.minorUnits)
@@ -145,40 +157,42 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
 
       {placed && (
         <Alert tone="success">
-          {plural(placed.bidCount, 'bid')} placed:{' '}
-          {placed.bids.map((bid) => money(bid.amountMinor)).join(', ')}. {money(placed.totalFeeMinor)} was
-          taken from your wallet.
+          {t('{bids} placed: {amounts}. {fee} was taken from your wallet.', {
+            bids: bids(placed.bidCount),
+            amounts: placed.bids.map((bid) => money(bid.amountMinor)).join(', '),
+            fee: money(placed.totalFeeMinor),
+          })}
         </Alert>
       )}
       {frozen && (
-        <Alert tone="warning">Your wallet is frozen, so you cannot bid. Please contact support.</Alert>
+        <Alert tone="warning">{t('Your wallet is frozen, so you cannot bid. Please contact support.')}</Alert>
       )}
       {place.error && <Alert>{bidErrorMessage(place.error, a)}</Alert>}
 
       <form onSubmit={addOne} noValidate className="flex items-start gap-2">
         <Field
-          label={`Bid amount (${a.currency})`}
+          label={t('Bid amount ({currency})', { currency: a.currency })}
           required
           className="flex-1"
           inputMode="decimal"
           autoComplete="off"
-          placeholder={`${money(a.minBidMinor).replace(`${a.currency} `, '')} or more`}
+          placeholder={t('{amount} or more', { amount: money(a.minBidMinor).replace(`${a.currency} `, '') })}
           value={entry}
           onChange={(event) => {
             setEntry(event.target.value);
             setEntryError(null);
           }}
           error={entryError}
-          hint={`Each bid costs ${money(a.bidFeeMinor)}.`}
+          hint={t('Each bid costs {fee}.', { fee: money(a.bidFeeMinor) })}
         />
         <Button type="submit" variant="dark" className="mt-6 py-3.5">
-          Add
+          {t('Add')}
         </Button>
       </form>
 
       {amounts.length > 0 && (
         <div className="space-y-3 border-t border-slate-100 pt-4">
-          <ul aria-label="Bids to place" className="flex flex-wrap gap-2">
+          <ul aria-label={t('Bids to place')} className="flex flex-wrap gap-2">
             {amounts.map((amount) => (
               <li
                 key={amount.toString()}
@@ -192,7 +206,7 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
                 {money(amount)}
                 <button
                   type="button"
-                  aria-label={`Remove ${money(amount)}`}
+                  aria-label={t('Remove {amount}', { amount: money(amount) })}
                   onClick={() => change(amounts.filter((other) => other !== amount))}
                   className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-black/10"
                 >
@@ -202,16 +216,18 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
             ))}
           </ul>
           <p className="text-sm text-slate-700">
-            {plural(amounts.length, 'bid')} × {money(a.bidFeeMinor)} ={' '}
+            {bids(amounts.length)} × {money(a.bidFeeMinor)} ={' '}
             <strong className="tabular-nums">{money(total)}</strong>
           </p>
           {short && balance !== null && (
             <Alert tone="warning">
-              Your wallet has {money(balance)}, which does not cover {money(total)}. Remove some bids or{' '}
-              <Link to="/wallet" className="font-semibold underline">
-                add money
+              {t('Your wallet has {balance}, which does not cover {total}.', {
+                balance: money(balance),
+                total: money(total),
+              })}{' '}
+              <Link to="/wallet?topup=1" className="font-semibold underline">
+                {t('Remove some bids or add money.')}
               </Link>
-              .
             </Alert>
           )}
           <div className="flex flex-wrap gap-3">
@@ -220,10 +236,10 @@ export function BidPanel({ auction: a }: { auction: Auction }) {
               disabled={short || frozen}
               className="flex-1 py-3 text-base"
             >
-              Review {plural(amounts.length, 'bid')}
+              {t('Review {bids}', { bids: bids(amounts.length) })}
             </Button>
             <Button variant="secondary" onClick={() => change([])}>
-              Clear
+              {t('Clear')}
             </Button>
           </div>
         </div>

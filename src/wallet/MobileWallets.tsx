@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Spinner } from '../components/ui';
 import { cx } from '../lib/cx';
 import { bidsPending, isWaiting, useDeposit, walletName } from './deposits';
+import { t, tCount } from '../i18n/i18n';
 
 /** A stroked 24px icon from one path. */
 export function Icon({ d, className = 'h-5 w-5' }: { d: string; className?: string }) {
@@ -46,12 +47,19 @@ export function ApproveOnPhone({
     return (
       <div role="status" className="space-y-3 rounded-3xl bg-brand-50 px-5 py-5 text-center">
         <Spinner className="mx-auto h-8 w-8 text-brand-600" />
-        <p className="text-lg font-bold">Approve the payment on your phone</p>
+        <p className="text-lg font-bold">{t('Approve the payment on your phone')}</p>
         <p className="text-sm text-slate-700">
           {d
-            ? `${name} sent a request for ${money(d.amountMinor)} to ${phone}.`
-            : `Sending the request to ${phone}…`}{' '}
-          Enter your {name} PIN on your phone to pay. This updates by itself once the payment is confirmed.
+            ? t('{name} sent a request for {amount} to {phone}.', {
+                name,
+                amount: money(d.amountMinor),
+                phone,
+              })
+            : t('Sending the request to {phone}…', { phone })}{' '}
+          {t(
+            'Enter your {name} PIN on your phone to pay. This updates by itself once the payment is confirmed.',
+            { name },
+          )}
         </p>
       </div>
     );
@@ -60,7 +68,7 @@ export function ApproveOnPhone({
     return (
       <div role="status" className="space-y-2 rounded-3xl bg-brand-50 px-5 py-5 text-center">
         <Spinner className="mx-auto h-8 w-8 text-brand-600" />
-        <p className="text-lg font-bold">Payment received, placing your bids…</p>
+        <p className="text-lg font-bold">{t('Payment received, placing your bids…')}</p>
       </div>
     );
   }
@@ -68,11 +76,14 @@ export function ApproveOnPhone({
     return (
       <div role="status" className="space-y-2 rounded-3xl bg-emerald-50 px-5 py-4 text-emerald-900">
         <p className="text-lg font-bold">
-          {d.bid.amounts.length === 1 ? 'Bid placed' : `${d.bid.amounts.length} bids placed`}
+          {tCount(d.bid.amounts.length, 'Bid placed', '{count} bids placed')}
         </p>
         <p className="text-sm">
-          You paid {money(d.amountMinor)} with {name} and bid {d.bid.amountsMinor.map(money).join(', ')}. Good
-          luck!
+          {t('You paid {amount} with {name} and bid {amounts}. Good luck!', {
+            amount: money(d.amountMinor),
+            name,
+            amounts: d.bid.amountsMinor.map(money).join(', '),
+          })}
         </p>
       </div>
     );
@@ -81,9 +92,14 @@ export function ApproveOnPhone({
     const bonus = BigInt(d.bonusMinor) > 0n;
     return (
       <div role="status" className="space-y-2 rounded-3xl bg-emerald-50 px-5 py-4 text-emerald-900">
-        <p className="text-lg font-bold">Money added</p>
+        <p className="text-lg font-bold">{t('Money added')}</p>
         <p className="text-sm">
-          {money(d.amountMinor)} is in your wallet{bonus ? `, plus a ${money(d.bonusMinor)} bonus` : ''}.
+          {bonus
+            ? t('{amount} is in your wallet, plus a {bonus} bonus.', {
+                amount: money(d.amountMinor),
+                bonus: money(d.bonusMinor),
+              })
+            : t('{amount} is in your wallet.', { amount: money(d.amountMinor) })}
         </p>
       </div>
     );
@@ -91,29 +107,31 @@ export function ApproveOnPhone({
   if (d.status === 'SUCCEEDED') {
     return (
       <div role="alert" className="space-y-2 rounded-3xl bg-amber-50 px-5 py-4 text-amber-900">
-        <p className="text-lg font-bold">Payment received, but the bids were not placed</p>
+        <p className="text-lg font-bold">{t('Payment received, but the bids were not placed')}</p>
         <p className="text-sm">
-          {d.bid?.error ? `${d.bid.error.replace(/\.?$/, '.')} ` : ''}Your {money(d.amountMinor)} is in your
-          wallet, so you can bid again from there.
+          {d.bid?.error ? `${d.bid.error.replace(/\.?$/, '.')} ` : ''}
+          {t('Your {amount} is in your wallet, so you can bid again from there.', {
+            amount: money(d.amountMinor),
+          })}
         </p>
       </div>
     );
   }
   return (
     <div role="alert" className="space-y-3 rounded-3xl bg-red-50 px-5 py-4 text-red-900">
-      <p className="text-lg font-bold">Payment not completed</p>
+      <p className="text-lg font-bold">{t('Payment not completed')}</p>
       <p className="text-sm">
         {d.status === 'EXPIRED'
-          ? 'The request was not approved in time.'
-          : 'The payment was declined or cancelled on the phone.'}{' '}
-        No money was taken{d.bid ? ' and no bid was placed' : ''}.
+          ? t('The request was not approved in time.')
+          : t('The payment was declined or cancelled on the phone.')}{' '}
+        {d.bid ? t('No money was taken and no bid was placed.') : t('No money was taken.')}
       </p>
       <button
         type="button"
         onClick={onRetry}
         className="rounded-full bg-white px-4 py-2 text-sm font-semibold"
       >
-        Try again
+        {t('Try again')}
       </button>
     </div>
   );

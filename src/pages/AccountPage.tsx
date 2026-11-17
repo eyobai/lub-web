@@ -5,9 +5,10 @@ import { useAuth } from '../auth/useAuth';
 import { Alert, Button, ButtonLink, Card } from '../components/ui';
 import { formatDateTime } from '../lib/clock';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t } from '../i18n/i18n';
 
 export function AccountPage() {
-  usePageTitle('Your account');
+  usePageTitle(t('Your account'));
   const { user, signOut, signOutEverywhere } = useAuth();
   const location = useLocation();
   const passwordChanged = (location.state as { passwordChanged?: boolean } | null)?.passwordChanged === true;
@@ -28,40 +29,40 @@ export function AccountPage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Your account</h1>
-      {passwordChanged && <Alert tone="info">Your password was changed.</Alert>}
+      <h1 className="text-2xl font-bold tracking-tight">{t('Your account')}</h1>
+      {passwordChanged && <Alert tone="info">{t('Your password was changed.')}</Alert>}
       {failure && <Alert>{failure}</Alert>}
       <Card className="p-5">
         <dl className="space-y-3 text-sm">
           <div>
-            <dt className="text-slate-500">Phone number</dt>
+            <dt className="text-slate-500">{t('Phone number')}</dt>
             <dd className="font-semibold">{user.phoneNumber}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Name</dt>
-            <dd className="font-semibold">{user.fullName ?? 'Not given'}</dd>
+            <dt className="text-slate-500">{t('Name')}</dt>
+            <dd className="font-semibold">{user.fullName ?? t('Not given')}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Email</dt>
-            <dd className="font-semibold break-words">{user.email ?? 'Not given'}</dd>
+            <dt className="text-slate-500">{t('Email')}</dt>
+            <dd className="font-semibold break-words">{user.email ?? t('Not given')}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Member since</dt>
+            <dt className="text-slate-500">{t('Member since')}</dt>
             <dd className="font-semibold">{formatDateTime(user.createdAt)}</dd>
           </div>
         </dl>
       </Card>
       <Card className="space-y-3 p-5">
         <ButtonLink to="/wins" variant="secondary" className="w-full">
-          My wins
+          {t('My wins')}
         </ButtonLink>
         <ButtonLink to="/notifications" variant="secondary" className="w-full">
-          Notifications
+          {t('Notifications')}
         </ButtonLink>
       </Card>
       <Card className="space-y-3 p-5">
         <ButtonLink to="/change-password" variant="secondary" className="w-full">
-          Change password
+          {t('Change password')}
         </ButtonLink>
         <Button
           variant="secondary"
@@ -70,7 +71,7 @@ export function AccountPage() {
           disabled={busy !== null}
           onClick={() => void run('here')}
         >
-          Sign out
+          {t('Sign out')}
         </Button>
         <Button
           variant="danger"
@@ -79,7 +80,7 @@ export function AccountPage() {
           disabled={busy !== null}
           onClick={() => void run('everywhere')}
         >
-          Sign out on all devices
+          {t('Sign out on all devices')}
         </Button>
       </Card>
     </div>

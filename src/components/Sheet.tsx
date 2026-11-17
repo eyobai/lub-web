@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cx } from '../lib/cx';
+import { t } from '../i18n/i18n';
 
 /**
  * A panel that slides up from the bottom on phones and sits in the middle on wider screens. The page behind does not
@@ -71,7 +72,7 @@ export function Sheet({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t('Close')}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-200/80 text-slate-700 hover:bg-slate-300/80"
             >
               <svg

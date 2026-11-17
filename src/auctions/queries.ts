@@ -3,6 +3,7 @@ import { api, unwrap } from '../api/client';
 import { isApiError } from '../api/errors';
 import type { components } from '../api/schema';
 import { serverClock } from '../lib/clock';
+import { tk } from '../i18n/i18n';
 
 export type Auction = components['schemas']['AuctionDto'];
 export type AuctionResult = components['schemas']['AuctionResultDto'];
@@ -11,9 +12,9 @@ export const PAGE_SIZE = 12;
 
 /** The public groupings of auctions, in the order a visitor cares about them. */
 export const AUCTION_TABS = [
-  { key: 'live', label: 'Live', status: 'ACTIVE', sort: 'closesAt', order: 'asc' },
-  { key: 'upcoming', label: 'Upcoming', status: 'SCHEDULED', sort: 'opensAt', order: 'asc' },
-  { key: 'ended', label: 'Ended', status: 'COMPLETED', sort: 'closesAt', order: 'desc' },
+  { key: 'live', label: tk('Live'), status: 'ACTIVE', sort: 'closesAt', order: 'asc' },
+  { key: 'upcoming', label: tk('Upcoming'), status: 'SCHEDULED', sort: 'opensAt', order: 'asc' },
+  { key: 'ended', label: tk('Ended'), status: 'COMPLETED', sort: 'closesAt', order: 'desc' },
 ] as const;
 export type AuctionTab = (typeof AUCTION_TABS)[number];
 

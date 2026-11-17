@@ -23,6 +23,8 @@ import {
 } from './deposits';
 import { ApproveOnPhone, Icon, WalletTile } from './MobileWallets';
 import { useWallet } from './queries';
+import { t } from '../i18n/i18n';
+import { tRich } from '../i18n/rich';
 
 const WALLET_ICON =
   'M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2zm13 7h.01';
@@ -46,18 +48,19 @@ export function AddMoney({ options }: { options: DepositOptions }) {
   return (
     <section aria-labelledby="add-money-heading">
       <h2 id="add-money-heading" className="text-lg font-semibold">
-        Add money
+        {t('Add money')}
       </h2>
       <Card className="mt-3 flex flex-wrap items-center justify-between gap-3 p-4">
         <p className="text-sm text-slate-600">
-          {percent > 0 ? (
-            <>
-              <span className="font-semibold text-emerald-700">Get a {percent}% bonus</span> on every top-up,
-              spent on bid fees before your own money.
-            </>
-          ) : (
-            'Top up once and bid from your wallet in one tap.'
-          )}
+          {percent > 0
+            ? tRich('{bonus} on every top-up, spent on bid fees before your own money.', {
+                bonus: (
+                  <span className="font-semibold text-emerald-700">
+                    {t('Get a {percent}% bonus', { percent })}
+                  </span>
+                ),
+              })
+            : t('Top up once and bid from your wallet in one tap.')}
         </p>
         <button
           type="button"
@@ -66,7 +69,7 @@ export function AddMoney({ options }: { options: DepositOptions }) {
           className="flex items-center gap-2 rounded-full bg-gradient-to-b from-brand-400 to-brand-500 px-5 py-3 font-bold text-ink shadow-[0_6px_16px_-4px_rgb(212_165_42/0.6)]"
         >
           <Icon d={WALLET_ICON} />
-          Top up wallet
+          {t('Top up wallet')}
         </button>
       </Card>
       {open && <TopUpSheet options={options} onClose={() => setOpen(false)} />}
@@ -108,7 +111,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
     }
     const mobile = method ? walletPhone(phone) : null;
     if (method && !mobile) {
-      setPhoneError(`Enter your ${walletName(method)} number, such as 0911223344.`);
+      setPhoneError(t('Enter your {wallet} number, such as 0911223344.', { wallet: walletName(method) }));
       return;
     }
     start.mutate(
@@ -124,7 +127,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
           }
           const address = checkoutAddress(deposit);
           if (!address) {
-            setProblem('The payment page could not be opened. No money was taken. Please try again.');
+            setProblem(t('The payment page could not be opened. No money was taken. Please try again.'));
             return;
           }
           setLeaving(true);
@@ -146,23 +149,25 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
       >
         {busy && <Spinner className="h-5 w-5" />}
         {leaving
-          ? 'Opening Chapa…'
+          ? t('Opening Chapa…')
           : method
-            ? `Top up ${amountMinor !== null ? money(amountMinor) : ''}`.trim()
-            : 'Continue to payment'}
+            ? amountMinor !== null
+              ? t('Top up {amount}', { amount: money(amountMinor) })
+              : t('Top up')
+            : t('Continue to payment')}
       </button>
       {!method && (
         <p className="mt-2 text-center text-xs text-slate-500">
-          You pay on Chapa&rsquo;s payment page, then come back here.
+          {t("You pay on Chapa's payment page, then come back here.")}
         </p>
       )}
     </>
   );
 
   return (
-    <Sheet title="Top up wallet" icon={<Icon d={WALLET_ICON} />} onClose={onClose} footer={footer}>
+    <Sheet title={t('Top up wallet')} icon={<Icon d={WALLET_ICON} />} onClose={onClose} footer={footer}>
       <p className="flex items-center justify-between rounded-full bg-slate-200/70 px-5 py-3">
-        <span className="text-slate-600">Wallet</span>
+        <span className="text-slate-600">{t('Wallet')}</span>
         <span className="font-bold tabular-nums">
           {wallet.data ? money(wallet.data.availableMinor) : '…'}
           {wallet.data && BigInt(wallet.data.bonusMinor) > 0n && (
@@ -174,7 +179,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
       </p>
 
       {options.testMode && (
-        <Alert tone="warning">Test mode: payments here are practice only. No real money moves.</Alert>
+        <Alert tone="warning">{t('Test mode: payments here are practice only. No real money moves.')}</Alert>
       )}
 
       {charged ? (
@@ -190,7 +195,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
         <>
           <form onSubmit={submit} noValidate>
             <label htmlFor={`${id}-amount`} className="block font-semibold text-slate-700">
-              Amount
+              {t('Amount')}
             </label>
             <div
               className={cx(
@@ -221,7 +226,10 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
               </p>
             ) : (
               <p id={`${id}-limits`} className="mt-1 text-sm text-slate-500">
-                {money(options.minAmountMinor)} to {money(options.maxAmountMinor)} at a time.
+                {t('{min} to {max} at a time.', {
+                  min: money(options.minAmountMinor),
+                  max: money(options.maxAmountMinor),
+                })}
               </p>
             )}
           </form>
@@ -231,13 +239,19 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
               <p className="font-bold text-emerald-700">
                 <span aria-hidden="true">🎁 </span>
                 {bonus > 0n
-                  ? `You'll get ${money(bonus)} bonus (${options.bonusPercent}%)`
-                  : `Get a ${options.bonusPercent}% bonus on this top-up`}
+                  ? t("You'll get {amount} bonus ({percent}%)", {
+                      amount: money(bonus),
+                      percent: options.bonusPercent,
+                    })
+                  : t('Get a {percent}% bonus on this top-up', { percent: options.bonusPercent })}
               </p>
-              <p className="text-sm">Valid for {options.bonusValidDays} days</p>
+              <p className="text-sm">{t('Valid for {days} days', { days: options.bonusValidDays })}</p>
               {(amountMinor === null || amountMinor < fullBonusAt) && (
                 <p className="text-sm">
-                  Top up {money(fullBonusAt)} to get the full {money(maxBonus)} bonus.
+                  {t('Top up {amount} to get the full {bonus} bonus.', {
+                    amount: money(fullBonusAt),
+                    bonus: money(maxBonus),
+                  })}
                 </p>
               )}
             </div>
@@ -245,14 +259,15 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
           {options.bonusPercent > 0 && (
             <div className="space-y-1 text-xs text-slate-500">
               <p>
-                The bonus is added when your payment is confirmed. It is spent on bid fees before your own
-                money and cannot be withdrawn.
+                {t(
+                  'The bonus is added when your payment is confirmed. It is spent on bid fees before your own money and cannot be withdrawn.',
+                )}
               </p>
-              <p>Bonuses apply only to wallet top-ups, not to paying for bids directly.</p>
+              <p>{t('Bonuses apply only to wallet top-ups, not to paying for bids directly.')}</p>
             </div>
           )}
 
-          <ul aria-label="Common amounts" className="flex flex-wrap gap-2">
+          <ul aria-label={t('Common amounts')} className="flex flex-wrap gap-2">
             {quickAmounts(options).map((amount) => {
               const minor = toMinor(amount, options.minorUnits) ?? 0n;
               const selected = amountMinor === minor;
@@ -287,13 +302,13 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
 
           {methods.length > 0 && (
             <fieldset className="space-y-2 rounded-4xl bg-slate-200/60 p-3">
-              <legend className="sr-only">Select payment method</legend>
+              <legend className="sr-only">{t('Select payment method')}</legend>
               <p
                 aria-hidden="true"
                 className="flex items-center gap-2 px-1 text-sm font-semibold text-slate-600"
               >
                 <Icon d="M3 7h18v10H3zm0 4h18" className="h-4 w-4 text-brand-600" />
-                Select payment method
+                {t('Select payment method')}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {methods.map((key) => (
@@ -316,7 +331,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
           {method && (
             <div>
               <label htmlFor={`${id}-phone`} className="block font-semibold text-slate-700">
-                {walletName(method)} phone number
+                {t('{wallet} phone number', { wallet: walletName(method) })}
               </label>
               <input
                 id={`${id}-phone`}
@@ -343,7 +358,7 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
                 </p>
               ) : (
                 <p className="mt-1 text-sm text-slate-500">
-                  You approve the payment on your phone, without leaving this page.
+                  {t('You approve the payment on your phone, without leaving this page.')}
                 </p>
               )}
             </div>
@@ -352,7 +367,10 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
           {start.isError && (
             <Alert>
               {method && isApiError(start.error, 'PAYMENT_PROVIDER_ERROR')
-                ? `The payment request could not be sent to ${walletPhone(phone) ?? 'that number'}. Check that it is your ${walletName(method)} number and try again. No money was taken.`
+                ? t(
+                    'The payment request could not be sent to {phone}. Check that it is your {wallet} number and try again. No money was taken.',
+                    { phone: walletPhone(phone) ?? t('that number'), wallet: walletName(method) },
+                  )
                 : depositErrorMessage(start.error, options)}
             </Alert>
           )}
@@ -369,7 +387,7 @@ function UnfinishedDeposits() {
   if (waiting.length === 0) return null;
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-slate-700">Payments not finished</h3>
+      <h3 className="text-sm font-semibold text-slate-700">{t('Payments not finished')}</h3>
       <Card className="mt-2">
         <ul className="divide-y divide-slate-100">
           {waiting.map((deposit) => (
@@ -377,14 +395,16 @@ function UnfinishedDeposits() {
               <div className="min-w-0">
                 <p className="font-semibold tabular-nums">{formatMoney(deposit.amount, deposit.currency)}</p>
                 <p className="text-xs text-slate-500">
-                  Started <time dateTime={deposit.createdAt}>{formatDateTime(deposit.createdAt)}</time>
+                  {tRich('Started {date}', {
+                    date: <time dateTime={deposit.createdAt}>{formatDateTime(deposit.createdAt)}</time>,
+                  })}
                 </p>
               </div>
               <Link
                 to={`/wallet/deposits/${deposit.id}`}
                 className="shrink-0 text-sm font-semibold text-brand-700 underline"
               >
-                View payment
+                {t('View payment')}
               </Link>
             </li>
           ))}

@@ -12,9 +12,10 @@ import {
   type Notification,
 } from '../notifications/queries';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t, tk } from '../i18n/i18n';
 
 export function NotificationsPage() {
-  usePageTitle('Notifications');
+  usePageTitle(t('Notifications'));
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const unreadOnly = params.get('show') === 'unread';
@@ -37,16 +38,18 @@ export function NotificationsPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('Notifications')}</h1>
         {unread > 0 && (
           <Button variant="secondary" onClick={() => markAll.mutate()} busy={markAll.isPending}>
-            Mark all as read
+            {t('Mark all as read')}
           </Button>
         )}
       </div>
       {notifications.data && (
         <p className="mt-1 text-sm text-slate-600">
-          {unread === 0 ? 'You have read everything.' : `${unread.toLocaleString()} unread.`}
+          {unread === 0
+            ? t('You have read everything.')
+            : t('{count} unread.', { count: unread.toLocaleString() })}
         </p>
       )}
       {(markAll.isError || markRead.isError) && (
@@ -57,12 +60,12 @@ export function NotificationsPage() {
 
       <div
         role="group"
-        aria-label="Which notifications to show"
+        aria-label={t('Which notifications to show')}
         className="mt-4 flex gap-1 rounded-full bg-slate-200/80 p-1"
       >
         {[
-          { label: 'All', value: false },
-          { label: 'Unread', value: true },
+          { label: tk('All'), value: false },
+          { label: tk('Unread'), value: true },
         ].map((option) => (
           <button
             key={option.label}
@@ -76,14 +79,14 @@ export function NotificationsPage() {
                 : 'text-slate-600 hover:text-slate-900',
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
 
       <div className="mt-4">
         {notifications.isPending ? (
-          <PageLoading label="Loading notifications" />
+          <PageLoading label={t('Loading notifications')} />
         ) : notifications.isError ? (
           <div className="space-y-3">
             <Alert>{errorMessage(notifications.error)}</Alert>
@@ -92,16 +95,16 @@ export function NotificationsPage() {
               onClick={() => void notifications.refetch()}
               busy={notifications.isFetching}
             >
-              Try again
+              {t('Try again')}
             </Button>
           </div>
         ) : notifications.data.items.length === 0 ? (
           <p className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
             {page > 1
-              ? 'There is nothing on this page.'
+              ? t('There is nothing on this page.')
               : unreadOnly
-                ? 'You have no unread notifications.'
-                : 'You have no notifications yet.'}
+                ? t('You have no unread notifications.')
+                : t('You have no notifications yet.')}
           </p>
         ) : (
           <Card>
@@ -137,7 +140,7 @@ function NotificationRow({ item, onOpen }: { item: Notification; onOpen: () => v
       <span className="min-w-0 flex-1">
         <span className={cx('block', item.read ? 'font-medium text-slate-700' : 'font-bold text-slate-900')}>
           {item.title}
-          {!item.read && <span className="sr-only"> (unread)</span>}
+          {!item.read && <span className="sr-only"> {t('(unread)')}</span>}
         </span>
         <span className="block text-sm break-words text-slate-600">{item.body}</span>
         <span className="block text-xs text-slate-500">

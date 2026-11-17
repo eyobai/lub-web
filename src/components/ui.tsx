@@ -1,6 +1,7 @@
 import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Link, type LinkProps } from 'react-router-dom';
 import { cx } from '../lib/cx';
+import { t } from '../i18n/i18n';
 
 const BUTTON_BASE =
   'inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50';
@@ -67,7 +68,7 @@ export function Field({ label, hint, error, className, ...rest }: FieldProps) {
     <div className={className}>
       <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">
         {label}
-        {!rest.required && <span className="font-normal text-slate-500"> (optional)</span>}
+        {!rest.required && <span className="font-normal text-slate-500"> {t('(optional)')}</span>}
       </label>
       <input
         {...rest}
@@ -132,11 +133,11 @@ export function Card({ className, children }: { className?: string; children: Re
   );
 }
 
-export function PageLoading({ label = 'Loading' }: { label?: string }) {
+export function PageLoading({ label }: { label?: string }) {
   return (
     <div role="status" className="flex items-center justify-center gap-3 py-16 text-slate-500">
       <Spinner />
-      <span>{label}…</span>
+      <span>{label ?? t('Loading')}…</span>
     </div>
   );
 }
@@ -153,15 +154,13 @@ export function Pagination({
 }) {
   if (pages <= 1 && page <= 1) return null;
   return (
-    <nav aria-label="Pages" className="mt-6 flex items-center justify-between gap-3">
+    <nav aria-label={t('Pages')} className="mt-6 flex items-center justify-between gap-3">
       <Button variant="secondary" disabled={page <= 1} onClick={() => onChange(Math.min(page - 1, pages))}>
-        Previous
+        {t('Previous')}
       </Button>
-      <span className="text-sm text-slate-600">
-        Page {page} of {pages}
-      </span>
+      <span className="text-sm text-slate-600">{t('Page {page} of {pages}', { page, pages })}</span>
       <Button variant="secondary" disabled={page >= pages} onClick={() => onChange(page + 1)}>
-        Next
+        {t('Next')}
       </Button>
     </nav>
   );

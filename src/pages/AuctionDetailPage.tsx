@@ -15,6 +15,7 @@ import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t } from '../i18n/i18n';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,13 +25,13 @@ export function AuctionDetailPage() {
 }
 
 function NotFound() {
-  usePageTitle('Auction not found');
+  usePageTitle(t('Auction not found'));
   return (
     <div className="py-16 text-center">
-      <h1 className="text-2xl font-bold tracking-tight">Auction not found</h1>
-      <p className="mt-2 text-slate-600">It may have been removed, or the link is wrong.</p>
+      <h1 className="text-2xl font-bold tracking-tight">{t('Auction not found')}</h1>
+      <p className="mt-2 text-slate-600">{t('It may have been removed, or the link is wrong.')}</p>
       <ButtonLink to="/" className="mt-6">
-        See all auctions
+        {t('See all auctions')}
       </ButtonLink>
     </div>
   );
@@ -43,16 +44,16 @@ function AuctionDetail({ id }: { id: string }) {
   const over = auction.data?.status === 'COMPLETED';
   const result = useAuctionResult(id, over);
   const missing = auction.isError && isApiError(auction.error, 'NOT_FOUND', 'VALIDATION_FAILED');
-  usePageTitle(auction.data?.title ?? (missing ? 'Auction not found' : null));
+  usePageTitle(auction.data?.title ?? (missing ? t('Auction not found') : null));
 
-  if (auction.isPending) return <PageLoading label="Loading auction" />;
+  if (auction.isPending) return <PageLoading label={t('Loading auction')} />;
   if (auction.isError) {
     if (missing) return <NotFound />;
     return (
       <div className="space-y-3">
         <Alert>{errorMessage(auction.error)}</Alert>
         <Button variant="secondary" onClick={() => void auction.refetch()} busy={auction.isFetching}>
-          Try again
+          {t('Try again')}
         </Button>
       </div>
     );
@@ -68,7 +69,7 @@ function AuctionDetail({ id }: { id: string }) {
         to="/"
         className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-[0_1px_2px_rgb(22_21_19/0.04)] hover:bg-slate-100"
       >
-        <span aria-hidden="true">←</span> All auctions
+        <span aria-hidden="true">←</span> {t('All auctions')}
       </Link>
       <div className="mt-3 grid gap-6 lg:grid-cols-2">
         <Gallery auction={a} />
@@ -87,20 +88,20 @@ function AuctionDetail({ id }: { id: string }) {
           {user && <MyAuctionBids auction={a} />}
 
           <Card className="p-5">
-            <h2 className="font-bold">Bidding rules</h2>
+            <h2 className="font-bold">{t('Bidding rules')}</h2>
             <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <Fact label="Fee per bid">{formatMoney(a.bidFee, a.currency)}</Fact>
-              <Fact label="Bids placed">
+              <Fact label={t('Fee per bid')}>{formatMoney(a.bidFee, a.currency)}</Fact>
+              <Fact label={t('Bids placed')}>
                 <span className="tabular-nums">{a.totalBidCount.toLocaleString()}</span>
               </Fact>
-              <Fact label="Lowest allowed bid">{formatMoney(a.minBid, a.currency)}</Fact>
-              <Fact label="Highest allowed bid">{formatMoney(a.maxBid, a.currency)}</Fact>
-              <Fact label="Bids go up in steps of">{formatMoney(a.bidStep, a.currency)}</Fact>
-              <Fact label="Bids per person">
-                {a.maxBidsPerUser === null ? 'No limit' : a.maxBidsPerUser.toLocaleString()}
+              <Fact label={t('Lowest allowed bid')}>{formatMoney(a.minBid, a.currency)}</Fact>
+              <Fact label={t('Highest allowed bid')}>{formatMoney(a.maxBid, a.currency)}</Fact>
+              <Fact label={t('Bids go up in steps of')}>{formatMoney(a.bidStep, a.currency)}</Fact>
+              <Fact label={t('Bids per person')}>
+                {a.maxBidsPerUser === null ? t('No limit') : a.maxBidsPerUser.toLocaleString()}
               </Fact>
-              <Fact label="Opens">{formatDateTime(a.opensAt)}</Fact>
-              <Fact label="Closes">{formatDateTime(a.closesAt)}</Fact>
+              <Fact label={t('Opens')}>{formatDateTime(a.opensAt)}</Fact>
+              <Fact label={t('Closes')}>{formatDateTime(a.closesAt)}</Fact>
             </dl>
             <p className="mt-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
               {noUniqueBidText(a)}
@@ -111,7 +112,7 @@ function AuctionDetail({ id }: { id: string }) {
 
       {(a.description || a.product.description) && (
         <section className="mt-8">
-          <h2 className="text-lg font-semibold">About this auction</h2>
+          <h2 className="text-lg font-semibold">{t('About this auction')}</h2>
           {a.description && <p className="mt-2 whitespace-pre-line text-slate-700">{a.description}</p>}
           {a.product.description && (
             <p className="mt-2 whitespace-pre-line text-slate-700">{a.product.description}</p>
@@ -136,11 +137,11 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 function noUniqueBidText(a: Auction): string {
   switch (a.noUniqueBidPolicy) {
     case 'REFUND_BID_FEES':
-      return 'If no amount is bid exactly once, nobody wins and every bid fee is refunded.';
+      return t('If no amount is bid exactly once, nobody wins and every bid fee is refunded.');
     case 'NO_WINNER':
-      return 'If no amount is bid exactly once, nobody wins and bid fees are not refunded.';
+      return t('If no amount is bid exactly once, nobody wins and bid fees are not refunded.');
     default:
-      return 'The lowest amount that is bid exactly once wins.';
+      return t('The lowest amount that is bid exactly once wins.');
   }
 }
 
@@ -162,7 +163,7 @@ function Gallery({ auction }: { auction: Auction }) {
               <button
                 type="button"
                 onClick={() => setSelected(index)}
-                aria-label={`Show picture ${index + 1} of ${images.length}`}
+                aria-label={t('Show picture {n} of {total}', { n: index + 1, total: images.length })}
                 aria-current={index === selected}
                 className={cx(
                   'block overflow-hidden rounded-2xl border-2',
@@ -195,7 +196,7 @@ function StatePanel({
     case 'ACTIVE':
       return (
         <Card className="bg-ink p-5 text-white">
-          <p className="text-sm text-white/70">Closes in</p>
+          <p className="text-sm text-white/70">{t('Closes in')}</p>
           <p className="text-4xl font-bold tracking-tight text-brand-400">
             <Countdown until={a.closesAt} onElapsed={onElapsed} />
           </p>
@@ -207,14 +208,14 @@ function StatePanel({
           {!user && (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <ButtonLink to="/sign-in" state={{ from: location.pathname }}>
-                Sign in to bid
+                {t('Sign in to bid')}
               </ButtonLink>
               <Link
                 to="/register"
                 state={{ from: location.pathname }}
                 className="text-sm font-semibold text-white underline decoration-brand-500 decoration-2 underline-offset-2"
               >
-                Create an account
+                {t('Create an account')}
               </Link>
             </div>
           )}
@@ -223,7 +224,7 @@ function StatePanel({
     case 'SCHEDULED':
       return (
         <Card className="p-5">
-          <p className="text-sm text-slate-500">Bidding opens in</p>
+          <p className="text-sm text-slate-500">{t('Bidding opens in')}</p>
           <p className="text-4xl font-bold tracking-tight text-ink">
             <Countdown until={a.opensAt} onElapsed={onElapsed} />
           </p>
@@ -232,9 +233,9 @@ function StatePanel({
     case 'CLOSING':
       return (
         <Card className="bg-brand-50 p-5">
-          <p className="font-semibold text-amber-900">Bidding has closed</p>
+          <p className="font-semibold text-amber-900">{t('Bidding has closed')}</p>
           <p className="mt-1 text-sm text-amber-900">
-            The result is being worked out. This page updates by itself.
+            {t('The result is being worked out. This page updates by itself.')}
           </p>
         </Card>
       );
@@ -243,8 +244,8 @@ function StatePanel({
     default:
       return (
         <Card className="bg-red-50 p-5">
-          <p className="font-semibold text-red-800">This auction was cancelled</p>
-          <p className="mt-1 text-sm text-red-800">Bid fees are refunded to the bidders' wallets.</p>
+          <p className="font-semibold text-red-800">{t('This auction was cancelled')}</p>
+          <p className="mt-1 text-sm text-red-800">{t("Bid fees are refunded to the bidders' wallets.")}</p>
         </Card>
       );
   }
@@ -254,8 +255,8 @@ function ResultPanel({ result }: { result: AuctionResult | null | undefined }) {
   if (!result) {
     return (
       <Card className="p-5">
-        <p className="font-semibold">This auction has ended</p>
-        <p className="mt-1 text-sm text-slate-600">The result will appear here shortly.</p>
+        <p className="font-semibold">{t('This auction has ended')}</p>
+        <p className="mt-1 text-sm text-slate-600">{t('The result will appear here shortly.')}</p>
       </Card>
     );
   }
@@ -280,27 +281,29 @@ function ResultPanel({ result }: { result: AuctionResult | null | undefined }) {
         </span>
         <div className="min-w-0">
           <p className="text-xs font-semibold tracking-wide text-brand-400 uppercase">
-            Winning bid: the lowest amount bid exactly once
+            {t('Winning bid: the lowest amount bid exactly once')}
           </p>
           <p className="text-3xl font-bold tracking-tight">
             {formatMoney(result.winningAmount, result.currency)}
           </p>
-          <p className="text-sm text-white/70">Out of {result.totalBids.toLocaleString()} bids.</p>
+          <p className="text-sm text-white/70">
+            {t('Out of {count} bids.', { count: result.totalBids.toLocaleString() })}
+          </p>
         </div>
       </Card>
     );
   }
   return (
     <Card className="p-5">
-      <p className="font-semibold">This auction ended without a winner</p>
+      <p className="font-semibold">{t('This auction ended without a winner')}</p>
       <p className="mt-1 text-sm text-slate-600">
         {result.outcome === 'NO_BIDS'
-          ? 'Nobody placed a bid.'
+          ? t('Nobody placed a bid.')
           : result.appliedNoUniquePolicy === 'REFUND_BID_FEES'
             ? result.bidFeesRefundedAt
-              ? 'No amount was bid exactly once. Every bid fee was refunded.'
-              : 'No amount was bid exactly once. Bid fees are being refunded.'
-            : 'No amount was bid exactly once.'}
+              ? t('No amount was bid exactly once. Every bid fee was refunded.')
+              : t('No amount was bid exactly once. Bid fees are being refunded.')
+            : t('No amount was bid exactly once.')}
       </p>
     </Card>
   );
@@ -315,13 +318,13 @@ function Specifications({ specifications }: { specifications: Auction['product']
   if (rows.length === 0) return null;
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold">Specifications</h2>
+      <h2 className="text-lg font-semibold">{t('Specifications')}</h2>
       <dl className="mt-2 divide-y divide-slate-100 rounded-3xl bg-white text-sm">
         {rows.map(([key, value]) => (
           <div key={key} className="grid grid-cols-3 gap-3 px-5 py-3">
             <dt className="text-slate-500">{key}</dt>
             <dd className="col-span-2 font-medium break-words">
-              {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+              {typeof value === 'boolean' ? (value ? t('Yes') : t('No')) : String(value)}
             </dd>
           </div>
         ))}

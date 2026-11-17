@@ -1,5 +1,6 @@
 import { ApiError } from '../api/errors';
 import type { DeliveryDetails, MyWin } from './queries';
+import { t, tk } from '../i18n/i18n';
 
 /**
  * What the form holds: who receives the prize, the number our team calls, and the city or town. The rest of the
@@ -32,17 +33,18 @@ const phoneDigits = (value: string) => value.replace(/[\s()-]/g, '');
 export function deliveryErrors(form: DeliveryForm): Partial<Record<DeliveryField, string>> {
   const errors: Partial<Record<DeliveryField, string>> = {};
   const name = form.recipientName.trim();
-  if (!name) errors.recipientName = 'Enter the name of the person who will receive the prize.';
-  else if (name.length < 2 || name.length > 150) errors.recipientName = 'Enter between 2 and 150 characters.';
+  if (!name) errors.recipientName = t('Enter the name of the person who will receive the prize.');
+  else if (name.length < 2 || name.length > 150)
+    errors.recipientName = t('Enter between 2 and 150 characters.');
 
   const phone = phoneDigits(form.recipientPhone);
-  if (!phone) errors.recipientPhone = 'Enter a phone number we can call about the delivery.';
+  if (!phone) errors.recipientPhone = t('Enter a phone number we can call about the delivery.');
   else if (!/^\+?[0-9]{9,15}$/.test(phone))
-    errors.recipientPhone = 'Enter a valid phone number, for example 0911 234 567.';
+    errors.recipientPhone = t('Enter a valid phone number, for example 0911 234 567.');
 
   const city = form.city.trim();
-  if (!city) errors.city = 'Enter the city or town.';
-  else if (city.length < 2 || city.length > 100) errors.city = 'Enter between 2 and 100 characters.';
+  if (!city) errors.city = t('Enter the city or town.');
+  else if (city.length < 2 || city.length > 100) errors.city = t('Enter between 2 and 100 characters.');
   return errors;
 }
 
@@ -58,8 +60,8 @@ export function toDeliveryDetails(form: DeliveryForm): DeliveryDetails {
 /** One line for display, most specific part first. Details sent before the form was shortened may have more parts. */
 export function formatAddress(address: DeliveryDetails['address']): string {
   return [
-    address.houseNumber && `House ${address.houseNumber}`,
-    address.woreda && `Woreda ${address.woreda}`,
+    address.houseNumber && t('House {number}', { number: address.houseNumber }),
+    address.woreda && t('Woreda {number}', { number: address.woreda }),
     address.subCity,
     address.city,
     address.region !== address.city && address.region,
@@ -69,24 +71,25 @@ export function formatAddress(address: DeliveryDetails['address']): string {
 }
 
 const SAVE_MESSAGES: Record<string, string> = {
-  DELIVERY_INVALID_STATE:
+  DELIVERY_INVALID_STATE: tk(
     'Our team has already confirmed the delivery details, so they can no longer be changed here. Please contact support.',
-  WINNER_INVALID_STATE: 'This win has not been confirmed yet. You can send your details once it is.',
-  NOT_FOUND: 'We could not find this win. Please reload the page.',
+  ),
+  WINNER_INVALID_STATE: tk('This win has not been confirmed yet. You can send your details once it is.'),
+  NOT_FOUND: tk('We could not find this win. Please reload the page.'),
 };
 
 /** Wording for a refused save, or null when the general wording applies. */
 export function deliverySaveMessage(error: unknown): string | null {
-  return error instanceof ApiError ? (SAVE_MESSAGES[error.code] ?? null) : null;
+  return error instanceof ApiError ? (SAVE_MESSAGES[error.code] ? t(SAVE_MESSAGES[error.code]) : null) : null;
 }
 
 export type Step = 'won' | 'confirmed' | 'details' | 'dispatched' | 'delivered';
 export const STEPS: readonly { key: Step; label: string }[] = [
-  { key: 'won', label: 'Won' },
-  { key: 'confirmed', label: 'Win confirmed' },
-  { key: 'details', label: 'Delivery details confirmed' },
-  { key: 'dispatched', label: 'On its way' },
-  { key: 'delivered', label: 'Delivered' },
+  { key: 'won', label: tk('Won') },
+  { key: 'confirmed', label: tk('Win confirmed') },
+  { key: 'details', label: tk('Delivery details confirmed') },
+  { key: 'dispatched', label: tk('On its way') },
+  { key: 'delivered', label: tk('Delivered') },
 ];
 
 /**
@@ -124,48 +127,52 @@ export interface WinStatus {
 export function winStatus(win: MyWin): WinStatus {
   if (win.verificationStatus === 'REJECTED')
     return {
-      label: 'Not confirmed',
+      label: t('Not confirmed'),
       tone: 'error',
-      message: 'We could not confirm this win. Please contact support for details.',
+      message: t('We could not confirm this win. Please contact support for details.'),
     };
   if (win.verificationStatus === 'PENDING_VERIFICATION' || !win.delivery)
     return {
-      label: 'Being checked',
+      label: t('Being checked'),
       tone: 'info',
-      message: 'We are checking the result. You will get a notification as soon as your win is confirmed.',
+      message: t('We are checking the result. You will get a notification as soon as your win is confirmed.'),
     };
   switch (win.delivery.status) {
     case 'PENDING':
     case 'CONTACTED':
       if (!hasDeliveryDetails(win))
         return {
-          label: 'Details needed',
+          label: t('Details needed'),
           tone: 'warning',
-          message: 'Your win is confirmed. Tell us who will receive the prize and where to deliver it.',
+          message: t('Your win is confirmed. Tell us who will receive the prize and where to deliver it.'),
         };
       return {
-        label: 'Arranging delivery',
+        label: t('Arranging delivery'),
         tone: 'info',
         message:
           win.delivery.status === 'CONTACTED'
-            ? 'Our team is arranging the delivery and may call the number below. You can still change the details.'
-            : 'We have your delivery details. Our team will confirm them with you. You can still change them.',
+            ? t(
+                'Our team is arranging the delivery and may call the number below. You can still change the details.',
+              )
+            : t(
+                'We have your delivery details. Our team will confirm them with you. You can still change them.',
+              ),
       };
     case 'VERIFIED':
       return {
-        label: 'Preparing',
+        label: t('Preparing'),
         tone: 'info',
-        message: 'Your delivery details are confirmed. The prize will be sent soon.',
+        message: t('Your delivery details are confirmed. The prize will be sent soon.'),
       };
     case 'DISPATCHED':
-      return { label: 'On its way', tone: 'info', message: 'Your prize is on its way.' };
+      return { label: t('On its way'), tone: 'info', message: t('Your prize is on its way.') };
     case 'DELIVERED':
-      return { label: 'Delivered', tone: 'success', message: 'Your prize was delivered. Enjoy!' };
+      return { label: t('Delivered'), tone: 'success', message: t('Your prize was delivered. Enjoy!') };
     case 'DISPUTED':
       return {
-        label: 'On hold',
+        label: t('On hold'),
         tone: 'warning',
-        message: 'The delivery is on hold while an issue is looked into. Our team will contact you.',
+        message: t('The delivery is on hold while an issue is looked into. Our team will contact you.'),
       };
   }
 }

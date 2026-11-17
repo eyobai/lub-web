@@ -10,6 +10,8 @@ import { DeliveryDetailsForm } from '../wins/DeliveryDetailsForm';
 import { formatAddress, hasDeliveryDetails, STEPS, stepsDone, winStatus } from '../wins/delivery';
 import { useMyWins, WINS_PAGE_SIZE, type MyWin } from '../wins/queries';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t } from '../i18n/i18n';
+import { tRich } from '../i18n/rich';
 
 const BADGE_TONES = {
   info: 'bg-sky-100 text-sky-900',
@@ -19,7 +21,7 @@ const BADGE_TONES = {
 } as const;
 
 export function MyWinsPage() {
-  usePageTitle('My wins');
+  usePageTitle(t('My wins'));
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const wins = useMyWins(page);
@@ -32,25 +34,25 @@ export function MyWinsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold tracking-tight">My wins</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{t('My wins')}</h1>
       <div className="mt-5">
         {wins.isPending ? (
-          <PageLoading label="Loading your wins" />
+          <PageLoading label={t('Loading your wins')} />
         ) : wins.isError ? (
           <div className="space-y-3">
             <Alert>{errorMessage(wins.error)}</Alert>
             <Button variant="secondary" onClick={() => void wins.refetch()} busy={wins.isFetching}>
-              Try again
+              {t('Try again')}
             </Button>
           </div>
         ) : wins.data.items.length === 0 ? (
           <div className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center">
             <p className="text-slate-500">
-              {page > 1 ? 'There is nothing on this page.' : 'You have not won an auction yet.'}
+              {page > 1 ? t('There is nothing on this page.') : t('You have not won an auction yet.')}
             </p>
             {page === 1 && (
               <ButtonLink to="/" className="mt-4">
-                See running auctions
+                {t('See running auctions')}
               </ButtonLink>
             )}
           </div>
@@ -101,17 +103,21 @@ function WinCard({ win }: { win: MyWin }) {
               </span>
             </div>
             <p className="text-sm text-slate-600">
-              Won with{' '}
-              <span className="font-semibold text-slate-900 tabular-nums">
-                {formatMoney(win.amount, win.currency)}
-              </span>{' '}
-              in{' '}
-              <Link
-                to={`/auctions/${win.auctionId}`}
-                className="font-semibold text-brand-700 hover:underline"
-              >
-                {win.auctionTitle}
-              </Link>
+              {tRich('Won with {amount} in {auction}', {
+                amount: (
+                  <span className="font-semibold text-slate-900 tabular-nums">
+                    {formatMoney(win.amount, win.currency)}
+                  </span>
+                ),
+                auction: (
+                  <Link
+                    to={`/auctions/${win.auctionId}`}
+                    className="font-semibold text-brand-700 hover:underline"
+                  >
+                    {win.auctionTitle}
+                  </Link>
+                ),
+              })}
             </p>
             <p className="text-xs text-slate-500">
               <time dateTime={win.createdAt}>{formatDateTime(win.createdAt)}</time>
@@ -122,7 +128,7 @@ function WinCard({ win }: { win: MyWin }) {
         <p className="mt-3 text-sm text-slate-700">{status.message}</p>
 
         {done !== null && (
-          <ol aria-label="Progress" className="mt-3 space-y-1.5 text-sm">
+          <ol aria-label={t('Progress')} className="mt-3 space-y-1.5 text-sm">
             {STEPS.map((step, index) => {
               const state = index < done ? 'done' : index === done ? 'next' : 'later';
               return (
@@ -148,7 +154,7 @@ function WinCard({ win }: { win: MyWin }) {
                   >
                     {state === 'done' ? '✓' : index + 1}
                   </span>
-                  {step.label}
+                  {t(step.label)}
                   <span className="sr-only">
                     {state === 'done' ? ' (done)' : state === 'next' ? ' (next)' : ''}
                   </span>
@@ -160,27 +166,29 @@ function WinCard({ win }: { win: MyWin }) {
 
         {delivery?.trackingInfo && (
           <p className="mt-3 rounded-2xl bg-slate-100 px-4 py-2 text-sm break-words">
-            <span className="font-semibold">Tracking:</span> {delivery.trackingInfo}
+            <span className="font-semibold">{t('Tracking:')}</span> {delivery.trackingInfo}
           </p>
         )}
 
         {delivery && hasDeliveryDetails(win) && !editing && (
           <dl className="mt-3 grid gap-x-4 gap-y-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-slate-500">Recipient</dt>
+              <dt className="text-slate-500">{t('Recipient')}</dt>
               <dd className="font-semibold break-words">{delivery.recipientName}</dd>
             </div>
             <div>
-              <dt className="text-slate-500">Phone</dt>
+              <dt className="text-slate-500">{t('Phone')}</dt>
               <dd className="font-semibold">{delivery.recipientPhone}</dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="text-slate-500">Address</dt>
+              <dt className="text-slate-500">{t('Address')}</dt>
               <dd className="font-semibold break-words">
                 {delivery.address && formatAddress(delivery.address)}
               </dd>
               {delivery.address?.landmark && (
-                <dd className="break-words text-slate-600">Landmark: {delivery.address.landmark}</dd>
+                <dd className="break-words text-slate-600">
+                  {t('Landmark: {landmark}', { landmark: delivery.address.landmark })}
+                </dd>
               )}
             </div>
           </dl>
@@ -188,7 +196,7 @@ function WinCard({ win }: { win: MyWin }) {
 
         {saved && !editing && (
           <div className="mt-3">
-            <Alert tone="success">Your delivery details were saved.</Alert>
+            <Alert tone="success">{t('Your delivery details were saved.')}</Alert>
           </div>
         )}
 
@@ -211,7 +219,7 @@ function WinCard({ win }: { win: MyWin }) {
                 setEditing(true);
               }}
             >
-              {hasDeliveryDetails(win) ? 'Change delivery details' : 'Send delivery details'}
+              {hasDeliveryDetails(win) ? t('Change delivery details') : t('Send delivery details')}
             </Button>
           ))}
       </article>

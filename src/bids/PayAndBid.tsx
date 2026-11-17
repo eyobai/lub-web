@@ -22,6 +22,7 @@ import { useWallet } from '../wallet/queries';
 import { parseBidAmount, sortAmounts, type AmountProblem } from './amounts';
 import { bidErrorMessage, refusedAmounts } from './errors';
 import { usePlaceBids, type BidSubmission } from './queries';
+import { t, tCount } from '../i18n/i18n';
 
 /** 'wallet', 'checkout' (Chapa's own page, only when no mobile wallet can be charged here), or a mobile wallet. */
 type Method = string;
@@ -47,7 +48,7 @@ export function PayAndBidButton({ auction: a, gold = false }: { auction: Auction
   const label = (
     <>
       <Icon d={TICKET} />
-      Pay {fee} &amp; bid
+      {t('Pay {fee} & bid', { fee })}
     </>
   );
   if (!user) {
@@ -114,13 +115,16 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
   const problemText = (problem: AmountProblem): string => {
     switch (problem) {
       case 'below':
-        return `The lowest allowed bid is ${money(a.minBidMinor)}.`;
+        return t('The lowest allowed bid is {amount}.', { amount: money(a.minBidMinor) });
       case 'above':
-        return `The highest allowed bid is ${money(a.maxBidMinor)}.`;
+        return t('The highest allowed bid is {amount}.', { amount: money(a.maxBidMinor) });
       case 'step':
-        return `Bids go up in steps of ${money(a.bidStepMinor)}, starting at ${money(a.minBidMinor)}.`;
+        return t('Bids go up in steps of {step}, starting at {min}.', {
+          step: money(a.bidStepMinor),
+          min: money(a.minBidMinor),
+        });
       default:
-        return 'Enter an amount such as 4 or 4.50.';
+        return t('Enter an amount such as 4 or 4.50.');
     }
   };
 
@@ -162,9 +166,12 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
     event.preventDefault();
     const parsed = parseBidAmount(entry.trim(), a);
     if (!parsed.ok) return setEntryError(problemText(parsed.problem));
-    if (list.includes(parsed.minor)) return setEntryError(`${money(parsed.minor)} is already in your list.`);
+    if (list.includes(parsed.minor))
+      return setEntryError(t('{amount} is already in your list.', { amount: money(parsed.minor) }));
     if (list.length >= a.maxBidsPerRequest) {
-      return setEntryError(`You can place at most ${a.maxBidsPerRequest} bids at a time.`);
+      return setEntryError(
+        t('You can place at most {count} bids at a time.', { count: a.maxBidsPerRequest }),
+      );
     }
     setEntryError(null);
     setEntry('');
@@ -182,20 +189,20 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
     if (!several) {
       const parsed = parseBidAmount(entry.trim(), a);
       if (!parsed.ok) {
-        setEntryError(entry.trim() === '' ? 'Enter your bid amount.' : problemText(parsed.problem));
+        setEntryError(entry.trim() === '' ? t('Enter your bid amount.') : problemText(parsed.problem));
         document.getElementById(amountId)?.focus();
         return;
       }
       toBid = [parsed.minor];
     } else if (list.length === 0) {
-      setEntryError('Add at least one amount.');
+      setEntryError(t('Add at least one amount.'));
       document.getElementById(amountId)?.focus();
       return;
     }
     if (!method) return;
     const mobile = onPhone ? walletPhone(phone) : null;
     if (onPhone && !mobile) {
-      setPhoneError(`Enter your ${walletName(method)} number, such as 0911223344.`);
+      setPhoneError(t('Enter your {wallet} number, such as 0911223344.', { wallet: walletName(method) }));
       return;
     }
     const amountsMinor = toBid.map(String);
@@ -250,7 +257,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t('Close')}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-200/80 text-slate-700 hover:bg-slate-300/80"
             >
               <Icon d="M6 6l12 12M18 6 6 18" />
@@ -270,29 +277,29 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                 aria-expanded={moreText}
                 className="mt-1 font-semibold text-brand-700"
               >
-                {moreText ? 'Show less' : 'Show more'}
+                {moreText ? t('Show less') : t('Show more')}
               </button>
             </div>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-3xl bg-slate-200/70 px-5 py-3">
             <div>
-              <p className="text-xs text-slate-500">Bid fee</p>
+              <p className="text-xs text-slate-500">{t('Bid fee')}</p>
               <p className="text-xl font-bold text-brand-700 tabular-nums">{money(a.bidFeeMinor)}</p>
             </div>
             <p className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-semibold tabular-nums">
               <Icon d={TICKET} className="h-4 w-4 text-brand-600" />
-              {a.totalBidCount.toLocaleString()} {a.totalBidCount === 1 ? 'bid' : 'bids'}
+              {tCount(a.totalBidCount, '{count} bid', '{count} bids')}
             </p>
             <p className="flex items-center gap-1.5 font-bold">
               <Icon d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-              <span className="sr-only">Closes in</span>
+              <span className="sr-only">{t('Closes in')}</span>
               <Countdown until={a.closesAt} />
             </p>
           </div>
 
           {staff ? (
-            <Alert tone="info">Staff accounts cannot place bids.</Alert>
+            <Alert tone="info">{t('Staff accounts cannot place bids.')}</Alert>
           ) : charged ? (
             <ApproveOnPhone
               {...charged}
@@ -305,18 +312,20 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
           ) : placed ? (
             <div role="status" className="space-y-3 rounded-3xl bg-emerald-50 px-5 py-4 text-emerald-900">
               <p className="text-lg font-bold">
-                {placed.bidCount === 1 ? 'Bid placed' : `${placed.bidCount} bids placed`}
+                {tCount(placed.bidCount, 'Bid placed', '{count} bids placed')}
               </p>
               <p className="text-sm">
-                {placed.bids.map((bid) => money(bid.amountMinor)).join(', ')}. {money(placed.totalFeeMinor)}{' '}
-                was taken from your wallet. Good luck!
+                {t('{amounts}. {fee} was taken from your wallet. Good luck!', {
+                  amounts: placed.bids.map((bid) => money(bid.amountMinor)).join(', '),
+                  fee: money(placed.totalFeeMinor),
+                })}
               </p>
               <button
                 type="button"
                 onClick={reset}
                 className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900"
               >
-                Bid again
+                {t('Bid again')}
               </button>
             </div>
           ) : (
@@ -334,7 +343,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                 className="flex w-full items-center gap-3 rounded-3xl border border-slate-200 bg-slate-100 px-5 py-4 text-left font-semibold"
               >
                 <Icon d="m12 3 9 5-9 5-9-5zm-9 9 9 5 9-5m-18 4 9 5 9-5" className="h-5 w-5 text-slate-600" />
-                <span className="flex-1">Bid on several amounts</span>
+                <span className="flex-1">{t('Bid on several amounts')}</span>
                 <span
                   aria-hidden="true"
                   className={cx(
@@ -353,11 +362,13 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
 
               <form onSubmit={several ? addToList : submitOne} noValidate>
                 <label htmlFor={amountId} className="block font-semibold text-slate-800">
-                  {several ? 'Add an amount' : 'Your bid amount'}
+                  {several ? t('Add an amount') : t('Your bid amount')}
                 </label>
                 <p id={`${amountId}-hint`} className="text-sm text-slate-500">
-                  Enter an amount between {money(a.minBidMinor).replace(`${a.currency} `, '')} and{' '}
-                  {money(a.maxBidMinor).replace(`${a.currency} `, '')}.
+                  {t('Enter an amount between {min} and {max}.', {
+                    min: money(a.minBidMinor).replace(`${a.currency} `, ''),
+                    max: money(a.maxBidMinor).replace(`${a.currency} `, ''),
+                  })}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
                   <div
@@ -371,7 +382,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                       id={amountId}
                       inputMode="decimal"
                       autoComplete="off"
-                      placeholder="Enter your bid amount…"
+                      placeholder={t('Enter your bid amount…')}
                       value={entry}
                       aria-invalid={entryError ? true : undefined}
                       aria-describedby={`${amountId}-hint${entryError ? ` ${amountId}-error` : ''}`}
@@ -388,7 +399,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                       type="submit"
                       className="rounded-full bg-ink px-5 py-4 text-sm font-semibold text-white hover:bg-slate-800"
                     >
-                      Add
+                      {t('Add')}
                     </button>
                   )}
                 </div>
@@ -400,7 +411,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
               </form>
 
               {several && list.length > 0 && (
-                <ul aria-label="Amounts to bid" className="flex flex-wrap gap-2">
+                <ul aria-label={t('Amounts to bid')} className="flex flex-wrap gap-2">
                   {list.map((amount) => (
                     <li
                       key={amount.toString()}
@@ -414,7 +425,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                       {money(amount)}
                       <button
                         type="button"
-                        aria-label={`Remove ${money(amount)}`}
+                        aria-label={t('Remove {amount}', { amount: money(amount) })}
                         onClick={() => {
                           setList(list.filter((other) => other !== amount));
                           reset();
@@ -434,11 +445,15 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                   className="mt-0.5 h-5 w-5"
                 />
                 <span>
-                  Available: {balance !== null ? money(balance) : '…'}
-                  {bonusLeft > 0n && <> (incl. {money(bonusLeft)} bonus)</>} · Top up once and bid from your
-                  wallet in one tap.{' '}
+                  {bonusLeft > 0n
+                    ? t('Available: {balance} (incl. {bonus} bonus)', {
+                        balance: balance !== null ? money(balance) : '…',
+                        bonus: money(bonusLeft),
+                      })
+                    : t('Available: {balance}', { balance: balance !== null ? money(balance) : '…' })}{' '}
+                  · {t('Top up once and bid from your wallet in one tap.')}{' '}
                   <Link to="/wallet?topup=1" className="font-semibold text-brand-700 underline">
-                    Top up
+                    {t('Top up')}
                   </Link>
                 </span>
               </p>
@@ -446,22 +461,25 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
               <fieldset className="space-y-2">
                 <legend className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                   <Icon d="M3 7h18v10H3zm0 4h18" className="h-4 w-4 text-brand-600" />
-                  Select payment method
+                  {t('Select payment method')}
                 </legend>
                 <MethodOption
                   name={`${titleId}-method`}
                   checked={method === 'wallet'}
                   disabled={!walletUsable}
                   onSelect={() => setChosen('wallet')}
-                  title="Wallet"
+                  title={t('Wallet')}
                   detail={
                     wallet.data?.isFrozen
-                      ? 'Your wallet is frozen.'
+                      ? t('Your wallet is frozen.')
                       : balance === null
-                        ? 'Checking your balance…'
+                        ? t('Checking your balance…')
                         : walletUsable
-                          ? `Pay from your balance of ${money(balance)}.`
-                          : `Your balance of ${money(balance)} does not cover ${money(total)}.`
+                          ? t('Pay from your balance of {balance}.', { balance: money(balance) })
+                          : t('Your balance of {balance} does not cover {total}.', {
+                              balance: money(balance),
+                              total: money(total),
+                            })
                   }
                 />
                 {mobileWallets.length > 0 && (
@@ -483,7 +501,9 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                 )}
                 {mobileWallets.length > 0 && (
                   <p className="px-1 text-xs text-slate-500">
-                    With a mobile wallet you approve the payment on your phone, without leaving this page.
+                    {t(
+                      'With a mobile wallet you approve the payment on your phone, without leaving this page.',
+                    )}
                   </p>
                 )}
                 {usable.includes('checkout') && (
@@ -492,8 +512,8 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                     checked={method === 'checkout'}
                     disabled={false}
                     onSelect={() => setChosen('checkout')}
-                    title="Chapa"
-                    detail="telebirr, CBE Birr, M-Pesa or a bank card, on Chapa's payment page."
+                    title={t('Chapa')}
+                    detail={t("telebirr, CBE Birr, M-Pesa or a bank card, on Chapa's payment page.")}
                   />
                 )}
               </fieldset>
@@ -501,10 +521,10 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
               {onPhone && method && (
                 <div>
                   <label htmlFor={`${amountId}-phone`} className="block font-semibold text-slate-800">
-                    {walletName(method)} phone number
+                    {t('{wallet} phone number', { wallet: walletName(method) })}
                   </label>
                   <p id={`${amountId}-phone-hint`} className="text-sm text-slate-500">
-                    The payment request is sent to this number.
+                    {t('The payment request is sent to this number.')}
                   </p>
                   <input
                     id={`${amountId}-phone`}
@@ -536,26 +556,34 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
               {error && (
                 <Alert>
                   {isApiError(error, 'DEPOSIT_AMOUNT_INVALID')
-                    ? 'The bid fee has changed. Close this and open it again to see the new fee. Nothing was charged.'
+                    ? t(
+                        'The bid fee has changed. Close this and open it again to see the new fee. Nothing was charged.',
+                      )
                     : isApiError(error, 'PAYMENT_PROVIDER_ERROR') && method && onPhone
-                      ? `The payment request could not be sent to ${walletPhone(phone) ?? 'that number'}. Check that it is your ${walletName(method)} number and try again. No money was taken.`
+                      ? t(
+                          'The payment request could not be sent to {phone}. Check that it is your {wallet} number and try again. No money was taken.',
+                          { phone: walletPhone(phone) ?? t('that number'), wallet: walletName(method) },
+                        )
                       : isApiError(
                             error,
                             'PAYMENT_PROVIDER_ERROR',
                             'PAYMENTS_UNAVAILABLE',
                             'DEPOSIT_LIMIT_REACHED',
                           )
-                        ? 'The payment could not be started. No money was taken. Please try again in a moment.'
+                        ? t(
+                            'The payment could not be started. No money was taken. Please try again in a moment.',
+                          )
                         : bidErrorMessage(error, a)}
                 </Alert>
               )}
               {!method && balance !== null && !options.isPending && (
                 <Alert tone="warning">
-                  Your wallet does not cover {money(total)} and paying online is not available right now.{' '}
-                  <Link to="/wallet" className="font-semibold underline">
-                    Add money
+                  {t('Your wallet does not cover {total} and paying online is not available right now.', {
+                    total: money(total),
+                  })}{' '}
+                  <Link to="/wallet?topup=1" className="font-semibold underline">
+                    {t('Add money')}
                   </Link>
-                  .
                 </Alert>
               )}
             </>
@@ -572,12 +600,12 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
               className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-5 py-4 text-lg font-semibold tracking-wide text-ink uppercase transition-colors hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy && <Spinner className="h-5 w-5" />}
-              {leaving ? 'Opening Chapa…' : `Pay ${money(total)} & bid`}
+              {leaving ? t('Opening Chapa…') : t('Pay {total} & bid', { total: money(total) })}
             </button>
             <p className="mt-2 text-center text-xs text-slate-500">
-              Bid fees are non-refundable. Bids cannot be changed or withdrawn.
+              {t('Bid fees are non-refundable. Bids cannot be changed or withdrawn.')}
               {method !== 'wallet' &&
-                ' If bidding closes before your payment is confirmed, the money goes to your wallet.'}
+                t(' If bidding closes before your payment is confirmed, the money goes to your wallet.')}
             </p>
           </div>
         )}

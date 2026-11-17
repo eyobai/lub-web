@@ -7,6 +7,7 @@ import { cx } from '../lib/cx';
 import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t, tCount } from '../i18n/i18n';
 
 /** Bids arrive newest first; neighbours from the same auction are shown under one heading. */
 function byAuction(bids: MyBid[]): MyBid[][] {
@@ -25,7 +26,7 @@ function shortAmount(amount: string): string {
 }
 
 export function MyBidsPage() {
-  usePageTitle('My bids');
+  usePageTitle(t('My bids'));
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const bids = useMyBids(page);
@@ -39,9 +40,9 @@ export function MyBidsPage() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">My bids</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('My bids')}</h1>
         <ButtonLink to="/wins" variant="dark">
-          My wins
+          {t('My wins')}
         </ButtonLink>
       </div>
       {bids.data && bids.data.total > 0 && (
@@ -51,8 +52,11 @@ export function MyBidsPage() {
               {bids.data.total.toLocaleString()}
             </p>
             <p className="text-sm text-slate-600">
-              {bids.data.total.toLocaleString()} {bids.data.total === 1 ? 'bid' : 'bids'} in total, newest
-              first.
+              {tCount(
+                bids.data.total,
+                '{count} bid in total, newest first.',
+                '{count} bids in total, newest first.',
+              )}
             </p>
           </div>
           <span
@@ -68,22 +72,22 @@ export function MyBidsPage() {
 
       <div className="mt-5">
         {bids.isPending ? (
-          <PageLoading label="Loading your bids" />
+          <PageLoading label={t('Loading your bids')} />
         ) : bids.isError ? (
           <div className="space-y-3">
             <Alert>{errorMessage(bids.error)}</Alert>
             <Button variant="secondary" onClick={() => void bids.refetch()} busy={bids.isFetching}>
-              Try again
+              {t('Try again')}
             </Button>
           </div>
         ) : bids.data.items.length === 0 ? (
           <div className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center">
             <p className="text-slate-500">
-              {page > 1 ? 'There is nothing on this page.' : 'You have not placed any bids yet.'}
+              {page > 1 ? t('There is nothing on this page.') : t('You have not placed any bids yet.')}
             </p>
             {page === 1 && (
               <ButtonLink to="/" className="mt-4">
-                See running auctions
+                {t('See running auctions')}
               </ButtonLink>
             )}
           </div>
@@ -114,7 +118,7 @@ export function MyBidsPage() {
                             {formatMoney(bid.amount, bid.currency)}
                           </span>
                           <span className="block text-xs text-slate-500">
-                            <time dateTime={bid.createdAt}>{formatDateTime(bid.createdAt)}</time> · fee{' '}
+                            <time dateTime={bid.createdAt}>{formatDateTime(bid.createdAt)}</time> · {t('fee')}{' '}
                             <span className="tabular-nums">{formatMoney(bid.bidFee, bid.currency)}</span>
                           </span>
                         </span>

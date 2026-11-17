@@ -11,6 +11,7 @@ import {
   type DeliveryForm,
 } from './delivery';
 import { useSubmitDeliveryDetails, type MyWin } from './queries';
+import { t } from '../i18n/i18n';
 
 /** Who receives the prize, the number to call and the city. Saving again replaces what was sent before. */
 export function DeliveryDetailsForm({
@@ -44,25 +45,25 @@ export function DeliveryDetailsForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate aria-label="Delivery details" className="mt-4 space-y-4">
+    <form onSubmit={submit} noValidate aria-label={t('Delivery details')} className="mt-4 space-y-4">
       {save.isError && <Alert>{deliverySaveMessage(save.error) ?? errorMessage(save.error)}</Alert>}
-      <Field label="Recipient's full name" required autoComplete="name" {...field('recipientName')} />
+      <Field label={t("Recipient's full name")} required autoComplete="name" {...field('recipientName')} />
       <Field
-        label="Recipient's phone number"
+        label={t("Recipient's phone number")}
         required
         type="tel"
         inputMode="tel"
         autoComplete="tel"
-        hint="We call this number to arrange the delivery."
+        hint={t('We call this number to arrange the delivery.')}
         {...field('recipientPhone')}
       />
-      <Field label="City or town" required autoComplete="address-level2" {...field('city')} />
+      <Field label={t('City or town')} required autoComplete="address-level2" {...field('city')} />
       <div className="flex flex-wrap gap-3">
         <Button type="submit" busy={save.isPending}>
-          Save delivery details
+          {t('Save delivery details')}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={save.isPending}>
-          Cancel
+          {t('Cancel')}
         </Button>
       </div>
     </form>

@@ -1,6 +1,7 @@
 import { errorMessage, isApiError } from '../api/errors';
 import { formatMinor } from '../lib/money';
 import { isUnconfirmed } from './queries';
+import { t, tCount } from '../i18n/i18n';
 
 interface Money {
   currency: string;
@@ -30,46 +31,60 @@ export function bidErrorMessage(error: unknown, money: Money): string {
       const [required] = minorList([details.requiredMinor]);
       const [available] = minorList([details.availableMinor]);
       return required && available
-        ? `These bids cost ${show(required)}, but your wallet has ${show(available)}. Nothing was charged.`
-        : 'Your wallet balance does not cover these bids. Nothing was charged.';
+        ? t('These bids cost {required}, but your wallet has {available}. Nothing was charged.', {
+            required: show(required),
+            available: show(available),
+          })
+        : t('Your wallet balance does not cover these bids. Nothing was charged.');
     }
     case 'WALLET_FROZEN':
-      return 'Your wallet is frozen, so you cannot bid. Please contact support.';
+      return t('Your wallet is frozen, so you cannot bid. Please contact support.');
     case 'FORBIDDEN':
-      return 'This account cannot place bids.';
+      return t('This account cannot place bids.');
     case 'AUCTION_NOT_OPEN':
-      return 'This auction has not opened yet.';
+      return t('This auction has not opened yet.');
     case 'AUCTION_CLOSED':
-      return 'Bidding on this auction has closed. Your bids were not placed and nothing was charged.';
+      return t('Bidding on this auction has closed. Your bids were not placed and nothing was charged.');
     case 'NOT_FOUND':
-      return 'This auction is no longer available.';
+      return t('This auction is no longer available.');
     case 'DUPLICATE_BID': {
       const amounts = refusedAmounts(error).map(show);
       return amounts.length > 0
-        ? `You have already bid ${amounts.join(', ')} in this auction. Remove ${amounts.length === 1 ? 'it' : 'them'} and try again. Nothing was charged.`
-        : 'You have already bid some of these amounts in this auction. Nothing was charged.';
+        ? t(
+            amounts.length === 1
+              ? 'You have already bid {amounts} in this auction. Remove it and try again. Nothing was charged.'
+              : 'You have already bid {amounts} in this auction. Remove them and try again. Nothing was charged.',
+            { amounts: amounts.join(', ') },
+          )
+        : t('You have already bid some of these amounts in this auction. Nothing was charged.');
     }
     case 'BID_AMOUNT_INVALID': {
       const amounts = refusedAmounts(error).map(show);
       return amounts.length > 0
-        ? `This auction does not accept ${amounts.join(', ')}. Nothing was charged.`
-        : 'Some of these amounts are not accepted by this auction. Nothing was charged.';
+        ? t('This auction does not accept {amounts}. Nothing was charged.', { amounts: amounts.join(', ') })
+        : t('Some of these amounts are not accepted by this auction. Nothing was charged.');
     }
     case 'BID_LIMIT_EXCEEDED':
       if (typeof details.remaining === 'number') {
         return details.remaining === 0
-          ? 'You have placed every bid you are allowed in this auction.'
-          : `You can place ${details.remaining} more ${details.remaining === 1 ? 'bid' : 'bids'} in this auction. Nothing was charged.`;
+          ? t('You have placed every bid you are allowed in this auction.')
+          : tCount(
+              details.remaining,
+              'You can place {count} more bid in this auction. Nothing was charged.',
+              'You can place {count} more bids in this auction. Nothing was charged.',
+            );
       }
       return typeof details.maxBidsPerRequest === 'number'
-        ? `You can place at most ${details.maxBidsPerRequest} bids at a time. Nothing was charged.`
-        : 'That is more bids than this auction allows. Nothing was charged.';
+        ? t('You can place at most {count} bids at a time. Nothing was charged.', {
+            count: details.maxBidsPerRequest,
+          })
+        : t('That is more bids than this auction allows. Nothing was charged.');
     case 'RATE_LIMITED':
     case 'PASSWORD_CHANGE_REQUIRED':
       return errorMessage(error);
     default:
       return isUnconfirmed(error)
-        ? 'We could not confirm that your bids were placed. Try again: you will not be charged twice.'
-        : 'Your bids could not be placed. Nothing was charged. Please try again.';
+        ? t('We could not confirm that your bids were placed. Try again: you will not be charged twice.')
+        : t('Your bids could not be placed. Nothing was charged. Please try again.');
   }
 }

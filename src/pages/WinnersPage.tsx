@@ -7,10 +7,12 @@ import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { useRecentWinners, WINNERS_PAGE_SIZE } from '../wins/queries';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t } from '../i18n/i18n';
+import { tRich } from '../i18n/rich';
 
 /** Winners our team has confirmed, newest first. Phone numbers arrive with the middle digits hidden. */
 export function WinnersPage() {
-  usePageTitle('Recent winners');
+  usePageTitle(t('Recent winners'));
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1);
   const winners = useRecentWinners(page);
@@ -23,24 +25,25 @@ export function WinnersPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold tracking-tight">Recent winners</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{t('Recent winners')}</h1>
       <p className="mt-1 text-sm text-slate-600">
-        Each of them won with the lowest amount nobody else bid. Wins are listed once our team has confirmed
-        them.
+        {t(
+          'Each of them won with the lowest amount nobody else bid. Wins are listed once our team has confirmed them.',
+        )}
       </p>
       <div className="mt-5">
         {winners.isPending ? (
-          <PageLoading label="Loading winners" />
+          <PageLoading label={t('Loading winners')} />
         ) : winners.isError ? (
           <div className="space-y-3">
             <Alert>{errorMessage(winners.error)}</Alert>
             <Button variant="secondary" onClick={() => void winners.refetch()} busy={winners.isFetching}>
-              Try again
+              {t('Try again')}
             </Button>
           </div>
         ) : winners.data.items.length === 0 ? (
           <p className="rounded-4xl border border-dashed border-slate-300 px-4 py-12 text-center text-slate-500">
-            {page > 1 ? 'There is nothing on this page.' : 'No winners have been announced yet.'}
+            {page > 1 ? t('There is nothing on this page.') : t('No winners have been announced yet.')}
           </p>
         ) : (
           <ul className={cx('space-y-4', winners.isPlaceholderData && 'opacity-60')}>
@@ -66,13 +69,13 @@ export function WinnersPage() {
                       >
                         <path d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0zm0 2H4a3 3 0 0 0 3 4m10-4h3a3 3 0 0 1-3 4" />
                       </svg>
-                      Winner
+                      {t('Winner')}
                     </span>
                     <span
                       aria-hidden="true"
                       className="absolute right-3 bottom-3 rounded-2xl bg-ink/90 px-3 py-1.5 text-right text-white"
                     >
-                      <span className="block text-[0.65rem] text-white/70">Winning bid</span>
+                      <span className="block text-[0.65rem] text-white/70">{t('Winning bid')}</span>
                       <span className="block text-lg leading-tight font-bold tabular-nums">
                         {formatMoney(winner.amount, winner.currency)}
                       </span>
@@ -81,10 +84,14 @@ export function WinnersPage() {
                   <div className="min-w-0 space-y-2 px-3 pt-3 pb-2">
                     <h2 className="text-lg leading-snug font-bold break-words">{winner.productName}</h2>
                     <p className="text-sm text-slate-600">
-                      <span className="font-semibold text-slate-900">{winner.winnerLabel}</span> won with{' '}
-                      <span className="font-semibold text-slate-900 tabular-nums">
-                        {formatMoney(winner.amount, winner.currency)}
-                      </span>
+                      {tRich('{winner} won with {amount}', {
+                        winner: <span className="font-semibold text-slate-900">{winner.winnerLabel}</span>,
+                        amount: (
+                          <span className="font-semibold text-slate-900 tabular-nums">
+                            {formatMoney(winner.amount, winner.currency)}
+                          </span>
+                        ),
+                      })}
                     </p>
                     <p className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                       <Link
@@ -94,8 +101,11 @@ export function WinnersPage() {
                         {winner.auctionTitle}
                       </Link>
                       <span>
-                        Announced{' '}
-                        <time dateTime={winner.publishedAt}>{formatDateTime(winner.publishedAt)}</time>
+                        {tRich('Announced {date}', {
+                          date: (
+                            <time dateTime={winner.publishedAt}>{formatDateTime(winner.publishedAt)}</time>
+                          ),
+                        })}
                       </span>
                     </p>
                   </div>

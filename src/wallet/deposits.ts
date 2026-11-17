@@ -9,6 +9,7 @@ import { bidKeys, isUnconfirmed } from '../bids/queries';
 import { formatMinor, toMinor } from '../lib/money';
 import { notificationKeys } from '../notifications/queries';
 import { walletKeys } from './queries';
+import { t } from '../i18n/i18n';
 
 export type DepositOptions = components['schemas']['DepositOptionsDto'];
 export type Deposit = components['schemas']['DepositDto'];
@@ -187,18 +188,23 @@ export type DepositAmount = { ok: true; minor: bigint } | { ok: false; message: 
 /** Checks what a person typed against the limits the server gave. The server checks again. */
 export function parseDepositAmount(input: string, options: DepositOptions): DepositAmount {
   const show = (minor: string) => formatMinor(minor, options.currency, options.minorUnits);
-  if (input.trim() === '') return { ok: false, message: 'Enter how much you want to add.' };
+  if (input.trim() === '') return { ok: false, message: t('Enter how much you want to add.') };
   const minor = toMinor(input.replace(/,/g, ''), options.minorUnits);
   if (minor === null) {
-    return { ok: false, message: 'Enter an amount in numbers, for example 500 or 250.50.' };
+    return { ok: false, message: t('Enter an amount in numbers, for example 500 or 250.50.') };
   }
   if (minor < BigInt(options.minAmountMinor)) {
-    return { ok: false, message: `The smallest amount you can add is ${show(options.minAmountMinor)}.` };
+    return {
+      ok: false,
+      message: t('The smallest amount you can add is {amount}.', { amount: show(options.minAmountMinor) }),
+    };
   }
   if (minor > BigInt(options.maxAmountMinor)) {
     return {
       ok: false,
-      message: `The largest amount you can add at once is ${show(options.maxAmountMinor)}.`,
+      message: t('The largest amount you can add at once is {amount}.', {
+        amount: show(options.maxAmountMinor),
+      }),
     };
   }
   return { ok: true, minor };
@@ -225,28 +231,34 @@ export function depositErrorMessage(error: unknown, options: DepositOptions): st
   const show = (minor: string) => formatMinor(minor, options.currency, options.minorUnits);
   switch (error.code) {
     case 'DEPOSIT_AMOUNT_INVALID':
-      return `You can add between ${show(options.minAmountMinor)} and ${show(options.maxAmountMinor)} at a time.`;
+      return t('You can add between {min} and {max} at a time.', {
+        min: show(options.minAmountMinor),
+        max: show(options.maxAmountMinor),
+      });
     case 'DEPOSIT_LIMIT_REACHED':
-      return 'You have several payments that are not finished yet. Finish one of them, or wait for them to expire, then try again.';
+      return t(
+        'You have several payments that are not finished yet. Finish one of them, or wait for them to expire, then try again.',
+      );
     case 'WALLET_FROZEN':
-      return 'Your wallet is frozen, so money cannot be added online. Please contact support.';
+      return t('Your wallet is frozen, so money cannot be added online. Please contact support.');
     case 'FORBIDDEN':
-      return 'This account cannot add money.';
+      return t('This account cannot add money.');
     case 'PAYMENTS_UNAVAILABLE':
-      return 'Paying in online is not available right now. Please try again later.';
+      return t('Paying in online is not available right now. Please try again later.');
     case 'PAYMENT_PROVIDER_ERROR':
-      return 'Chapa could not open the payment. No money was taken. Please try again in a moment.';
+      return t('Chapa could not open the payment. No money was taken. Please try again in a moment.');
     case 'RATE_LIMITED':
     case 'PASSWORD_CHANGE_REQUIRED':
     case 'NETWORK_ERROR':
     case 'SERVICE_BUSY':
       return errorMessage(error);
     default:
-      return 'The payment could not be started. No money was taken. Please try again.';
+      return t('The payment could not be started. No money was taken. Please try again.');
   }
 }
 
 /** How each mobile wallet is named to people. Chapa's own key is shown for one not listed here. */
+// Brand names: the same in every language.
 const WALLET_NAMES: Record<string, string> = {
   telebirr: 'telebirr',
   mpesa: 'M-Pesa',

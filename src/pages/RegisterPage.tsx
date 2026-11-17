@@ -5,11 +5,12 @@ import { useAuth } from '../auth/useAuth';
 import { Alert, Button, Card, Field } from '../components/ui';
 import { emailError, fullNameError, passwordError, phoneError } from '../lib/validation';
 import { usePageTitle } from '../lib/usePageTitle';
+import { t } from '../i18n/i18n';
 
 type Errors = Partial<Record<'phone' | 'password' | 'confirm' | 'fullName' | 'email', string | null>>;
 
 export function RegisterPage() {
-  usePageTitle('Create your account');
+  usePageTitle(t('Create your account'));
   const { register } = useAuth();
   const location = useLocation();
   const [form, setForm] = useState({ phoneNumber: '', password: '', confirm: '', fullName: '', email: '' });
@@ -25,7 +26,7 @@ export function RegisterPage() {
     const next: Errors = {
       phone: phoneError(form.phoneNumber),
       password: passwordError(form.password),
-      confirm: form.confirm === form.password ? null : 'The two passwords do not match.',
+      confirm: form.confirm === form.password ? null : t('The two passwords do not match.'),
       fullName: fullNameError(form.fullName),
       email: emailError(form.email),
     };
@@ -47,7 +48,7 @@ export function RegisterPage() {
         setErrors({ email: errorMessage(error) });
       } else if (isApiError(error, 'PHONE_VERIFICATION_UNSUPPORTED')) {
         setFailure(
-          'Your account needs phone verification, which this site cannot do yet. Please contact support.',
+          t('Your account needs phone verification, which this site cannot do yet. Please contact support.'),
         );
       } else {
         setFailure(errorMessage(error));
@@ -59,12 +60,12 @@ export function RegisterPage() {
   return (
     <div className="mx-auto max-w-md">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-        <p className="mt-1 text-sm text-slate-600">You only need a phone number and a password.</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('Create your account')}</h1>
+        <p className="mt-1 text-sm text-slate-600">{t('You only need a phone number and a password.')}</p>
         <form onSubmit={submit} noValidate className="mt-5 space-y-4">
           {failure && <Alert>{failure}</Alert>}
           <Field
-            label="Phone number"
+            label={t('Phone number')}
             type="tel"
             inputMode="tel"
             autoComplete="tel"
@@ -75,17 +76,17 @@ export function RegisterPage() {
             error={errors.phone}
           />
           <Field
-            label="Password"
+            label={t('Password')}
             type="password"
             autoComplete="new-password"
             required
-            hint="At least 8 characters, with a letter and a number."
+            hint={t('At least 8 characters, with a letter and a number.')}
             value={form.password}
             onChange={set('password')}
             error={errors.password}
           />
           <Field
-            label="Repeat password"
+            label={t('Repeat password')}
             type="password"
             autoComplete="new-password"
             required
@@ -94,14 +95,14 @@ export function RegisterPage() {
             error={errors.confirm}
           />
           <Field
-            label="Full name"
+            label={t('Full name')}
             autoComplete="name"
             value={form.fullName}
             onChange={set('fullName')}
             error={errors.fullName}
           />
           <Field
-            label="Email"
+            label={t('Email')}
             type="email"
             autoComplete="email"
             value={form.email}
@@ -109,14 +110,14 @@ export function RegisterPage() {
             error={errors.email}
           />
           <Button type="submit" busy={busy} className="w-full">
-            Create account
+            {t('Create account')}
           </Button>
         </form>
       </Card>
       <p className="mt-4 text-center text-sm text-slate-600">
-        Already have an account?{' '}
+        {t('Already have an account?')}{' '}
         <Link to="/sign-in" state={location.state} className="font-semibold text-brand-700 hover:underline">
-          Sign in
+          {t('Sign in')}
         </Link>
       </p>
     </div>

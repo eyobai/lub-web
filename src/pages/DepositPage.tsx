@@ -5,42 +5,44 @@ import { formatDateTime } from '../lib/clock';
 import { formatMoney } from '../lib/money';
 import { usePageTitle } from '../lib/usePageTitle';
 import { bidsPending, checkoutAddress, isWaiting, useDeposit, type Deposit } from '../wallet/deposits';
+import { t, tk } from '../i18n/i18n';
+import { tRich } from '../i18n/rich';
 
 const CLOSED: Record<'FAILED' | 'CANCELLED' | 'EXPIRED', { title: string; text: string }> = {
   FAILED: {
-    title: 'Payment not completed',
-    text: 'The payment did not go through, so no money was added to your wallet.',
+    title: tk('Payment not completed'),
+    text: tk('The payment did not go through, so no money was added to your wallet.'),
   },
   CANCELLED: {
-    title: 'Payment cancelled',
-    text: 'The payment was cancelled, so no money was added to your wallet.',
+    title: tk('Payment cancelled'),
+    text: tk('The payment was cancelled, so no money was added to your wallet.'),
   },
   EXPIRED: {
-    title: 'Payment expired',
-    text: 'This payment was not finished in time, so no money was added to your wallet.',
+    title: tk('Payment expired'),
+    text: tk('This payment was not finished in time, so no money was added to your wallet.'),
   },
 };
 
 /** Where Chapa sends the user back to. Shows what the server knows about the payment, never what the address says. */
 export function DepositPage() {
-  usePageTitle('Payment');
+  usePageTitle(t('Payment'));
   const { id = '' } = useParams();
   const deposit = useDeposit(id);
 
-  if (deposit.isPending) return <PageLoading label="Checking your payment" />;
+  if (deposit.isPending) return <PageLoading label={t('Checking your payment')} />;
   if (deposit.isError && !deposit.data) {
     const missing = isApiError(deposit.error, 'NOT_FOUND', 'VALIDATION_FAILED');
     return (
       <div className="mx-auto max-w-xl space-y-3">
-        <h1 className="text-2xl font-bold tracking-tight">Payment</h1>
-        <Alert>{missing ? 'We could not find this payment.' : errorMessage(deposit.error)}</Alert>
+        <h1 className="text-2xl font-bold tracking-tight">{t('Payment')}</h1>
+        <Alert>{missing ? t('We could not find this payment.') : errorMessage(deposit.error)}</Alert>
         {missing ? (
           <ButtonLink to="/wallet" variant="secondary">
-            Back to wallet
+            {t('Back to wallet')}
           </ButtonLink>
         ) : (
           <Button variant="secondary" onClick={() => void deposit.refetch()} busy={deposit.isFetching}>
-            Try again
+            {t('Try again')}
           </Button>
         )}
       </div>
@@ -50,15 +52,15 @@ export function DepositPage() {
   const d = deposit.data;
   return (
     <div className="mx-auto max-w-xl space-y-5">
-      <h1 className="text-2xl font-bold tracking-tight">Payment</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{t('Payment')}</h1>
       <Card className="space-y-4 p-5">
         <Outcome deposit={d} />
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 border-t border-slate-100 pt-4 text-sm">
-          <dt className="text-slate-500">Amount</dt>
+          <dt className="text-slate-500">{t('Amount')}</dt>
           <dd className="font-semibold tabular-nums">{formatMoney(d.amount, d.currency)}</dd>
-          <dt className="text-slate-500">Reference</dt>
+          <dt className="text-slate-500">{t('Reference')}</dt>
           <dd className="break-all">{d.reference}</dd>
-          <dt className="text-slate-500">Started</dt>
+          <dt className="text-slate-500">{t('Started')}</dt>
           <dd>
             <time dateTime={d.createdAt}>{formatDateTime(d.createdAt)}</time>
           </dd>
@@ -78,13 +80,13 @@ function Outcome({ deposit }: { deposit: Deposit }) {
     return (
       <div className="space-y-3">
         <div role="status">
-          <h2 className="text-lg font-semibold text-emerald-800">Payment received</h2>
-          <p className="text-slate-700">{amount} was added to your wallet.</p>
+          <h2 className="text-lg font-semibold text-emerald-800">{t('Payment received')}</h2>
+          <p className="text-slate-700">{t('{amount} was added to your wallet.', { amount })}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink to="/wallet">Go to wallet</ButtonLink>
+          <ButtonLink to="/wallet">{t('Go to wallet')}</ButtonLink>
           <ButtonLink to="/" variant="secondary">
-            See auctions
+            {t('See auctions')}
           </ButtonLink>
         </div>
       </div>
@@ -98,16 +100,21 @@ function Outcome({ deposit }: { deposit: Deposit }) {
         <div role="status" className="flex items-start gap-3">
           <Spinner className="mt-1 h-5 w-5 shrink-0 text-brand-700" />
           <div>
-            <h2 className="text-lg font-semibold">Waiting for your payment</h2>
+            <h2 className="text-lg font-semibold">{t('Waiting for your payment')}</h2>
             {deposit.bid && (
               <p className="text-slate-700">
-                Your {deposit.bid.amounts.length === 1 ? 'bid' : 'bids'} of {bidList(deposit)} will be placed
-                as soon as the payment is confirmed.
+                {t(
+                  deposit.bid.amounts.length === 1
+                    ? 'Your bid of {amounts} will be placed as soon as the payment is confirmed.'
+                    : 'Your bids of {amounts} will be placed as soon as the payment is confirmed.',
+                  { amounts: bidList(deposit) },
+                )}
               </p>
             )}
             <p className="text-slate-700">
-              We have not received confirmation from Chapa yet. If you have paid, stay on this page: it
-              updates by itself, usually within a minute. No money is added until the payment is confirmed.
+              {t(
+                'We have not received confirmation from Chapa yet. If you have paid, stay on this page: it updates by itself, usually within a minute. No money is added until the payment is confirmed.',
+              )}
             </p>
           </div>
         </div>
@@ -116,12 +123,13 @@ function Outcome({ deposit }: { deposit: Deposit }) {
             href={address}
             className="inline-flex min-h-11 items-center rounded-full bg-slate-200/80 px-5 text-sm font-semibold text-slate-900 hover:bg-slate-300/80"
           >
-            I have not paid yet: open the payment page
+            {t('I have not paid yet: open the payment page')}
           </a>
         )}
         <p className="text-sm text-slate-500">
-          This payment can be finished until{' '}
-          <time dateTime={deposit.expiresAt}>{formatDateTime(deposit.expiresAt)}</time>.
+          {tRich('This payment can be finished until {date}.', {
+            date: <time dateTime={deposit.expiresAt}>{formatDateTime(deposit.expiresAt)}</time>,
+          })}
         </p>
       </div>
     );
@@ -131,13 +139,13 @@ function Outcome({ deposit }: { deposit: Deposit }) {
   return (
     <div className="space-y-3">
       <div role="alert">
-        <h2 className="text-lg font-semibold text-red-800">{closed.title}</h2>
-        <p className="text-slate-700">{closed.text}</p>
+        <h2 className="text-lg font-semibold text-red-800">{t(closed.title)}</h2>
+        <p className="text-slate-700">{t(closed.text)}</p>
       </div>
       <p className="text-sm text-slate-600">
-        If money left your account for this payment, contact support and give them the reference below.
+        {t('If money left your account for this payment, contact support and give them the reference below.')}
       </p>
-      <ButtonLink to="/wallet">Try again</ButtonLink>
+      <ButtonLink to="/wallet">{t('Try again')}</ButtonLink>
     </div>
   );
 }
@@ -150,7 +158,7 @@ function PaidBids({ deposit, bid }: { deposit: Deposit; bid: NonNullable<Deposit
   const amount = formatMoney(deposit.amount, deposit.currency);
   const auction = (
     <ButtonLink to={`/auctions/${bid.auctionId}`} variant="secondary">
-      Back to the auction
+      {t('Back to the auction')}
     </ButtonLink>
   );
   if (bidsPending(deposit)) {
@@ -158,8 +166,8 @@ function PaidBids({ deposit, bid }: { deposit: Deposit; bid: NonNullable<Deposit
       <div role="status" className="flex items-start gap-3">
         <Spinner className="mt-1 h-5 w-5 shrink-0 text-brand-700" />
         <div>
-          <h2 className="text-lg font-semibold">Payment received, placing your bids</h2>
-          <p className="text-slate-700">This takes a moment. The page updates by itself.</p>
+          <h2 className="text-lg font-semibold">{t('Payment received, placing your bids')}</h2>
+          <p className="text-slate-700">{t('This takes a moment. The page updates by itself.')}</p>
         </div>
       </div>
     );
@@ -170,14 +178,14 @@ function PaidBids({ deposit, bid }: { deposit: Deposit; bid: NonNullable<Deposit
       <div className="space-y-3">
         <div role="status">
           <h2 className="text-lg font-semibold text-emerald-800">
-            {many ? 'Your bids are placed' : 'Your bid is placed'}
+            {many ? t('Your bids are placed') : t('Your bid is placed')}
           </h2>
           <p className="text-slate-700">
-            You paid {amount} and bid {bidList(deposit)}. Good luck!
+            {t('You paid {amount} and bid {amounts}. Good luck!', { amount, amounts: bidList(deposit) })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink to="/bids">See my bids</ButtonLink>
+          <ButtonLink to="/bids">{t('See my bids')}</ButtonLink>
           {auction}
         </div>
       </div>
@@ -186,14 +194,16 @@ function PaidBids({ deposit, bid }: { deposit: Deposit; bid: NonNullable<Deposit
   return (
     <div className="space-y-3">
       <div role="alert">
-        <h2 className="text-lg font-semibold text-red-800">Payment received, but the bids were not placed</h2>
+        <h2 className="text-lg font-semibold text-red-800">
+          {t('Payment received, but the bids were not placed')}
+        </h2>
         <p className="text-slate-700">
-          {bid.error ? `${bid.error.replace(/\.?$/, '.')} ` : ''}Your {amount} is in your wallet, so you can
-          bid again from there.
+          {bid.error ? `${bid.error.replace(/\.?$/, '.')} ` : ''}
+          {t('Your {amount} is in your wallet, so you can bid again from there.', { amount })}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <ButtonLink to="/wallet">Go to wallet</ButtonLink>
+        <ButtonLink to="/wallet">{t('Go to wallet')}</ButtonLink>
         {auction}
       </div>
     </div>

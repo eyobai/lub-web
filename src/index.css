@@ -1,12 +1,14 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/outfit/wght.css';
+/* Ethiopic letters for Amharic: only downloaded when a page shows them (the font is split by unicode-range). */
+@import '@fontsource-variable/noto-sans-ethiopic/wght.css';
 
 /*
  * Warm cream surfaces, gold for money and calls to action, near-black for the selected state.
  * The slate scale is re-tinted warm so every grey in the app follows the same palette.
  */
 @theme {
-  --font-sans: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Outfit Variable', 'Noto Sans Ethiopic Variable', ui-sans-serif, system-ui, sans-serif;
 
   --color-brand-50: #fbf6e7;
   --color-brand-100: #f4e7c2;
