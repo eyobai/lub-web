@@ -87,7 +87,7 @@ describe('a page that fails to draw', () => {
     expect(screen.getByRole('button', { name: 'Reload the page' })).toBeInTheDocument();
     expect(logged).toHaveBeenCalled();
 
-    await user.click(screen.getByRole('link', { name: 'Auctions' }));
+    await user.click(screen.getByRole('link', { name: 'Home' }));
     expect(await screen.findByRole('heading', { name: 'Lowest unique bid wins' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Something went wrong' })).not.toBeInTheDocument();
   });

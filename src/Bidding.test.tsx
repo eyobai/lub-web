@@ -139,7 +139,7 @@ describe('wallet', () => {
       'href',
       '/wallet',
     );
-    for (const name of ['Auctions', 'My bids', 'Wallet', 'Account']) {
+    for (const name of ['Home', 'My bids', 'Wallet', 'Account']) {
       expect(screen.getByRole('link', { name })).toBeInTheDocument();
     }
   });

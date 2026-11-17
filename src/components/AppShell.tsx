@@ -20,7 +20,7 @@ const ICONS = {
 } as const;
 
 const USER_LINKS = [
-  { to: '/', label: 'Auctions', icon: 'auctions', end: true },
+  { to: '/', label: 'Home', icon: 'auctions', end: true },
   { to: '/winners', label: 'Winners', icon: 'winners', end: false },
   { to: '/bids', label: 'My bids', icon: 'bids', end: false },
   { to: '/wallet', label: 'Wallet', icon: 'wallet', end: false },
@@ -95,7 +95,7 @@ export function AppShell() {
                   )
                 }
               >
-                Auctions
+                Home
               </NavLink>
               <NavLink
                 to="/winners"
