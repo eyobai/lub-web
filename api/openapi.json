@@ -3068,6 +3068,162 @@
         ]
       }
     },
+    "/api/v1/admin/uploads/settings": {
+      "get": {
+        "description": "Role: ADMIN.",
+        "operationId": "AdminUploadsController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadSettingsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Whether picture uploads are available",
+        "tags": [
+          "Admin: Uploads"
+        ]
+      }
+    },
+    "/api/v1/admin/uploads/images": {
+      "post": {
+        "description": "Role: ADMIN. Multipart form with one `file` field: a JPEG, PNG or WebP picture. Stores it and returns its public address, to put in a product’s images.",
+        "operationId": "AdminUploadsController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedImageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — no file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the signed-in user lacks the required role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "UNSUPPORTED_IMAGE — not a JPEG, PNG or WebP picture",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "UPLOAD_FAILED — the storage service refused or did not answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UPLOADS_UNAVAILABLE — storage is not set up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a product picture",
+        "tags": [
+          "Admin: Uploads"
+        ]
+      }
+    },
     "/api/v1/auctions": {
       "get": {
         "description": "No sign-in needed. Shows upcoming, running and finished auctions; drafts are never listed. Each item carries the bid fee, the allowed bid range and the number of bids so far.",
@@ -8841,6 +8997,77 @@
             "description": "A product with a scheduled or running auction must stay AVAILABLE."
           }
         }
+      },
+      "UploadSettingsDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "False while storage is not set up: pictures are then added by address only"
+          },
+          "maxBytes": {
+            "type": "number",
+            "example": 5242880,
+            "description": "Largest picture accepted, in bytes"
+          },
+          "contentTypes": {
+            "example": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "enabled",
+          "maxBytes",
+          "contentTypes"
+        ]
+      },
+      "UploadImageDto": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "A JPEG, PNG or WebP picture"
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "UploadedImageDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://images.leyubid.com/products/2026/11/2f1c.jpg",
+            "description": "Public address"
+          },
+          "key": {
+            "type": "string",
+            "example": "products/2026/11/2f1c.jpg"
+          },
+          "contentType": {
+            "type": "string",
+            "example": "image/jpeg"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 182044
+          }
+        },
+        "required": [
+          "url",
+          "key",
+          "contentType",
+          "sizeBytes"
+        ]
       },
       "ProductSummaryDto": {
         "type": "object",

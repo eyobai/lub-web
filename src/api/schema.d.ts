@@ -738,6 +738,46 @@ export interface paths {
         patch: operations["AdminProductsController_update"];
         trace?: never;
     };
+    "/api/v1/admin/uploads/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether picture uploads are available
+         * @description Role: ADMIN.
+         */
+        get: operations["AdminUploadsController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/uploads/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload a product picture
+         * @description Role: ADMIN. Multipart form with one `file` field: a JPEG, PNG or WebP picture. Stores it and returns its public address, to put in a product’s images.
+         */
+        post: operations["AdminUploadsController_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auctions": {
         parameters: {
             query?: never;
@@ -2547,6 +2587,43 @@ export interface components {
              * @enum {string}
              */
             status?: "AVAILABLE" | "RESERVED" | "UNAVAILABLE" | "ARCHIVED";
+        };
+        UploadSettingsDto: {
+            /** @description False while storage is not set up: pictures are then added by address only */
+            enabled: boolean;
+            /**
+             * @description Largest picture accepted, in bytes
+             * @example 5242880
+             */
+            maxBytes: number;
+            /**
+             * @example [
+             *       "image/jpeg",
+             *       "image/png",
+             *       "image/webp"
+             *     ]
+             */
+            contentTypes: string[];
+        };
+        UploadImageDto: {
+            /**
+             * Format: binary
+             * @description A JPEG, PNG or WebP picture
+             */
+            file: string;
+        };
+        UploadedImageDto: {
+            /**
+             * @description Public address
+             * @example https://images.leyubid.com/products/2026/11/2f1c.jpg
+             */
+            url: string;
+            /** @example products/2026/11/2f1c.jpg */
+            key: string;
+            /** @example image/jpeg */
+            contentType: string;
+            /** @example 182044 */
+            sizeBytes: number;
         };
         ProductSummaryDto: {
             /** Format: uuid */
@@ -5782,6 +5859,129 @@ export interface operations {
             };
             /** @description PRODUCT_IN_USE — it has a scheduled or running auction and must stay AVAILABLE */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminUploadsController_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadSettingsDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminUploadsController_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["UploadImageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadedImageDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — no file */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description FORBIDDEN — the signed-in user lacks the required role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNSUPPORTED_IMAGE — not a JPEG, PNG or WebP picture */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UPLOAD_FAILED — the storage service refused or did not answer */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UPLOADS_UNAVAILABLE — storage is not set up */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
