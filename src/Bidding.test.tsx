@@ -139,9 +139,11 @@ describe('wallet', () => {
       'href',
       '/wallet',
     );
-    for (const name of ['Home', 'My bids', 'Wallet', 'Account']) {
+    for (const name of ['Home', 'Winners', 'My bids', 'Account']) {
       expect(screen.getByRole('link', { name })).toBeInTheDocument();
     }
+    // The balance is the way to the wallet: there is no separate tab.
+    expect(screen.queryByRole('link', { name: 'Wallet' })).not.toBeInTheDocument();
   });
 });
 

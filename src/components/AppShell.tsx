@@ -14,8 +14,6 @@ const ICONS = {
   auctions: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
   winners: 'M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0zm0 2H4a3 3 0 0 0 3 4m10-4h3a3 3 0 0 1-3 4',
   bids: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
-  wallet:
-    'M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2zm13 7h.01',
   account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-8 9a8 8 0 0 1 16 0',
 } as const;
 
@@ -23,9 +21,9 @@ const USER_LINKS = [
   { to: '/', label: 'Home', icon: 'auctions', end: true },
   { to: '/winners', label: 'Winners', icon: 'winners', end: false },
   { to: '/bids', label: 'My bids', icon: 'bids', end: false },
-  { to: '/wallet', label: 'Wallet', icon: 'wallet', end: false },
   { to: '/account', label: 'Account', icon: 'account', end: false },
 ] as const;
+// No Wallet tab: the balance next to the bell opens the wallet.
 
 /**
  * A new page starts at its top, with the keyboard and screen reader placed on it, as after a full page load.
@@ -156,7 +154,7 @@ function UserNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 rounded-t-4xl bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[0.7rem] font-medium shadow-[0_-4px_20px_rgb(22_21_19/0.08)] sm:static sm:flex sm:items-center sm:gap-1 sm:rounded-none sm:p-0 sm:text-sm sm:shadow-none"
+      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 gap-1 rounded-t-4xl bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[0.7rem] font-medium shadow-[0_-4px_20px_rgb(22_21_19/0.08)] sm:static sm:flex sm:items-center sm:gap-1 sm:rounded-none sm:p-0 sm:text-sm sm:shadow-none"
     >
       {USER_LINKS.map((link) => (
         <NavLink
