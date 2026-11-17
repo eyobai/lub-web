@@ -14,7 +14,7 @@ describe('translation', () => {
     language.set('am');
     expect(t('Worth {amount}', { amount: 'ETB 5' })).toBe('ዋጋው ETB 5');
     expect(t('A sentence nobody translated')).toBe('A sentence nobody translated');
-    expect(tCount(3, '{count} bid', '{count} bids')).toBe('3 ቢዶች');
+    expect(tCount(3, '{count} bid', '{count} bids')).toBe('3 ጨረታዎች');
   });
 
   it('switches the site to Amharic and back, remembers the choice and tells the browser', async () => {
@@ -23,7 +23,7 @@ describe('translation', () => {
     expect(await screen.findByRole('heading', { name: 'Lowest unique bid wins' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Switch to Amharic/ }));
-    expect(await screen.findByRole('heading', { name: 'ዝቅተኛው ልዩ ቢድ ያሸንፋል' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'ዝቅተኛው ልዩ ጨረታ ያሸንፋል' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'ይግቡ' })).toHaveAttribute('href', '/sign-in');
     expect(document.documentElement.lang).toBe('am');
     expect(localStorage.getItem('lub.language')).toBe('am');
