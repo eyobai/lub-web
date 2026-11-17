@@ -11,7 +11,6 @@ import { tRich } from '../i18n/rich';
 const EMPTY: Record<AuctionTab['key'], string> = {
   live: tk('No auctions are running right now. Check the upcoming ones.'),
   upcoming: tk('No auctions are scheduled yet.'),
-  ended: tk('No auctions have ended yet.'),
 };
 
 export function AuctionListPage() {

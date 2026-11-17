@@ -308,29 +308,27 @@ describe('auction list', () => {
     expect(fake.callsTo(AUCTIONS)[0].authorization).toBeNull();
   });
 
-  it('switches to upcoming and ended auctions and keeps the choice in the address', async () => {
+  it('switches to upcoming auctions and keeps the choice in the address; finished ones are on the winners page', async () => {
     const fake = fakeApi({
       [AUCTIONS]: (call) => [
         200,
         aPage(
-          call.query.get('status') === 'COMPLETED'
-            ? [anAuction({ status: 'COMPLETED', title: 'Finished one' })]
+          call.query.get('status') === 'SCHEDULED'
+            ? [anAuction({ status: 'SCHEDULED', title: 'Coming soon' })]
             : [],
         ),
       ],
     });
     const { user, address } = renderApp('/');
     expect(await screen.findByText(/No auctions are running/)).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Live', 'Upcoming']);
 
-    await user.click(screen.getByRole('tab', { name: 'Ended' }));
+    await user.click(screen.getByRole('tab', { name: 'Upcoming' }));
 
-    expect(await screen.findByRole('article', { name: 'Finished one' })).toBeInTheDocument();
-    expect(address()).toBe('/?show=ended');
-    expect(screen.getByRole('tab', { name: 'Ended' })).toHaveAttribute('aria-selected', 'true');
-    expect(Object.fromEntries(fake.calls.at(-1)!.query)).toMatchObject({
-      status: 'COMPLETED',
-      order: 'desc',
-    });
+    expect(await screen.findByRole('article', { name: 'Coming soon' })).toBeInTheDocument();
+    expect(address()).toBe('/?show=upcoming');
+    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute('aria-selected', 'true');
+    expect(Object.fromEntries(fake.calls.at(-1)!.query)).toMatchObject({ status: 'SCHEDULED', order: 'asc' });
   });
 
   it('pages through a long list', async () => {
@@ -365,7 +363,7 @@ describe('auction list', () => {
 
   it('gives an ended auction a way to its details instead of Pay & bid', async () => {
     fakeApi({ [AUCTIONS]: [200, aPage([anAuction({ status: 'COMPLETED' })])] });
-    renderApp('/?show=ended');
+    renderApp('/');
     const card = await screen.findByRole('article', { name: 'Samsung Galaxy A55 auction' });
     expect(within(card).getByRole('link', { name: 'See details' })).toHaveAttribute(
       'href',

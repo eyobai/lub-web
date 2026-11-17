@@ -1120,6 +1120,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/winners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a recent winner with the full draw
+         * @description No sign-in needed. A published winner plus how many bids each amount received, so anyone can check that the winning amount was the lowest one bid exactly once. Never shows who placed the other bids.
+         */
+        get: operations["WinnersController_getPublished"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/winners/mine/{id}/delivery-details": {
         parameters: {
             query?: never;
@@ -3194,6 +3214,58 @@ export interface components {
             total: number;
             page: number;
             limit: number;
+        };
+        PublicWinnerDetailDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            auctionId: string;
+            auctionTitle: string;
+            productName: string;
+            productImageUrl: string | null;
+            /**
+             * @description The winning bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 400
+             */
+            amountMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 4.00
+             */
+            amount: string;
+            /** @example ETB */
+            currency: string;
+            /**
+             * @description The winner’s phone number with the middle digits hidden
+             * @example +2519*****67
+             */
+            winnerLabel: string;
+            /** Format: date-time */
+            publishedAt: string;
+            /**
+             * @description The auction's bid fee. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
+             * @example 2500
+             */
+            bidFeeMinor: string;
+            /**
+             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
+             * @example 25.00
+             */
+            bidFee: string;
+            /** @example 1191 */
+            totalBids: number;
+            /**
+             * @description Number of different amounts that were bid
+             * @example 150
+             */
+            distinctAmounts: number;
+            /**
+             * @description Number of amounts that were bid exactly once
+             * @example 60
+             */
+            uniqueAmounts: number;
+            /** @description How many bids each amount received, lowest amount first. Never who bid them. */
+            histogram: components["schemas"]["ResultHistogramEntryDto"][];
         };
         SubmitDeliveryDetailsDto: {
             /** @example Abebe Kebede */
@@ -6795,6 +6867,36 @@ export interface operations {
             };
             /** @description UNAUTHORIZED */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WinnersController_getPublished: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicWinnerDetailDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such published winner */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

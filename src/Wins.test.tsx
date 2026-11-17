@@ -8,7 +8,6 @@ import {
   aUser,
   aWallet,
   aWin,
-  anAuction,
   apiError,
   fakeApi,
   myWins,
@@ -201,15 +200,58 @@ describe('recent winners', () => {
     expect(await screen.findByRole('heading', { name: 'Samsung Galaxy A55' })).toBeInTheDocument();
     const row = screen.getAllByRole('listitem')[0];
     expect(row).toHaveTextContent('+2519****4567 won with ETB 4');
-    expect(within(row).getByRole('link', { name: 'Samsung Galaxy A55 auction' })).toHaveAttribute(
-      'href',
-      `/auctions/${anAuction().id}`,
-    );
     expect(fake.calls.every((call) => call.authorization === null)).toBe(true);
 
     await user.click(screen.getByRole('button', { name: /Next/ }));
     expect(await screen.findByRole('heading', { name: 'Older prize' })).toBeInTheDocument();
     expect(address()).toBe('/winners?page=2');
+  });
+
+  it('opens the whole draw of a winner, and Back closes it', async () => {
+    const winner = aPublicWinner({ amountMinor: '106', amount: '1.06' });
+    const fake = fakeApi({
+      [WINNERS]: [200, { items: [winner], total: 1, page: 1, limit: 20 }],
+      [`${WINNERS}/${winner.id}`]: [
+        200,
+        {
+          ...winner,
+          bidFeeMinor: '2500',
+          bidFee: '25.00',
+          totalBids: 9,
+          distinctAmounts: 4,
+          uniqueAmounts: 2,
+          histogram: [
+            { amountMinor: '1', amount: '0.01', count: 5 },
+            { amountMinor: '106', amount: '1.06', count: 1 },
+            { amountMinor: '107', amount: '1.07', count: 2 },
+            { amountMinor: '200', amount: '2.00', count: 1 },
+          ],
+        },
+      ],
+    });
+    const { user, address } = renderApp('/winners');
+
+    await user.click(await screen.findByRole('button', { name: 'See the draw for Samsung Galaxy A55' }));
+
+    const sheet = await screen.findByRole('dialog', { name: 'Draw ended' });
+    expect(address()).toBe(`/winners?winner=${winner.id}`);
+    expect(sheet).toHaveTextContent('+2519****4567');
+    expect(await within(sheet).findByText('ETB 25')).toBeInTheDocument();
+    expect(sheet).toHaveTextContent('Winning amount: ETB 1.06');
+    const rows = () =>
+      within(sheet)
+        .getAllByRole('listitem')
+        .map((row) => row.textContent);
+    expect(rows()).toEqual(['ETB 0.015 bids', 'ETB 1.06Winner1 bid', 'ETB 1.072 bids', 'ETB 2Unique1 bid']);
+
+    await user.click(within(sheet).getByRole('button', { name: 'Most picked' }));
+    expect(rows()[0]).toBe('ETB 0.015 bids');
+    expect(rows()[1]).toBe('ETB 1.072 bids');
+    expect(fake.calls.every((call) => call.authorization === null)).toBe(true);
+
+    await user.click(within(sheet).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(address()).toBe('/winners');
   });
 
   it('says so when nobody has been announced yet', async () => {

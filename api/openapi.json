@@ -4683,6 +4683,48 @@
         ]
       }
     },
+    "/api/v1/winners/{id}": {
+      "get": {
+        "description": "No sign-in needed. A published winner plus how many bids each amount received, so anyone can check that the winning amount was the lowest one bid exactly once. Never shows who placed the other bids.",
+        "operationId": "WinnersController_getPublished",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicWinnerDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such published winner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a recent winner with the full draw",
+        "tags": [
+          "Winners"
+        ]
+      }
+    },
     "/api/v1/winners/mine/{id}/delivery-details": {
       "put": {
         "description": "Who receives the prize and where. Possible once the win is verified and until staff have confirmed the details (delivery status PENDING or CONTACTED). Sending again replaces the earlier details.",
@@ -10308,6 +10350,101 @@
           "total",
           "page",
           "limit"
+        ]
+      },
+      "PublicWinnerDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "auctionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "auctionTitle": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "productImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "amountMinor": {
+            "type": "string",
+            "example": "400",
+            "description": "The winning bid. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "amount": {
+            "type": "string",
+            "example": "4.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "currency": {
+            "type": "string",
+            "example": "ETB"
+          },
+          "winnerLabel": {
+            "type": "string",
+            "example": "+2519*****67",
+            "description": "The winner’s phone number with the middle digits hidden"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "bidFeeMinor": {
+            "type": "string",
+            "example": "2500",
+            "description": "The auction's bid fee. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
+          },
+          "bidFee": {
+            "type": "string",
+            "example": "25.00",
+            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
+          },
+          "totalBids": {
+            "type": "number",
+            "example": 1191
+          },
+          "distinctAmounts": {
+            "type": "number",
+            "example": 150,
+            "description": "Number of different amounts that were bid"
+          },
+          "uniqueAmounts": {
+            "type": "number",
+            "example": 60,
+            "description": "Number of amounts that were bid exactly once"
+          },
+          "histogram": {
+            "description": "How many bids each amount received, lowest amount first. Never who bid them.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultHistogramEntryDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "auctionId",
+          "auctionTitle",
+          "productName",
+          "productImageUrl",
+          "amountMinor",
+          "amount",
+          "currency",
+          "winnerLabel",
+          "publishedAt",
+          "bidFeeMinor",
+          "bidFee",
+          "totalBids",
+          "distinctAmounts",
+          "uniqueAmounts",
+          "histogram"
         ]
       },
       "SubmitDeliveryDetailsDto": {

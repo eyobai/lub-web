@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth';
 export type MyWin = components['schemas']['MyWinDto'];
 export type MyWinPage = components['schemas']['MyWinPageDto'];
 export type PublicWinner = components['schemas']['PublicWinnerDto'];
+export type WinnerDetail = components['schemas']['PublicWinnerDetailDto'];
 export type DeliveryDetails = components['schemas']['SubmitDeliveryDetailsDto'];
 
 export const WINS_PAGE_SIZE = 20;
@@ -57,5 +58,14 @@ export function useRecentWinners(page: number) {
     queryFn: () =>
       unwrap(api.GET('/api/v1/winners', { params: { query: { page, limit: WINNERS_PAGE_SIZE } } })),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** One published winner with the bid count of every amount. A finished draw never changes, so it is not refetched. */
+export function useWinnerDetail(id: string) {
+  return useQuery({
+    queryKey: ['winners', 'detail', id],
+    queryFn: () => unwrap(api.GET('/api/v1/winners/{id}', { params: { path: { id } } })),
+    staleTime: Infinity,
   });
 }

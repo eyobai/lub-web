@@ -10,11 +10,10 @@ export type AuctionResult = components['schemas']['AuctionResultDto'];
 
 export const PAGE_SIZE = 12;
 
-/** The public groupings of auctions, in the order a visitor cares about them. */
+/** The public groupings of auctions, in the order a visitor cares about them. Finished ones are on the winners page. */
 export const AUCTION_TABS = [
   { key: 'live', label: tk('Live'), status: 'ACTIVE', sort: 'closesAt', order: 'asc' },
   { key: 'upcoming', label: tk('Upcoming'), status: 'SCHEDULED', sort: 'opensAt', order: 'asc' },
-  { key: 'ended', label: tk('Ended'), status: 'COMPLETED', sort: 'closesAt', order: 'desc' },
 ] as const;
 export type AuctionTab = (typeof AUCTION_TABS)[number];
 
@@ -35,7 +34,7 @@ export function useAuctions(tab: AuctionTab, page: number) {
     },
     placeholderData: keepPreviousData,
     // Bid counts and statuses move while an auction runs.
-    refetchInterval: tab.key === 'ended' ? false : 30_000,
+    refetchInterval: 30_000,
     retry: retryUnlessRefused,
   });
 }
