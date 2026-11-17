@@ -10,6 +10,17 @@
 @theme {
   --font-sans: 'Outfit Variable', 'Noto Sans Ethiopic Variable', ui-sans-serif, system-ui, sans-serif;
 
+  /* A light band sweeping across a grey block while a picture loads. */
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
   /* Emerald green: buttons, the balance, live badges and highlights. White text on 500 and darker. */
   --color-brand-50: #ecfdf5;
   --color-brand-100: #d1fae5;

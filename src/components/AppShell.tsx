@@ -67,13 +67,13 @@ export function AppShell() {
             <img src="/favicon.svg" alt="" className="h-7 w-7" />
             <span
               className={cx(
-                'whitespace-nowrap',
-                // The name gives way where the links need the room: to Sign in and Register on the narrowest
+                // The name gives way where the links need the room: to Sign in, Register and the language switch on
                 // phones, and to the signed-in links on small tablets.
-                user ? 'sm:max-md:sr-only' : 'sr-only min-[22.5rem]:not-sr-only',
+                user ? 'sm:max-md:sr-only' : 'sr-only min-[26rem]:not-sr-only',
               )}
             >
-              {config.appName}
+              {/* Its own element: not-sr-only resets white-space, which would let the name break onto two lines. */}
+              <span className="whitespace-nowrap">{config.appName}</span>
             </span>
           </Link>
           {user ? (
