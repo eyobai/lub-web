@@ -43,12 +43,7 @@ function signedIn(overrides: Handlers = {}) {
 const SENT = aDelivery({
   recipientName: 'Abebe Kebede',
   recipientPhone: '+251911234567',
-  address: {
-    city: 'Addis Ababa',
-    subCity: 'Bole',
-    woreda: '03',
-    landmark: 'Near Edna Mall',
-  },
+  address: { city: 'Addis Ababa' },
 });
 
 const steps = (card: HTMLElement) =>
@@ -95,21 +90,23 @@ describe('my wins', () => {
     await user.clear(screen.getByLabelText("Recipient's phone number"));
     await user.type(screen.getByLabelText("Recipient's phone number"), '+251 911 234 567');
     await user.type(screen.getByLabelText('City or town'), 'Addis Ababa');
-    await user.type(screen.getByLabelText(/^Sub-city/), 'Bole');
-    await user.type(screen.getByLabelText(/^Woreda/), '03');
-    await user.type(screen.getByLabelText(/^Landmark/), 'Near Edna Mall');
+    // Only these three are asked: the rest of the address is arranged on the phone.
+    expect(screen.queryByLabelText(/^Region/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Sub-city/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Woreda/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^House number/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Landmark/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Save delivery details' }));
 
     expect(await screen.findByText('Your delivery details were saved.')).toBeInTheDocument();
     expect(fake.callsTo(SAVE)[0].body).toEqual({
       recipientName: 'Abebe Kebede',
       recipientPhone: '+251911234567',
-      address: { city: 'Addis Ababa', subCity: 'Bole', woreda: '03', landmark: 'Near Edna Mall' },
+      address: { city: 'Addis Ababa' },
     });
     expect(card).toHaveTextContent('Arranging delivery');
     expect(card).toHaveTextContent('Abebe Kebede');
-    expect(card).toHaveTextContent('Woreda 03, Bole, Addis Ababa');
-    expect(card).toHaveTextContent('Landmark: Near Edna Mall');
+    expect(card).toHaveTextContent('Addis Ababa');
     expect(screen.queryByRole('form', { name: 'Delivery details' })).not.toBeInTheDocument();
 
     // Changing them starts from what was saved.

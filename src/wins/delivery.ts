@@ -1,27 +1,16 @@
 import { ApiError } from '../api/errors';
 import type { DeliveryDetails, MyWin } from './queries';
 
-/** What the form holds: every box is text, filled or not. */
+/**
+ * What the form holds: who receives the prize, the number our team calls, and the city or town. The rest of the
+ * address is arranged on that call, so the form does not ask for it.
+ */
 export interface DeliveryForm {
   recipientName: string;
   recipientPhone: string;
-  region: string;
   city: string;
-  subCity: string;
-  woreda: string;
-  houseNumber: string;
-  landmark: string;
 }
 export type DeliveryField = keyof DeliveryForm;
-
-const OPTIONAL_LIMITS = {
-  region: 100,
-  subCity: 100,
-  woreda: 50,
-  houseNumber: 50,
-  landmark: 255,
-} as const satisfies Partial<Record<DeliveryField, number>>;
-const OPTIONAL_FIELDS = Object.keys(OPTIONAL_LIMITS) as (keyof typeof OPTIONAL_LIMITS)[];
 
 /** The details already sent, or the account's own name and number as a first suggestion. */
 export function initialDeliveryForm(
@@ -32,12 +21,7 @@ export function initialDeliveryForm(
   return {
     recipientName: d?.recipientName ?? account.fullName ?? '',
     recipientPhone: d?.recipientPhone ?? account.phoneNumber,
-    region: d?.address?.region ?? '',
     city: d?.address?.city ?? '',
-    subCity: d?.address?.subCity ?? '',
-    woreda: d?.address?.woreda ?? '',
-    houseNumber: d?.address?.houseNumber ?? '',
-    landmark: d?.address?.landmark ?? '',
   };
 }
 
@@ -59,29 +43,19 @@ export function deliveryErrors(form: DeliveryForm): Partial<Record<DeliveryField
   const city = form.city.trim();
   if (!city) errors.city = 'Enter the city or town.';
   else if (city.length < 2 || city.length > 100) errors.city = 'Enter between 2 and 100 characters.';
-
-  for (const field of OPTIONAL_FIELDS) {
-    if (form[field].trim().length > OPTIONAL_LIMITS[field])
-      errors[field] = `Use at most ${OPTIONAL_LIMITS[field]} characters.`;
-  }
   return errors;
 }
 
-/** The request body: trimmed, with the boxes left empty left out. */
+/** The request body, trimmed. */
 export function toDeliveryDetails(form: DeliveryForm): DeliveryDetails {
-  const address: DeliveryDetails['address'] = { city: form.city.trim() };
-  for (const field of OPTIONAL_FIELDS) {
-    const value = form[field].trim();
-    if (value) address[field] = value;
-  }
   return {
     recipientName: form.recipientName.trim(),
     recipientPhone: phoneDigits(form.recipientPhone),
-    address,
+    address: { city: form.city.trim() },
   };
 }
 
-/** One line for display, most specific part first. */
+/** One line for display, most specific part first. Details sent before the form was shortened may have more parts. */
 export function formatAddress(address: DeliveryDetails['address']): string {
   return [
     address.houseNumber && `House ${address.houseNumber}`,

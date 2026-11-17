@@ -12,7 +12,7 @@ import {
 } from './delivery';
 import { useSubmitDeliveryDetails, type MyWin } from './queries';
 
-/** Who receives the prize and where. Saving again replaces what was sent before. */
+/** Who receives the prize, the number to call and the city. Saving again replaces what was sent before. */
 export function DeliveryDetailsForm({
   win,
   onSaved,
@@ -57,17 +57,6 @@ export function DeliveryDetailsForm({
         {...field('recipientPhone')}
       />
       <Field label="City or town" required autoComplete="address-level2" {...field('city')} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Region" autoComplete="address-level1" {...field('region')} />
-        <Field label="Sub-city" {...field('subCity')} />
-        <Field label="Woreda" {...field('woreda')} />
-        <Field label="House number" {...field('houseNumber')} />
-      </div>
-      <Field
-        label="Landmark"
-        hint="Something nearby that helps the courier find you."
-        {...field('landmark')}
-      />
       <div className="flex flex-wrap gap-3">
         <Button type="submit" busy={save.isPending}>
           Save delivery details

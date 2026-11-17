@@ -15,12 +15,7 @@ import {
 const filled: DeliveryForm = {
   recipientName: 'Abebe Kebede',
   recipientPhone: '0911 234 567',
-  region: '',
   city: 'Addis Ababa',
-  subCity: '',
-  woreda: '',
-  houseNumber: '',
-  landmark: '',
 };
 const sent = aDelivery({
   recipientName: 'Abebe Kebede',
@@ -40,13 +35,10 @@ describe('delivery form', () => {
       recipientPhone: '+251911000222',
       city: '',
     });
-    expect(initialDeliveryForm(aWin({ delivery: sent }), account)).toMatchObject({
+    expect(initialDeliveryForm(aWin({ delivery: sent }), account)).toEqual({
       recipientName: 'Abebe Kebede',
       recipientPhone: '+251911234567',
       city: 'Addis Ababa',
-      subCity: 'Bole',
-      woreda: '03',
-      region: '',
     });
     expect(initialDeliveryForm(aWin(), { fullName: null, phoneNumber: '' }).recipientName).toBe('');
   });
@@ -66,18 +58,16 @@ describe('delivery form', () => {
     for (const phone of ['+251 911 234 567', '(091) 123-4567', '911234567']) {
       expect(deliveryErrors({ ...filled, recipientPhone: phone }).recipientPhone, phone).toBeUndefined();
     }
-    expect(deliveryErrors({ ...filled, woreda: 'x'.repeat(51) }).woreda).toBe('Use at most 50 characters.');
-    expect(deliveryErrors({ ...filled, landmark: 'x'.repeat(255) }).landmark).toBeUndefined();
   });
 
-  it('sends trimmed values, digits only for the phone, and leaves empty boxes out', () => {
-    expect(
-      toDeliveryDetails({ ...filled, recipientName: '  Abebe Kebede ', subCity: ' Bole ', landmark: '   ' }),
-    ).toEqual({
-      recipientName: 'Abebe Kebede',
-      recipientPhone: '0911234567',
-      address: { city: 'Addis Ababa', subCity: 'Bole' },
-    });
+  it('sends the name, the phone as digits and the city, trimmed', () => {
+    expect(toDeliveryDetails({ ...filled, recipientName: '  Abebe Kebede ', city: ' Addis Ababa ' })).toEqual(
+      {
+        recipientName: 'Abebe Kebede',
+        recipientPhone: '0911234567',
+        address: { city: 'Addis Ababa' },
+      },
+    );
   });
 
   it('writes an address on one line', () => {
