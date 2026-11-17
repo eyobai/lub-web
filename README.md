@@ -1,4 +1,4 @@
-# LyuBid — website
+# LeyuBid — website
 
 The user-facing website of the Lowest Unique Bid auction platform. It is a separate project from the
 backend (`lub-auction-backend`) and talks to it only through the HTTP API.
@@ -54,7 +54,7 @@ Wins and notifications notes:
 
 Across the whole site:
 
-- **Tab titles**: every page names the browser tab, for example "Wallet · LyuBid"; an auction page uses
+- **Tab titles**: every page names the browser tab, for example "Wallet · LeyuBid"; an auction page uses
   the auction's title.
 - **Moving between pages**: a new page starts at its top with the keyboard and screen reader placed on it.
   Going back returns to where the user was.

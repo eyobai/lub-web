@@ -1,6 +1,6 @@
 {
-  "name": "LyuBid",
-  "short_name": "LyuBid",
+  "name": "LeyuBid",
+  "short_name": "LeyuBid",
   "description": "Lowest unique bid auctions: the lowest bid nobody else placed wins.",
   "start_url": "/",
   "scope": "/",
