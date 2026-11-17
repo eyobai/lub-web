@@ -32,7 +32,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   // With VITE_API_BASE_URL=/ the local servers pass /api on to the backend, as a reverse proxy would in production.
   // PREVIEW_ANY_HOST=1 lets `npm run preview` answer under a tunnel's host name; never needed in production.
-  const proxy = process.env.API_PROXY_TARGET ? { '/api': process.env.API_PROXY_TARGET } : undefined;
+  // changeOrigin: a remote backend behind a web server (Caddy) answers only to its own host name.
+  const target = process.env.API_PROXY_TARGET;
+  const proxy = target ? { '/api': { target, changeOrigin: true } } : undefined;
   return {
     plugins: [
       react(),
