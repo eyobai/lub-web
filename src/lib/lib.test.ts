@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { returnPath } from '../auth/returnPath';
 import { formatTimeLeft, serverClock, timeLeft } from './clock';
 import { formatMoney } from './money';
-import { emailError, fullNameError, passwordError, phoneError } from './validation';
+import { fullNameError, passwordError, phoneError } from './validation';
 
 describe('formatMoney', () => {
   it('groups thousands and drops an all-zero fraction', () => {
@@ -77,13 +77,10 @@ describe('validation', () => {
     expect(passwordError('abcd1234')).toBeNull();
   });
 
-  it('treats name and email as optional but checks them when given', () => {
+  it('treats the name as optional but checks it when given', () => {
     expect(fullNameError('  ')).toBeNull();
     expect(fullNameError('A')).not.toBeNull();
     expect(fullNameError('<b>Abebe</b>')).not.toBeNull();
-    expect(emailError('')).toBeNull();
-    expect(emailError('abebe@example')).not.toBeNull();
-    expect(emailError('abebe@example.com')).toBeNull();
   });
 });
 

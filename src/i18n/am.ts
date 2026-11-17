@@ -104,7 +104,6 @@ export const am: Record<string, string> = {
   Email: 'ኢሜይል',
   Ended: 'ተጠናቋል',
   'Enter a phone number we can call about the delivery.': 'ስለ ማድረሱ የምንደውልበትን ስልክ ቁጥር ያስገቡ።',
-  'Enter a valid email address.': 'ትክክለኛ የኢሜይል አድራሻ ያስገቡ።',
   'Enter a valid Ethiopian mobile number, for example 0911 234 567.':
     'ትክክለኛ የኢትዮጵያ ሞባይል ቁጥር ያስገቡ፣ ለምሳሌ 0911 234 567።',
   'Enter a valid phone number, for example 0911 234 567.': 'ትክክለኛ ስልክ ቁጥር ያስገቡ፣ ለምሳሌ 0911 234 567።',

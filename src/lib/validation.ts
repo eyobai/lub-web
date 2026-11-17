@@ -24,11 +24,3 @@ export function fullNameError(value: string): string | null {
   if (name.length < 2 || name.length > 150) return t('Enter between 2 and 150 characters.');
   return /[<>]/.test(name) ? t('The name cannot contain < or >.') : null;
 }
-
-export function emailError(value: string): string | null {
-  const email = value.trim();
-  if (!email) return null;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254
-    ? null
-    : t('Enter a valid email address.');
-}

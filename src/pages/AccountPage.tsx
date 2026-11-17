@@ -42,10 +42,13 @@ export function AccountPage() {
             <dt className="text-slate-500">{t('Name')}</dt>
             <dd className="font-semibold">{user.fullName ?? t('Not given')}</dd>
           </div>
-          <div>
-            <dt className="text-slate-500">{t('Email')}</dt>
-            <dd className="font-semibold break-words">{user.email ?? t('Not given')}</dd>
-          </div>
+          {/* Email is no longer asked for at sign-up; older accounts that gave one still see it. */}
+          {user.email && (
+            <div>
+              <dt className="text-slate-500">{t('Email')}</dt>
+              <dd className="font-semibold break-words">{user.email}</dd>
+            </div>
+          )}
           <div>
             <dt className="text-slate-500">{t('Member since')}</dt>
             <dd className="font-semibold">{formatDateTime(user.createdAt)}</dd>

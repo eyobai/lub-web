@@ -3,17 +3,17 @@ import { Link, useLocation } from 'react-router-dom';
 import { errorMessage, isApiError } from '../api/errors';
 import { useAuth } from '../auth/useAuth';
 import { Alert, Button, Card, Field } from '../components/ui';
-import { emailError, fullNameError, passwordError, phoneError } from '../lib/validation';
+import { fullNameError, passwordError, phoneError } from '../lib/validation';
 import { usePageTitle } from '../lib/usePageTitle';
 import { t } from '../i18n/i18n';
 
-type Errors = Partial<Record<'phone' | 'password' | 'confirm' | 'fullName' | 'email', string | null>>;
+type Errors = Partial<Record<'phone' | 'password' | 'confirm' | 'fullName', string | null>>;
 
 export function RegisterPage() {
   usePageTitle(t('Create your account'));
   const { register } = useAuth();
   const location = useLocation();
-  const [form, setForm] = useState({ phoneNumber: '', password: '', confirm: '', fullName: '', email: '' });
+  const [form, setForm] = useState({ phoneNumber: '', password: '', confirm: '', fullName: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,7 +28,6 @@ export function RegisterPage() {
       password: passwordError(form.password),
       confirm: form.confirm === form.password ? null : t('The two passwords do not match.'),
       fullName: fullNameError(form.fullName),
-      email: emailError(form.email),
     };
     setErrors(next);
     setFailure(null);
@@ -39,13 +38,10 @@ export function RegisterPage() {
         phoneNumber: form.phoneNumber.trim(),
         password: form.password,
         fullName: form.fullName.trim() || undefined,
-        email: form.email.trim() || undefined,
       });
     } catch (error) {
       if (isApiError(error, 'PHONE_ALREADY_REGISTERED', 'INVALID_PHONE_NUMBER')) {
         setErrors({ phone: errorMessage(error) });
-      } else if (isApiError(error, 'EMAIL_ALREADY_IN_USE')) {
-        setErrors({ email: errorMessage(error) });
       } else if (isApiError(error, 'PHONE_VERIFICATION_UNSUPPORTED')) {
         setFailure(
           t('Your account needs phone verification, which this site cannot do yet. Please contact support.'),
@@ -100,14 +96,6 @@ export function RegisterPage() {
             value={form.fullName}
             onChange={set('fullName')}
             error={errors.fullName}
-          />
-          <Field
-            label={t('Email')}
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={set('email')}
-            error={errors.email}
           />
           <Button type="submit" busy={busy} className="w-full">
             {t('Create account')}
