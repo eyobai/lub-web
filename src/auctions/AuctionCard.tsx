@@ -39,11 +39,6 @@ export function AuctionCard({ auction }: { auction: Auction }) {
           <h2 id={titleId} className="line-clamp-2 text-lg leading-snug font-bold text-ink">
             {auction.title}
           </h2>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {t('Worth {amount}', {
-              amount: formatMoney(auction.product.marketValue, auction.product.currency),
-            })}
-          </p>
         </div>
         <dl className="mt-auto flex flex-wrap items-center gap-2 text-sm">
           <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">

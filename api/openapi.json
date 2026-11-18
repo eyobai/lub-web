@@ -8752,16 +8752,6 @@
             "type": "string",
             "example": "ETB"
           },
-          "marketValueMinor": {
-            "type": "string",
-            "example": "6500000",
-            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "marketValue": {
-            "type": "string",
-            "example": "65000.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
           "specifications": {
             "type": "object",
             "additionalProperties": true,
@@ -8803,8 +8793,6 @@
           "brand",
           "model",
           "currency",
-          "marketValueMinor",
-          "marketValue",
           "specifications",
           "images",
           "status",
@@ -8885,11 +8873,6 @@
             "maxLength": 100,
             "nullable": true
           },
-          "marketValueMinor": {
-            "type": "string",
-            "example": "6500000",
-            "description": "Market value. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
           "currency": {
             "type": "string",
             "example": "ETB",
@@ -8926,8 +8909,7 @@
           }
         },
         "required": [
-          "name",
-          "marketValueMinor"
+          "name"
         ]
       },
       "UpdateProductDto": {
@@ -8952,11 +8934,6 @@
             "type": "string",
             "maxLength": 100,
             "nullable": true
-          },
-          "marketValueMinor": {
-            "type": "string",
-            "example": "6500000",
-            "description": "Market value. Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
           },
           "specifications": {
             "type": "object",
@@ -9080,16 +9057,6 @@
             "type": "string",
             "example": "ETB"
           },
-          "marketValueMinor": {
-            "type": "string",
-            "example": "6500000",
-            "description": "Integer amount in minor units (santim for ETB), as a string so large values keep full precision."
-          },
-          "marketValue": {
-            "type": "string",
-            "example": "65000.00",
-            "description": "The same amount formatted in major units for display. Do not use it for arithmetic."
-          },
           "specifications": {
             "type": "object",
             "additionalProperties": true,
@@ -9109,8 +9076,6 @@
           "brand",
           "model",
           "currency",
-          "marketValueMinor",
-          "marketValue",
           "specifications",
           "images"
         ]

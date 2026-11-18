@@ -2494,16 +2494,6 @@ export interface components {
             model: string | null;
             /** @example ETB */
             currency: string;
-            /**
-             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 6500000
-             */
-            marketValueMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 65000.00
-             */
-            marketValue: string;
             specifications: {
                 [key: string]: unknown;
             } | null;
@@ -2539,11 +2529,6 @@ export interface components {
             /** @example SM-A556E */
             model?: string | null;
             /**
-             * @description Market value. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 6500000
-             */
-            marketValueMinor: string;
-            /**
              * @description ISO-4217 code. Defaults to the platform currency.
              * @example ETB
              */
@@ -2572,11 +2557,6 @@ export interface components {
             description?: string | null;
             brand?: string | null;
             model?: string | null;
-            /**
-             * @description Market value. Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 6500000
-             */
-            marketValueMinor?: string;
             specifications?: {
                 [key: string]: unknown;
             } | null;
@@ -2634,16 +2614,6 @@ export interface components {
             model: string | null;
             /** @example ETB */
             currency: string;
-            /**
-             * @description Integer amount in minor units (santim for ETB), as a string so large values keep full precision.
-             * @example 6500000
-             */
-            marketValueMinor: string;
-            /**
-             * @description The same amount formatted in major units for display. Do not use it for arithmetic.
-             * @example 65000.00
-             */
-            marketValue: string;
             specifications: {
                 [key: string]: unknown;
             } | null;

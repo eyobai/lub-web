@@ -79,7 +79,6 @@ function AuctionDetail({ id }: { id: string }) {
             <h1 className="mt-3 text-3xl leading-tight font-bold tracking-tight">{a.title}</h1>
             <p className="mt-1 text-slate-600">
               {[a.product.brand, a.product.model].filter(Boolean).join(' · ') || a.product.name}
-              {' · '}worth {formatMoney(a.product.marketValue, a.product.currency)}
             </p>
           </header>
 

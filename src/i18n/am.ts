@@ -408,7 +408,6 @@ export const am: Record<string, string> = {
   Won: 'አሸንፏል',
   'Won with {amount} in {auction}': 'በ{auction} በ{amount} አሸንፈዋል',
   'Woreda {number}': 'ወረዳ {number}',
-  'Worth {amount}': 'ዋጋው {amount}',
   Yes: 'አዎ',
   'You approve the payment on your phone, without leaving this page.': 'ይህን ገጽ ሳይለቁ ክፍያውን በስልክዎ ያጸድቃሉ።',
   'You are offline. What you see may be out of date, and nothing can be sent until you reconnect.':

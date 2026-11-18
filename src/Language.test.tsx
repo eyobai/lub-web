@@ -10,9 +10,9 @@ afterEach(() => language.set('en'));
 
 describe('translation', () => {
   it('fills values into the sentence, and falls back to English when a sentence has no Amharic', () => {
-    expect(t('Worth {amount}', { amount: 'ETB 5' })).toBe('Worth ETB 5');
+    expect(t('Up to ETB {amount}', { amount: '10,000' })).toBe('Up to ETB 10,000');
     language.set('am');
-    expect(t('Worth {amount}', { amount: 'ETB 5' })).toBe('ዋጋው ETB 5');
+    expect(t('Up to ETB {amount}', { amount: '10,000' })).toBe('እስከ 10,000 ብር');
     expect(t('A sentence nobody translated')).toBe('A sentence nobody translated');
     expect(tCount(3, '{count} bid', '{count} bids')).toBe('3 ጨረታዎች');
   });

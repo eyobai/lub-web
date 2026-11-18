@@ -296,7 +296,7 @@ describe('auction list', () => {
     expect(within(card).getByRole('link', { name: 'Pay ETB 75 & bid' })).toHaveAttribute('href', '/sign-in');
     expect(within(card).getByText('ETB 75')).toBeInTheDocument();
     expect(within(card).getByText('1,234')).toBeInTheDocument();
-    expect(within(card).getByText('Worth ETB 65,000')).toBeInTheDocument();
+    expect(within(card).queryByText(/Worth/)).not.toBeInTheDocument();
     expect(within(card).getByText(/^0[12]:\d\d:\d\d$/)).toBeInTheDocument();
     expect(Object.fromEntries(fake.callsTo(AUCTIONS)[0].query)).toEqual({
       status: 'ACTIVE',

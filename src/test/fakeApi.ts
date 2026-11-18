@@ -120,8 +120,6 @@ export function anAuction(overrides: Partial<Schemas['AuctionDto']> = {}): Schem
       brand: 'Samsung',
       model: 'SM-A556E',
       currency: 'ETB',
-      marketValueMinor: '6500000',
-      marketValue: '65000.00',
       specifications: { Storage: '256 GB', '5G': true, nested: { ignored: 1 } },
       images: [],
     },
