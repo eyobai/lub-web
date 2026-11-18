@@ -163,7 +163,7 @@ function WalletLogo({ method }: { method: string }) {
       <span
         aria-hidden="true"
         className={cx(
-          'flex h-12 w-12 items-center justify-center rounded-2xl text-base font-bold',
+          'flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold',
           WALLET_TINT[method] ?? 'bg-slate-200 text-slate-700',
         )}
       >
@@ -172,12 +172,15 @@ function WalletLogo({ method }: { method: string }) {
     );
   }
   return (
-    <img
-      src={`/payments/${method}.png`}
-      alt=""
-      onError={() => setMissing(true)}
-      className="h-12 w-auto max-w-[7.5rem] object-contain"
-    />
+    // Every logo fits the same small box, whatever the shape of the file.
+    <span aria-hidden="true" className="flex h-8 w-[5.5rem] items-center justify-center">
+      <img
+        src={`/payments/${method}.png`}
+        alt=""
+        onError={() => setMissing(true)}
+        className="max-h-full max-w-full object-contain"
+      />
+    </span>
   );
 }
 
@@ -196,19 +199,19 @@ export function WalletTile({
   return (
     <label
       className={cx(
-        'relative flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-3xl border-2 bg-white px-3 py-3 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600',
+        'relative flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 bg-white px-3 py-2.5 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-600',
         checked ? 'border-ink bg-brand-50' : 'border-slate-200 hover:border-slate-300',
       )}
     >
       <input type="radio" name={name} checked={checked} onChange={onSelect} className="sr-only" />
       <WalletLogo method={method} />
-      <span className="text-sm font-semibold">{walletName(method)}</span>
+      <span className="text-xs font-semibold">{walletName(method)}</span>
       {checked && (
         <span
           aria-hidden="true"
-          className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-white"
+          className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-ink text-white"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-3 w-3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-2.5 w-2.5">
             <path d="m5 12 5 5 9-10" />
           </svg>
         </span>
