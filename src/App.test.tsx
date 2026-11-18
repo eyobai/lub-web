@@ -408,6 +408,47 @@ describe('auction list', () => {
   });
 });
 
+describe('tabs for visitors', () => {
+  it('shows every tab, and asks for an account before My bids, then goes there', async () => {
+    const user = aUser();
+    fakeApi({
+      ...empty,
+      [LOGIN]: [200, { user, tokens: tokens() }],
+      [ME]: [200, user],
+      'GET /api/v1/bids/mine': [200, { items: [], total: 0, page: 1, limit: 20 }],
+      'GET /api/v1/wallet': [200, aWallet()],
+      'GET /api/v1/notifications/unread-count': [200, { unread: 0 }],
+    });
+    const { user: u, address } = renderApp('/');
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    expect(within(nav).getByRole('link', { name: 'Home' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Winners' })).toBeInTheDocument();
+
+    await u.click(within(nav).getByRole('button', { name: 'My bids' }));
+    const prompt = screen.getByRole('dialog', { name: 'Sign in to continue' });
+    expect(prompt).toHaveTextContent('see your bids');
+    expect(within(prompt).getByRole('link', { name: 'Create an account' })).toHaveAttribute(
+      'href',
+      '/register',
+    );
+    await u.click(within(prompt).getByRole('link', { name: 'Sign in' }));
+
+    expect(address()).toBe('/sign-in');
+    await u.type(screen.getByLabelText('Phone number'), '0911234567');
+    await u.type(screen.getByLabelText('Password'), 'secret123');
+    await u.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(address()).toBe('/bids'));
+  });
+
+  it('asks for an account before Account too', async () => {
+    fakeApi(empty);
+    const { user: u } = renderApp('/winners');
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
+    await u.click(within(nav).getByRole('button', { name: 'Account' }));
+    expect(screen.getByRole('dialog', { name: 'Sign in to continue' })).toHaveTextContent('wallet and wins');
+  });
+});
+
 describe('top-up bonus banner', () => {
   const OPTIONS = 'GET /api/v1/wallet/deposit-options';
   const options = (over: object = {}) => ({

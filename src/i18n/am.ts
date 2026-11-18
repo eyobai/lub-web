@@ -543,4 +543,9 @@ export const am: Record<string, string> = {
   'is in your wallet': 'ዋሌትዎ ውስጥ ገብቷል',
   'Use it for bid fees by {date}. It cannot be withdrawn.': 'እስከ {date} ድረስ ለጨረታ ክፍያ ይጠቀሙበት። ወጪ ማድረግ አይቻልም።',
   'Use it for bid fees. It cannot be withdrawn.': 'ለጨረታ ክፍያ ይጠቀሙበት። ወጪ ማድረግ አይቻልም።',
+  'Sign in to continue': 'ለመቀጠል ይግቡ',
+  'Sign in or create an account to see your bids and follow your auctions.':
+    'ጨረታዎችዎን ለማየትና ለመከታተል ይግቡ ወይም መለያ ይፍጠሩ።',
+  'Sign in or create an account to see your account, wallet and wins.':
+    'መለያዎን፣ ዋሌትዎንና ያሸነፉትን ለማየት ይግቡ ወይም መለያ ይፍጠሩ።',
 };

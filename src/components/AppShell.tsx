@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom';
+import { Sheet } from './Sheet';
 import { useAuth } from '../auth/useAuth';
 import { config } from '../config';
 import { cx } from '../lib/cx';
@@ -21,11 +23,12 @@ const ICONS = {
 } as const;
 
 const USER_LINKS = [
-  { to: '/', label: tk('Home'), icon: 'auctions', end: true },
-  { to: '/winners', label: tk('Winners'), icon: 'winners', end: false },
-  { to: '/bids', label: tk('My bids'), icon: 'bids', end: false },
-  { to: '/account', label: tk('Account'), icon: 'account', end: false },
+  { to: '/', label: tk('Home'), icon: 'auctions', end: true, private: false },
+  { to: '/winners', label: tk('Winners'), icon: 'winners', end: false, private: false },
+  { to: '/bids', label: tk('My bids'), icon: 'bids', end: false, private: true },
+  { to: '/account', label: tk('Account'), icon: 'account', end: false, private: true },
 ] as const;
+type UserLink = (typeof USER_LINKS)[number];
 // No Wallet tab: the balance next to the bell opens the wallet.
 
 /**
@@ -53,8 +56,8 @@ export function AppShell() {
   const main = usePageStart();
   const { pathname } = useLocation();
   return (
-    // Signed-in phones get a tab bar fixed to the bottom edge; the page leaves room for it.
-    <div className={cx('flex min-h-dvh flex-col', user && 'pb-20 sm:pb-0')}>
+    // Phones get a tab bar fixed to the bottom edge, for visitors too; the page leaves room for it.
+    <div className="flex min-h-dvh flex-col pb-20 sm:pb-0">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-30 focus:rounded focus:bg-white focus:px-3 focus:py-2"
@@ -70,7 +73,7 @@ export function AppShell() {
               className={cx(
                 // The name gives way where the links need the room: to Sign in, Register and the language switch on
                 // phones, and to the signed-in links on small tablets.
-                user ? 'sm:max-md:sr-only' : 'sr-only min-[26rem]:not-sr-only',
+                user ? 'sm:max-md:sr-only' : 'sr-only min-[26rem]:not-sr-only sm:max-lg:sr-only',
               )}
             >
               {/* Its own element: not-sr-only resets white-space, which would let the name break onto two lines. */}
@@ -85,34 +88,8 @@ export function AppShell() {
               <LanguageSwitch />
             </div>
           ) : (
-            <nav
-              aria-label={t('Main')}
-              className="flex items-center gap-1 text-sm font-medium whitespace-nowrap"
-            >
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  cx(
-                    // On narrow phones a visitor has the logo for this; the space goes to Sign in and Register.
-                    'hidden rounded-full px-3 py-2 min-[26rem]:block sm:px-4',
-                    isActive ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-100',
-                  )
-                }
-              >
-                {t('Home')}
-              </NavLink>
-              <NavLink
-                to="/winners"
-                className={({ isActive }) =>
-                  cx(
-                    'hidden rounded-full px-3 py-2 min-[32rem]:block sm:px-4',
-                    isActive ? 'bg-ink text-white' : 'text-slate-600 hover:bg-slate-100',
-                  )
-                }
-              >
-                {t('Winners')}
-              </NavLink>
+            <div className="flex items-center gap-1 text-sm font-medium whitespace-nowrap">
+              <UserNav signedIn={false} />
               <Link
                 to="/sign-in"
                 className="rounded-full px-3 py-2 text-slate-600 hover:bg-slate-100 sm:px-4"
@@ -123,7 +100,7 @@ export function AppShell() {
                 {t('Register')}
               </ButtonLink>
               <LanguageSwitch />
-            </nav>
+            </div>
           )}
         </div>
       </header>
@@ -160,43 +137,103 @@ export function AppShell() {
   );
 }
 
-/** One list of links: a bottom tab bar on phones, part of the header from tablet width up. */
-function UserNav() {
+/**
+ * One list of links: a bottom tab bar on phones, part of the header from tablet width up. A visitor sees it too;
+ * the tabs that need an account ask them to sign in or register, then take them there.
+ */
+function UserNav({ signedIn = true }: { signedIn?: boolean }) {
+  const [asked, setAsked] = useState<UserLink | null>(null);
   return (
-    <nav
-      aria-label={t('Main')}
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 gap-1 rounded-t-4xl bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[0.7rem] font-medium shadow-[0_-4px_20px_rgb(22_21_19/0.08)] sm:static sm:flex sm:items-center sm:gap-1 sm:rounded-none sm:p-0 sm:text-sm sm:shadow-none"
+    <>
+      <nav
+        aria-label={t('Main')}
+        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 gap-1 rounded-t-4xl bg-white px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-[0.7rem] font-medium shadow-[0_-4px_20px_rgb(22_21_19/0.08)] sm:static sm:flex sm:items-center sm:gap-1 sm:rounded-none sm:p-0 sm:text-sm sm:shadow-none"
+      >
+        {USER_LINKS.map((link) =>
+          !signedIn && link.private ? (
+            <button
+              key={link.to}
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setAsked(link)}
+              className="flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 whitespace-nowrap text-slate-600 transition-colors hover:bg-slate-100 sm:px-4 sm:py-2"
+            >
+              <TabIcon icon={link.icon} />
+              {t(link.label)}
+            </button>
+          ) : (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              className={({ isActive }) =>
+                cx(
+                  'flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 whitespace-nowrap transition-colors sm:px-4 sm:py-2',
+                  isActive
+                    ? 'bg-slate-200 font-semibold text-ink sm:bg-ink sm:text-white'
+                    : 'text-slate-600 hover:bg-slate-100',
+                )
+              }
+            >
+              <TabIcon icon={link.icon} />
+              {t(link.label)}
+            </NavLink>
+          ),
+        )}
+      </nav>
+      {asked && <SignInPrompt link={asked} onClose={() => setAsked(null)} />}
+    </>
+  );
+}
+
+function TabIcon({ icon }: { icon: keyof typeof ICONS }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="h-5 w-5 sm:hidden"
     >
-      {USER_LINKS.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.end}
-          className={({ isActive }) =>
-            cx(
-              'flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 whitespace-nowrap transition-colors sm:px-4 sm:py-2',
-              isActive
-                ? 'bg-slate-200 font-semibold text-ink sm:bg-ink sm:text-white'
-                : 'text-slate-600 hover:bg-slate-100',
-            )
-          }
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            className="h-5 w-5 sm:hidden"
+      <path d={ICONS[icon]} />
+    </svg>
+  );
+}
+
+/** A visitor tapped a tab that needs an account: sign in or register, then go there. */
+function SignInPrompt({ link, onClose }: { link: UserLink; onClose: () => void }) {
+  const state = { from: link.to };
+  return (
+    <Sheet
+      title={t('Sign in to continue')}
+      icon={<TabIcon icon={link.icon} />}
+      onClose={onClose}
+      footer={
+        <div className="flex flex-col gap-2">
+          <ButtonLink to="/register" state={state} onClick={onClose} className="w-full py-3.5 text-base">
+            {t('Create an account')}
+          </ButtonLink>
+          <ButtonLink
+            to="/sign-in"
+            state={state}
+            onClick={onClose}
+            variant="secondary"
+            className="w-full py-3.5 text-base"
           >
-            <path d={ICONS[link.icon]} />
-          </svg>
-          {t(link.label)}
-        </NavLink>
-      ))}
-    </nav>
+            {t('Sign in')}
+          </ButtonLink>
+        </div>
+      }
+    >
+      <p className="text-center text-slate-600">
+        {link.to === '/bids'
+          ? t('Sign in or create an account to see your bids and follow your auctions.')
+          : t('Sign in or create an account to see your account, wallet and wins.')}
+      </p>
+    </Sheet>
   );
 }
 
