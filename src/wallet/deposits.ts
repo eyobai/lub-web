@@ -34,13 +34,13 @@ export const depositKeys = {
 export const isWaiting = (deposit: Pick<Deposit, 'status'>): boolean =>
   deposit.status === 'PENDING' || deposit.status === 'INITIATED';
 
-/** Whether money can be added online, and the limits. */
+/** Whether money can be added online, the limits and the bonus. Public: visitors see the bonus offer too. */
 export function useDepositOptions() {
   const { user } = useAuth();
   return useQuery({
     queryKey: depositKeys.options,
     queryFn: () => unwrap(api.GET('/api/v1/wallet/deposit-options')),
-    enabled: !!user && !user.mustChangePassword,
+    enabled: !user?.mustChangePassword,
     staleTime: 5 * 60_000,
   });
 }

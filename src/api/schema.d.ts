@@ -454,10 +454,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Whether money can be added online, and the limits
-         * @description Ask this before showing an "add money" form.
+         * Whether money can be added online, the limits and the top-up bonus
+         * @description No sign-in needed. Ask this before showing an "add money" form or a bonus offer.
          */
-        get: operations["DepositsController_options"];
+        get: operations["DepositOptionsController_options"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4910,7 +4910,7 @@ export interface operations {
             };
         };
     };
-    DepositsController_options: {
+    DepositOptionsController_options: {
         parameters: {
             query?: never;
             header?: never;
@@ -4925,15 +4925,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositOptionsDto"];
-                };
-            };
-            /** @description UNAUTHORIZED */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
         };

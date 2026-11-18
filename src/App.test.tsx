@@ -373,6 +373,39 @@ describe('auction list', () => {
   });
 });
 
+describe('top-up bonus banner', () => {
+  const OPTIONS = 'GET /api/v1/wallet/deposit-options';
+  const options = (over: object = {}) => ({
+    enabled: true,
+    provider: 'chapa',
+    testMode: false,
+    currency: 'ETB',
+    minorUnits: 2,
+    minAmountMinor: '1000',
+    maxAmountMinor: '5000000',
+    directChargeMethods: [],
+    bonusPercent: 100,
+    bonusMaxMinor: '1000000',
+    bonusValidDays: 7,
+    ...over,
+  });
+
+  it('shows a visitor the bonus the server applies, and leads to registration', async () => {
+    fakeApi({ [AUCTIONS]: [200, aPage([])], [OPTIONS]: [200, options()] });
+    renderApp('/');
+    const banner = await screen.findByRole('link', { name: /100% bonus on every top-up, up to ETB 10,000/ });
+    expect(banner).toHaveAttribute('href', '/register');
+    expect(banner).toHaveTextContent('Join now');
+  });
+
+  it('is not shown while the bonus is off', async () => {
+    fakeApi({ [AUCTIONS]: [200, aPage([])], [OPTIONS]: [200, options({ bonusPercent: 0 })] });
+    renderApp('/');
+    expect(await screen.findByText(/No auctions are running/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /bonus on every top-up/ })).not.toBeInTheDocument();
+  });
+});
+
 describe('auction detail', () => {
   it('shows the rules of a running auction and invites a visitor to sign in', async () => {
     fakeApi({ [DETAIL]: [200, anAuction({ maxBidsPerUser: 50 })] });

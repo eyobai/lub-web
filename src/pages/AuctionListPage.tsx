@@ -5,6 +5,7 @@ import { AUCTION_TABS, PAGE_SIZE, useAuctions, type AuctionTab } from '../auctio
 import { Alert, Button, PageLoading, Pagination } from '../components/ui';
 import { cx } from '../lib/cx';
 import { usePageTitle } from '../lib/usePageTitle';
+import { BonusBanner } from '../wallet/BonusBanner';
 import { t, tk } from '../i18n/i18n';
 import { tRich } from '../i18n/rich';
 
@@ -50,6 +51,8 @@ export function AuctionListPage() {
           )}
         </p>
       </section>
+
+      <BonusBanner />
 
       <div
         role="tablist"

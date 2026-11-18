@@ -527,4 +527,11 @@ export const am: Record<string, string> = {
   'Most picked': 'በብዛት የተመረጡ',
   'Show winning amount': 'አሸናፊውን መጠን አሳይ',
   Unique: 'ልዩ',
+  'Top up your wallet': 'ገንዘብ ይሙሉ',
+  'on every top-up': 'በእያንዳንዱ ሙሌት',
+  'Up to ETB {amount}': 'እስከ {amount} ብር',
+  'Top up now': 'አሁን ይሙሉ',
+  'Join now': 'አሁን ይመዝገቡ',
+  '{percent}% bonus on every top-up, up to ETB {amount}. Top up now':
+    'በእያንዳንዱ ሙሌት {percent}% ቦነስ፣ እስከ {amount} ብር። አሁን ይሙሉ',
 };

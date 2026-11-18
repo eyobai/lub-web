@@ -1624,8 +1624,8 @@
     },
     "/api/v1/wallet/deposit-options": {
       "get": {
-        "description": "Ask this before showing an \"add money\" form.",
-        "operationId": "DepositsController_options",
+        "description": "No sign-in needed. Ask this before showing an \"add money\" form or a bonus offer.",
+        "operationId": "DepositOptionsController_options",
         "parameters": [],
         "responses": {
           "200": {
@@ -1637,24 +1637,9 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "UNAUTHORIZED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Whether money can be added online, and the limits",
+        "summary": "Whether money can be added online, the limits and the top-up bonus",
         "tags": [
           "Wallet"
         ]
