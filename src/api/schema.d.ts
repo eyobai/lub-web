@@ -1772,6 +1772,11 @@ export interface components {
             verificationToken?: string;
             /** @description Present when verificationRequired is true */
             otp?: components["schemas"]["OtpInfoDto"];
+            /**
+             * @description Present when this sign-up gave the welcome bonus: the amount in minor units (1000 = ETB 10).
+             * @example 1000
+             */
+            welcomeBonusMinor?: string;
         };
         VerifyPhoneDto: {
             /**
@@ -1793,6 +1798,11 @@ export interface components {
         AuthResponseDto: {
             user: components["schemas"]["AuthUserDto"];
             tokens: components["schemas"]["TokenPairDto"];
+            /**
+             * @description Present when this sign-up gave the welcome bonus: the amount in minor units (1000 = ETB 10).
+             * @example 1000
+             */
+            welcomeBonusMinor?: string;
         };
         PhoneOnlyDto: {
             /**
@@ -1908,6 +1918,8 @@ export interface components {
             spendable: string;
             /** @description A frozen wallet can receive money but cannot spend or withdraw it */
             isFrozen: boolean;
+            /** @description Whether the next wallet top-up earns the top-up bonus (only the first one does). */
+            topUpBonusAvailable: boolean;
             /** Format: date-time */
             updatedAt: string;
         };

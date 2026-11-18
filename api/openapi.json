@@ -7325,6 +7325,11 @@
                 "$ref": "#/components/schemas/OtpInfoDto"
               }
             ]
+          },
+          "welcomeBonusMinor": {
+            "type": "string",
+            "example": "1000",
+            "description": "Present when this sign-up gave the welcome bonus: the amount in minor units (1000 = ETB 10)."
           }
         },
         "required": [
@@ -7366,6 +7371,11 @@
           },
           "tokens": {
             "$ref": "#/components/schemas/TokenPairDto"
+          },
+          "welcomeBonusMinor": {
+            "type": "string",
+            "example": "1000",
+            "description": "Present when this sign-up gave the welcome bonus: the amount in minor units (1000 = ETB 10)."
           }
         },
         "required": [
@@ -7561,6 +7571,10 @@
             "type": "boolean",
             "description": "A frozen wallet can receive money but cannot spend or withdraw it"
           },
+          "topUpBonusAvailable": {
+            "type": "boolean",
+            "description": "Whether the next wallet top-up earns the top-up bonus (only the first one does)."
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -7581,6 +7595,7 @@
           "spendableMinor",
           "spendable",
           "isFrozen",
+          "topUpBonusAvailable",
           "updatedAt"
         ]
       },

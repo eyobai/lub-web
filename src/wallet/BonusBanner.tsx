@@ -3,6 +3,7 @@ import { useAuth } from '../auth/useAuth';
 import { fromMinor } from '../lib/money';
 import { t } from '../i18n/i18n';
 import { useDepositOptions } from './deposits';
+import { useWallet } from './queries';
 
 /** "10000.00" → "10,000": the cap as people say it, without the currency or empty decimals. */
 const plain = (minor: string, minorUnits: number) => {
@@ -18,15 +19,18 @@ const plain = (minor: string, minorUnits: number) => {
 export function BonusBanner() {
   const { user } = useAuth();
   const options = useDepositOptions();
+  const wallet = useWallet();
   const o = options.data;
   if (!o?.enabled || o.bonusPercent <= 0) return null;
+  // Only the first top-up earns it: someone who has had it is not offered it again.
+  if (user && wallet.data?.topUpBonusAvailable === false) return null;
   const cap = plain(o.bonusMaxMinor, o.minorUnits);
   const target = user ? '/wallet?topup=1' : '/register';
 
   return (
     <Link
       to={target}
-      aria-label={t('{percent}% bonus on every top-up, up to ETB {amount}. Top up now', {
+      aria-label={t('{percent}% bonus on your first top-up, up to ETB {amount}. Top up now', {
         percent: o.bonusPercent,
         amount: cap,
       })}
@@ -68,7 +72,9 @@ export function BonusBanner() {
           </span>
         </span>
         <span className="block text-4xl leading-tight font-black sm:text-5xl">{t('Bonus')}</span>
-        <span className="mt-0.5 block text-base font-semibold text-white/90">{t('on every top-up')}</span>
+        <span className="mt-0.5 block text-base font-semibold text-white/90">
+          {t('on your first top-up')}
+        </span>
         <span className="mt-2.5 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-ink px-3.5 py-1.5 text-sm font-bold text-white shadow-md">
             {t('Up to ETB {amount}', { amount: cap })}

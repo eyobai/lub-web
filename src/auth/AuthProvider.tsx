@@ -1,3 +1,4 @@
+import { welcome } from '../wallet/welcome';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import { anonymousApi, api, unwrap } from '../api/client';
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new ApiError(0, 'PHONE_VERIFICATION_UNSUPPORTED', 'Phone verification is required');
     }
     session.start(result.user, result.tokens);
+    if (result.welcomeBonusMinor) welcome.remember(result.user.id, result.welcomeBonusMinor);
     return result.user;
   }, []);
 

@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { session } from './auth/session';
-import { aPage, aUser, anAuction, apiError, fakeApi, tokens } from './test/fakeApi';
+import { aPage, aUser, aWallet, anAuction, apiError, fakeApi, tokens } from './test/fakeApi';
 import { renderApp } from './test/renderApp';
 
 const AUCTIONS = 'GET /api/v1/auctions';
@@ -48,6 +48,41 @@ describe('registration', () => {
     expect(session.get()?.refreshToken).toBe('refresh-one');
     expect(screen.getByRole('link', { name: 'Account' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
+  it('welcomes a new account with the gift in its wallet, once', async () => {
+    fakeApi({
+      ...empty,
+      [REGISTER]: [
+        201,
+        {
+          userId: aUser().id,
+          phoneNumber: aUser().phoneNumber,
+          verificationRequired: false,
+          user: aUser(),
+          tokens: tokens(),
+          welcomeBonusMinor: '1000',
+        },
+      ],
+      [ME]: [200, aUser()],
+      'GET /api/v1/wallet': [
+        200,
+        aWallet({ bonusMinor: '1000', bonus: '10.00', bonusExpiresAt: '2026-12-19T12:00:00.000Z' }),
+      ],
+      'GET /api/v1/notifications/unread-count': [200, { unread: 0 }],
+    });
+    const { user } = renderApp('/register');
+    await user.type(screen.getByLabelText('Phone number'), '0911 234 567');
+    await user.type(screen.getByLabelText('Password'), 'secret123');
+    await user.type(screen.getByLabelText('Repeat password'), 'secret123');
+    await user.click(screen.getByRole('button', { name: 'Create account' }));
+
+    const popup = await screen.findByRole('dialog', { name: 'Welcome to LeyuBid!' });
+    expect(popup).toHaveTextContent('ETB 10');
+    expect(popup).toHaveTextContent('is in your wallet');
+    await user.click(within(popup).getByRole('button', { name: 'Start bidding' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(sessionStorage.getItem('leyubid.welcome')).toBeNull();
   });
 
   it('checks the form before sending anything', async () => {
@@ -393,16 +428,32 @@ describe('top-up bonus banner', () => {
   it('shows a visitor the bonus the server applies, and leads to registration', async () => {
     fakeApi({ [AUCTIONS]: [200, aPage([])], [OPTIONS]: [200, options()] });
     renderApp('/');
-    const banner = await screen.findByRole('link', { name: /100% bonus on every top-up, up to ETB 10,000/ });
+    const banner = await screen.findByRole('link', {
+      name: /100% bonus on your first top-up, up to ETB 10,000/,
+    });
     expect(banner).toHaveAttribute('href', '/register');
     expect(banner).toHaveTextContent('Join now');
+  });
+
+  it('is not shown to someone whose first top-up already had the bonus', async () => {
+    session.start(aUser(), tokens());
+    fakeApi({
+      [AUCTIONS]: [200, aPage([])],
+      [OPTIONS]: [200, options()],
+      [ME]: [200, aUser()],
+      'GET /api/v1/wallet': [200, aWallet({ topUpBonusAvailable: false })],
+      'GET /api/v1/notifications/unread-count': [200, { unread: 0 }],
+    });
+    renderApp('/');
+    expect(await screen.findByText(/No auctions are running/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('link', { name: /first top-up/ })).not.toBeInTheDocument());
   });
 
   it('is not shown while the bonus is off', async () => {
     fakeApi({ [AUCTIONS]: [200, aPage([])], [OPTIONS]: [200, options({ bonusPercent: 0 })] });
     renderApp('/');
     expect(await screen.findByText(/No auctions are running/)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /bonus on every top-up/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /bonus on your first top-up/ })).not.toBeInTheDocument();
   });
 });
 

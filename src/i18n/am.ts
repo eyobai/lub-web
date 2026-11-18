@@ -494,8 +494,6 @@ export const am: Record<string, string> = {
   '{amount} was added to your wallet.': '{amount} ወደ ዋሌትዎ ገብቷል።',
   '{bids} placed: {amounts}. {fee} was taken from your wallet.':
     '{bids} ገብተዋል፦ {amounts}። {fee} ከዋሌትዎ ተወስዷል።',
-  '{bonus} on every top-up, spent on bid fees before your own money.':
-    '{bonus} በእያንዳንዱ ሙሌት፣ ከራስዎ ገንዘብ በፊት ለጨረታ ክፍያ ይውላል።',
   '{count} bid': '{count} ጨረታ',
   '{count} bid in total, newest first.': 'በአጠቃላይ {count} ጨረታ፣ አዲሱ ቀድሞ።',
   '{count} bids': '{count} ጨረታዎች',
@@ -527,14 +525,22 @@ export const am: Record<string, string> = {
   'Show winning amount': 'አሸናፊውን መጠን አሳይ',
   Unique: 'ልዩ',
   'Top up your wallet': 'ገንዘብ ይሙሉ',
-  'on every top-up': 'በእያንዳንዱ ሙሌት',
+  'on your first top-up': 'በመጀመሪያ ሙሌትዎ',
   'Up to ETB {amount}': 'እስከ {amount} ብር',
   'Top up now': 'አሁን ይሙሉ',
   'Join now': 'አሁን ይመዝገቡ',
-  '{percent}% bonus on every top-up, up to ETB {amount}. Top up now':
-    'በእያንዳንዱ ሙሌት {percent}% ቦነስ፣ እስከ {amount} ብር። አሁን ይሙሉ',
+  '{percent}% bonus on your first top-up, up to ETB {amount}. Top up now':
+    'በመጀመሪያ ሙሌትዎ {percent}% ቦነስ፣ እስከ {amount} ብር። አሁን ይሙሉ',
   'The payment request could not be sent to your phone. Please try again later or choose another way to pay.':
     'የክፍያ ጥያቄው ወደ ስልክዎ ሊላክ አልቻለም። እባክዎ ቆይተው እንደገና ይሞክሩ ወይም ሌላ የመክፈያ መንገድ ይምረጡ።',
   'Paying with {wallet} is not available right now. No money was taken. Please try again later, or choose another way to pay.':
     'በ{wallet} መክፈል አሁን አይቻልም። ምንም ገንዘብ አልተወሰደም። እባክዎ ቆይተው ይሞክሩ ወይም ሌላ የመክፈያ መንገድ ይምረጡ።',
+  '{bonus} on your first top-up, spent on bid fees before your own money.':
+    '{bonus} በመጀመሪያ ሙሌትዎ፤ ከራስዎ ገንዘብ በፊት ለጨረታ ክፍያ ይውላል።',
+  'Welcome to LeyuBid!': 'እንኳን ወደ LeyuBid በደህና መጡ!',
+  'Start bidding': 'መጫረት ይጀምሩ',
+  'A welcome gift for you': 'የእንኳን ደህና መጡ ስጦታ',
+  'is in your wallet': 'ዋሌትዎ ውስጥ ገብቷል',
+  'Use it for bid fees by {date}. It cannot be withdrawn.': 'እስከ {date} ድረስ ለጨረታ ክፍያ ይጠቀሙበት። ወጪ ማድረግ አይቻልም።',
+  'Use it for bid fees. It cannot be withdrawn.': 'ለጨረታ ክፍያ ይጠቀሙበት። ወጪ ማድረግ አይቻልም።',
 };

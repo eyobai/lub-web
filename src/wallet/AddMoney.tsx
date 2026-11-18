@@ -29,10 +29,16 @@ import { tRich } from '../i18n/rich';
 const WALLET_ICON =
   'M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2zm13 7h.01';
 
+/** Only a user's first top-up earns the bonus: once it has, the offer is not shown. */
+function withEligibleBonus(options: DepositOptions, available: boolean | undefined): DepositOptions {
+  return available === false ? { ...options, bonusPercent: 0 } : options;
+}
+
 /** The wallet page's way in: a button that opens the top-up sheet, and payments started but not finished. */
 export function AddMoney({ options }: { options: DepositOptions }) {
   // Other pages link here with ?topup=1 to open the sheet straight away.
   const [params, setParams] = useSearchParams();
+  const wallet = useWallet();
   const open = params.get('topup') === '1';
   const setOpen = (next: boolean) =>
     setParams(
@@ -44,7 +50,7 @@ export function AddMoney({ options }: { options: DepositOptions }) {
       },
       { replace: true },
     );
-  const percent = options.bonusPercent;
+  const percent = withEligibleBonus(options, wallet.data?.topUpBonusAvailable).bonusPercent;
   return (
     <section aria-labelledby="add-money-heading">
       <h2 id="add-money-heading" className="text-lg font-semibold">
@@ -53,7 +59,7 @@ export function AddMoney({ options }: { options: DepositOptions }) {
       <Card className="mt-3 flex flex-wrap items-center justify-between gap-3 p-4">
         <p className="text-sm text-slate-600">
           {percent > 0
-            ? tRich('{bonus} on every top-up, spent on bid fees before your own money.', {
+            ? tRich('{bonus} on your first top-up, spent on bid fees before your own money.', {
                 bonus: (
                   <span className="font-semibold text-emerald-700">
                     {t('Get a {percent}% bonus', { percent })}
@@ -79,10 +85,11 @@ export function AddMoney({ options }: { options: DepositOptions }) {
 }
 
 /** "Top up wallet": amount, the bonus it earns, how to pay, and then the payment on the phone. */
-export function TopUpSheet({ options, onClose }: { options: DepositOptions; onClose: () => void }) {
+export function TopUpSheet({ options: offered, onClose }: { options: DepositOptions; onClose: () => void }) {
   const id = useId();
   const { user } = useAuth();
   const wallet = useWallet();
+  const options = withEligibleBonus(offered, wallet.data?.topUpBonusAvailable);
   const start = useStartDeposit();
   const [input, setInput] = useState('');
   const [problem, setProblem] = useState<string | null>(null);

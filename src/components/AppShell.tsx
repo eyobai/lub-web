@@ -7,6 +7,7 @@ import { formatMinor } from '../lib/money';
 import { useOnline } from '../lib/useOnline';
 import { useUnreadCount } from '../notifications/queries';
 import { useWallet } from '../wallet/queries';
+import { WelcomeGift } from '../wallet/WelcomeGift';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ButtonLink } from './ui';
 import { language, t, tk, type Language } from '../i18n/i18n';
@@ -142,6 +143,7 @@ export function AppShell() {
         <ErrorBoundary key={pathname}>
           <Outlet />
         </ErrorBoundary>
+        <WelcomeGift />
       </main>
       <footer>
         <div className="mx-auto max-w-5xl px-4 py-4 text-center text-xs text-slate-500">

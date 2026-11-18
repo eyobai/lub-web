@@ -169,6 +169,17 @@ describe('topping up the wallet', () => {
     expect(await screen.findByRole('dialog', { name: 'Top up wallet' })).toBeInTheDocument();
   });
 
+  it('offers no bonus once the first top-up has had it', async () => {
+    signedIn({
+      [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00', topUpBonusAvailable: false })],
+    });
+    const { user } = renderApp('/wallet');
+    await user.click(await screen.findByRole('button', { name: 'Top up wallet' }));
+    const sheet = screen.getByRole('dialog', { name: 'Top up wallet' });
+    await user.type(within(sheet).getByLabelText('Amount'), '500');
+    expect(within(sheet).queryByText(/bonus/i)).not.toBeInTheDocument();
+  });
+
   it('says nothing about a bonus when there is none', async () => {
     signedIn({ [OPTIONS]: [200, depositOptions({ bonusPercent: 0 })] });
     const { user } = renderApp('/wallet');
