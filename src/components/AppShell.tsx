@@ -156,9 +156,9 @@ function UserNav({ signedIn = true }: { signedIn?: boolean }) {
               type="button"
               aria-haspopup="dialog"
               onClick={() => setAsked(link)}
-              className="flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 whitespace-nowrap text-slate-600 transition-colors hover:bg-slate-100 sm:px-4 sm:py-2"
+              className={cx(TAB, TAB_IDLE)}
             >
-              <TabIcon icon={link.icon} />
+              <TabBadge icon={link.icon} active={false} />
               {t(link.label)}
             </button>
           ) : (
@@ -167,16 +167,15 @@ function UserNav({ signedIn = true }: { signedIn?: boolean }) {
               to={link.to}
               end={link.end}
               className={({ isActive }) =>
-                cx(
-                  'flex flex-col items-center gap-0.5 rounded-full px-1 py-1.5 whitespace-nowrap transition-colors sm:px-4 sm:py-2',
-                  isActive
-                    ? 'bg-slate-200 font-semibold text-ink sm:bg-ink sm:text-white'
-                    : 'text-slate-600 hover:bg-slate-100',
-                )
+                cx(TAB, isActive ? 'font-semibold text-brand-700 sm:bg-ink sm:text-white' : TAB_IDLE)
               }
             >
-              <TabIcon icon={link.icon} />
-              {t(link.label)}
+              {({ isActive }) => (
+                <>
+                  <TabBadge icon={link.icon} active={isActive} />
+                  {t(link.label)}
+                </>
+              )}
             </NavLink>
           ),
         )}
@@ -186,7 +185,29 @@ function UserNav({ signedIn = true }: { signedIn?: boolean }) {
   );
 }
 
-function TabIcon({ icon }: { icon: keyof typeof ICONS }) {
+// A tab: on phones an icon over its label, from tablet width up a plain link in the header.
+const TAB =
+  'group flex flex-col items-center gap-1 rounded-full px-1 pt-1 pb-0.5 whitespace-nowrap transition-colors sm:px-4 sm:py-2';
+const TAB_IDLE = 'text-slate-500 sm:text-slate-600 sm:hover:bg-slate-100';
+
+/** The icon of a phone tab, in an emerald pill when the tab is open. */
+function TabBadge({ icon, active }: { icon: keyof typeof ICONS; active: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        'flex h-8 w-14 items-center justify-center rounded-full transition-all duration-200 sm:hidden',
+        active
+          ? 'bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-[0_4px_12px_-2px_rgb(5_150_105/0.55)]'
+          : 'text-slate-400 group-hover:bg-brand-50 group-hover:text-brand-600 group-active:bg-brand-50',
+      )}
+    >
+      <TabIcon icon={icon} />
+    </span>
+  );
+}
+
+function TabIcon({ icon, className = 'h-5 w-5' }: { icon: keyof typeof ICONS; className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -196,7 +217,7 @@ function TabIcon({ icon }: { icon: keyof typeof ICONS }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      className="h-5 w-5 sm:hidden"
+      className={className}
     >
       <path d={ICONS[icon]} />
     </svg>
