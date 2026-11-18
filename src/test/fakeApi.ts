@@ -220,6 +220,7 @@ export function aDeposit(overrides: Partial<Schemas['DepositDto']> = {}): Schema
     bonusMinor: '0',
     bonus: '0.00',
     failureReason: null,
+    requestNotSent: false,
     walletTransactionId: null,
     confirmedAt: null,
     expiresAt: '2026-01-02T12:00:00.000Z',

@@ -123,7 +123,11 @@ export function ApproveOnPhone({
       <p className="text-sm">
         {d.status === 'EXPIRED'
           ? t('The request was not approved in time.')
-          : t('The payment was declined or cancelled on the phone.')}{' '}
+          : d.requestNotSent
+            ? t(
+                'The payment request could not be sent to your phone. Please try again later or choose another way to pay.',
+              )
+            : t('The payment was declined or cancelled on the phone.')}{' '}
         {d.bid ? t('No money was taken and no bid was placed.') : t('No money was taken.')}
       </p>
       <button

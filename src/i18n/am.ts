@@ -533,4 +533,6 @@ export const am: Record<string, string> = {
   'Join now': 'አሁን ይመዝገቡ',
   '{percent}% bonus on every top-up, up to ETB {amount}. Top up now':
     'በእያንዳንዱ ሙሌት {percent}% ቦነስ፣ እስከ {amount} ብር። አሁን ይሙሉ',
+  'The payment request could not be sent to your phone. Please try again later or choose another way to pay.':
+    'የክፍያ ጥያቄው ወደ ስልክዎ ሊላክ አልቻለም። እባክዎ ቆይተው እንደገና ይሞክሩ ወይም ሌላ የመክፈያ መንገድ ይምረጡ።',
 };

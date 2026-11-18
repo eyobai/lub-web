@@ -8072,6 +8072,10 @@
             "nullable": true,
             "description": "Why no money was added, when the deposit did not succeed."
           },
+          "requestNotSent": {
+            "type": "boolean",
+            "description": "True when the provider refused to send the payment request at all, so nothing ever reached the phone (for example direct charges are not enabled for this account). False for a declined or cancelled payment."
+          },
           "walletTransactionId": {
             "type": "string",
             "format": "uuid",
@@ -8118,6 +8122,7 @@
           "bonusMinor",
           "bonus",
           "failureReason",
+          "requestNotSent",
           "walletTransactionId",
           "confirmedAt",
           "expiresAt",
@@ -8235,6 +8240,10 @@
             "nullable": true,
             "description": "Why no money was added, when the deposit did not succeed."
           },
+          "requestNotSent": {
+            "type": "boolean",
+            "description": "True when the provider refused to send the payment request at all, so nothing ever reached the phone (for example direct charges are not enabled for this account). False for a declined or cancelled payment."
+          },
           "walletTransactionId": {
             "type": "string",
             "format": "uuid",
@@ -8308,6 +8317,7 @@
           "bonusMinor",
           "bonus",
           "failureReason",
+          "requestNotSent",
           "walletTransactionId",
           "confirmedAt",
           "expiresAt",

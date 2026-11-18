@@ -156,8 +156,26 @@ describe('pay and bid', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' }));
 
     expect(await within(sheet).findByText('Payment not completed')).toBeInTheDocument();
+    expect(sheet).toHaveTextContent('declined or cancelled on the phone');
     await user.click(within(sheet).getByRole('button', { name: 'Try again' }));
     expect(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' })).toBeInTheDocument();
+  });
+
+  it('does not blame the payer when the request never reached the phone', async () => {
+    const charged = aDeposit({ amountMinor: '7500', checkoutUrl: null, chargeMethod: 'telebirr' });
+    signedIn({
+      [WALLET]: [200, aWallet({ availableMinor: '0', available: '0.00' })],
+      [START]: [201, charged],
+      [ONE]: [200, { ...charged, status: 'FAILED', requestNotSent: true }],
+    });
+    const { user } = renderApp('/');
+    const sheet = await openSheet(user);
+    await user.type(within(sheet).getByLabelText('Your bid amount'), '4');
+    await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' }));
+
+    expect(await within(sheet).findByText('Payment not completed')).toBeInTheDocument();
+    expect(sheet).toHaveTextContent('could not be sent to your phone');
+    expect(sheet).not.toHaveTextContent('declined');
   });
 
   it("falls back to Chapa's page only when no mobile wallet can be charged here", async () => {

@@ -2178,6 +2178,8 @@ export interface components {
             bonus: string;
             /** @description Why no money was added, when the deposit did not succeed. */
             failureReason: string | null;
+            /** @description True when the provider refused to send the payment request at all, so nothing ever reached the phone (for example direct charges are not enabled for this account). False for a declined or cancelled payment. */
+            requestNotSent: boolean;
             /**
              * Format: uuid
              * @description The wallet transaction that credited the money, once SUCCEEDED.
@@ -2256,6 +2258,8 @@ export interface components {
             bonus: string;
             /** @description Why no money was added, when the deposit did not succeed. */
             failureReason: string | null;
+            /** @description True when the provider refused to send the payment request at all, so nothing ever reached the phone (for example direct charges are not enabled for this account). False for a declined or cancelled payment. */
+            requestNotSent: boolean;
             /**
              * Format: uuid
              * @description The wallet transaction that credited the money, once SUCCEEDED.
