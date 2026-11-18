@@ -559,21 +559,29 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                     ? t(
                         'The bid fee has changed. Close this and open it again to see the new fee. Nothing was charged.',
                       )
-                    : isApiError(error, 'PAYMENT_PROVIDER_ERROR') && method && onPhone
+                    : isApiError(error, 'PAYMENT_PROVIDER_ERROR') &&
+                        method &&
+                        onPhone &&
+                        error.details?.unavailable
                       ? t(
-                          'The payment request could not be sent to {phone}. Check that it is your {wallet} number and try again. No money was taken.',
-                          { phone: walletPhone(phone) ?? t('that number'), wallet: walletName(method) },
+                          'Paying with {wallet} is not available right now. No money was taken. Please try again later, or choose another way to pay.',
+                          { wallet: walletName(method) },
                         )
-                      : isApiError(
-                            error,
-                            'PAYMENT_PROVIDER_ERROR',
-                            'PAYMENTS_UNAVAILABLE',
-                            'DEPOSIT_LIMIT_REACHED',
-                          )
+                      : isApiError(error, 'PAYMENT_PROVIDER_ERROR') && method && onPhone
                         ? t(
-                            'The payment could not be started. No money was taken. Please try again in a moment.',
+                            'The payment request could not be sent to {phone}. Check that it is your {wallet} number and try again. No money was taken.',
+                            { phone: walletPhone(phone) ?? t('that number'), wallet: walletName(method) },
                           )
-                        : bidErrorMessage(error, a)}
+                        : isApiError(
+                              error,
+                              'PAYMENT_PROVIDER_ERROR',
+                              'PAYMENTS_UNAVAILABLE',
+                              'DEPOSIT_LIMIT_REACHED',
+                            )
+                          ? t(
+                              'The payment could not be started. No money was taken. Please try again in a moment.',
+                            )
+                          : bidErrorMessage(error, a)}
                 </Alert>
               )}
               {!method && balance !== null && !options.isPending && (

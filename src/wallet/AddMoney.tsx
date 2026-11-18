@@ -366,12 +366,17 @@ export function TopUpSheet({ options, onClose }: { options: DepositOptions; onCl
 
           {start.isError && (
             <Alert>
-              {method && isApiError(start.error, 'PAYMENT_PROVIDER_ERROR')
+              {method && isApiError(start.error, 'PAYMENT_PROVIDER_ERROR') && start.error.details?.unavailable
                 ? t(
-                    'The payment request could not be sent to {phone}. Check that it is your {wallet} number and try again. No money was taken.',
-                    { phone: walletPhone(phone) ?? t('that number'), wallet: walletName(method) },
+                    'Paying with {wallet} is not available right now. No money was taken. Please try again later, or choose another way to pay.',
+                    { wallet: walletName(method) },
                   )
-                : depositErrorMessage(start.error, options)}
+                : method && isApiError(start.error, 'PAYMENT_PROVIDER_ERROR')
+                  ? t(
+                      'The payment request could not be sent to {phone}. Check that it is your {wallet} number and try again. No money was taken.',
+                      { phone: walletPhone(phone) ?? t('that number'), wallet: walletName(method) },
+                    )
+                  : depositErrorMessage(start.error, options)}
             </Alert>
           )}
         </>

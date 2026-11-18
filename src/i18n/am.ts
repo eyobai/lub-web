@@ -535,4 +535,6 @@ export const am: Record<string, string> = {
     'በእያንዳንዱ ሙሌት {percent}% ቦነስ፣ እስከ {amount} ብር። አሁን ይሙሉ',
   'The payment request could not be sent to your phone. Please try again later or choose another way to pay.':
     'የክፍያ ጥያቄው ወደ ስልክዎ ሊላክ አልቻለም። እባክዎ ቆይተው እንደገና ይሞክሩ ወይም ሌላ የመክፈያ መንገድ ይምረጡ።',
+  'Paying with {wallet} is not available right now. No money was taken. Please try again later, or choose another way to pay.':
+    'በ{wallet} መክፈል አሁን አይቻልም። ምንም ገንዘብ አልተወሰደም። እባክዎ ቆይተው ይሞክሩ ወይም ሌላ የመክፈያ መንገድ ይምረጡ።',
 };

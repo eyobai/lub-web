@@ -2,7 +2,16 @@ import { screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { session } from './auth/session';
 import { leaveTo } from './lib/leave';
-import { aDeposit, aTransaction, aUser, aWallet, depositOptions, fakeApi, tokens } from './test/fakeApi';
+import {
+  aDeposit,
+  apiError,
+  aTransaction,
+  aUser,
+  aWallet,
+  depositOptions,
+  fakeApi,
+  tokens,
+} from './test/fakeApi';
 import { renderApp } from './test/renderApp';
 
 vi.mock('./lib/leave', () => ({ leaveTo: vi.fn() }));
@@ -74,6 +83,19 @@ describe('topping up the wallet', () => {
     expect(within(sheet).getByText('ETB 500 is in your wallet, plus a ETB 500 bonus.')).toBeInTheDocument();
     expect(leaveTo).not.toHaveBeenCalled();
   }, 10_000);
+
+  it.each([
+    [{ directCharge: true }, /could not be sent to 0911234567\. Check that it is your telebirr number/],
+    [{ directCharge: true, unavailable: true }, /Paying with telebirr is not available right now/],
+  ])('says why the request did not reach the phone (%o)', async (details, message) => {
+    signedIn({ [START]: apiError(502, 'PAYMENT_PROVIDER_ERROR', details) });
+    const { user } = renderApp('/wallet?topup=1');
+    const sheet = await screen.findByRole('dialog', { name: 'Top up wallet' });
+    await user.type(within(sheet).getByLabelText('Amount'), '100');
+    await user.click(within(sheet).getByRole('radio', { name: /telebirr/ }));
+    await user.click(within(sheet).getByRole('button', { name: 'Top up ETB 100' }));
+    expect(await within(sheet).findByRole('alert')).toHaveTextContent(message);
+  });
 
   it('opens straight away from a link elsewhere on the site', async () => {
     signedIn();
