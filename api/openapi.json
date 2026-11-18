@@ -1908,6 +1908,83 @@
         ]
       }
     },
+    "/api/v1/wallet/deposits/{id}/charge-not-sent": {
+      "post": {
+        "description": "For a deposit whose phone request the browser sends (see `inlinePublicKey`): Chapa's inline service refused it. The server asks Chapa first; if no payment is known the deposit is closed as never sent (FAILED with `requestNotSent`), so it does not wait for an approval that cannot come.",
+        "operationId": "DepositsController_chargeNotSent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChargeNotSentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepositDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "VALIDATION_FAILED — malformed id or reason",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHORIZED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND — no such deposit of mine",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report that the phone request could not be sent",
+        "tags": [
+          "Wallet"
+        ]
+      }
+    },
     "/api/v1/payments/chapa/webhook": {
       "post": {
         "description": "Set this address as the webhook URL in the Chapa dashboard, with the same secret as CHAPA_WEBHOOK_SECRET. The request must carry a valid `x-chapa-signature` or `chapa-signature`. The event is stored as received, handled once, and the payment it names is verified with Chapa before any wallet is credited.",
@@ -7835,6 +7912,12 @@
               "type": "string"
             }
           },
+          "inlinePublicKey": {
+            "type": "string",
+            "nullable": true,
+            "example": "CHAPUBK-xxxxxxxx",
+            "description": "When set, a phone payment is sent from the browser: start the deposit with `charge`, then send the request to Chapa's inline service with this public key and the deposit's `reference` as tx_ref. Null: the server sends it."
+          },
           "bonusPercent": {
             "type": "number",
             "example": 100,
@@ -7860,6 +7943,7 @@
           "minAmountMinor",
           "maxAmountMinor",
           "directChargeMethods",
+          "inlinePublicKey",
           "bonusPercent",
           "bonusMaxMinor",
           "bonusValidDays"
@@ -8155,6 +8239,16 @@
           "page",
           "limit"
         ]
+      },
+      "ChargeNotSentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Transaction initiation failed",
+            "description": "What Chapa's inline service said."
+          }
+        }
       },
       "WebhookAckDto": {
         "type": "object",

@@ -510,6 +510,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wallet/deposits/{id}/charge-not-sent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report that the phone request could not be sent
+         * @description For a deposit whose phone request the browser sends (see `inlinePublicKey`): Chapa's inline service refused it. The server asks Chapa first; if no payment is known the deposit is closed as never sent (FAILED with `requestNotSent`), so it does not wait for an approval that cannot come.
+         */
+        post: operations["DepositsController_chargeNotSent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/chapa/webhook": {
         parameters: {
             query?: never;
@@ -2043,6 +2063,11 @@ export interface components {
              */
             directChargeMethods: string[];
             /**
+             * @description When set, a phone payment is sent from the browser: start the deposit with `charge`, then send the request to Chapa's inline service with this public key and the deposit's `reference` as tx_ref. Null: the server sends it.
+             * @example CHAPUBK-xxxxxxxx
+             */
+            inlinePublicKey: string | null;
+            /**
              * @description Top-up bonus, in percent of a wallet top-up. 0: no bonus.
              * @example 100
              */
@@ -2205,6 +2230,13 @@ export interface components {
             total: number;
             page: number;
             limit: number;
+        };
+        ChargeNotSentDto: {
+            /**
+             * @description What Chapa's inline service said.
+             * @example Transaction initiation failed
+             */
+            reason?: string;
         };
         WebhookAckDto: {
             /** @example true */
@@ -5061,6 +5093,58 @@ export interface operations {
                 };
             };
             /** @description VALIDATION_FAILED — malformed id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description NOT_FOUND — no such deposit of mine */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DepositsController_chargeNotSent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChargeNotSentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepositDto"];
+                };
+            };
+            /** @description VALIDATION_FAILED — malformed id or reason */
             400: {
                 headers: {
                     [name: string]: unknown;

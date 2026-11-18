@@ -19,6 +19,15 @@ type Handler = (call: RecordedCall) => Reply | Promise<Reply>;
  * Replaces `fetch` with handlers keyed by "METHOD /path". A request with no handler fails the test with a
  * network error, like an unreachable server would.
  */
+/** JSON bodies as objects; anything else (form data sent to Chapa) as its raw text. */
+const parseBody = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+};
+
 export function fakeApi(handlers: Record<string, Handler | Reply>) {
   const calls: RecordedCall[] = [];
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -31,7 +40,7 @@ export function fakeApi(handlers: Record<string, Handler | Reply>) {
       query: url.searchParams,
       authorization: request.headers.get('authorization'),
       idempotencyKey: request.headers.get('idempotency-key'),
-      body: text ? JSON.parse(text) : undefined,
+      body: text ? parseBody(text) : undefined,
     };
     calls.push(call);
     const handler = handlers[`${call.method} ${call.path}`];
@@ -197,6 +206,7 @@ export function depositOptions(
     minAmountMinor: '1000',
     maxAmountMinor: '5000000',
     directChargeMethods: ['telebirr', 'mpesa', 'cbebirr', 'ebirr'],
+    inlinePublicKey: null,
     bonusPercent: 100,
     bonusMaxMinor: '1000000',
     bonusValidDays: 7,

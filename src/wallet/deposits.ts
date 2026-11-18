@@ -9,6 +9,7 @@ import { bidKeys, isUnconfirmed } from '../bids/queries';
 import { formatMinor, toMinor } from '../lib/money';
 import { notificationKeys } from '../notifications/queries';
 import { walletKeys } from './queries';
+import { sendInlineCharge } from './inline';
 import { t } from '../i18n/i18n';
 
 export type DepositOptions = components['schemas']['DepositOptionsDto'];
@@ -33,6 +34,17 @@ export const depositKeys = {
 /** A deposit the provider has not confirmed or refused yet. */
 export const isWaiting = (deposit: Pick<Deposit, 'status'>): boolean =>
   deposit.status === 'PENDING' || deposit.status === 'INITIATED';
+
+/** When the server leaves the phone request to the browser (Chapa inline), sends it. */
+async function sendFromBrowser(
+  queryClient: ReturnType<typeof useQueryClient>,
+  deposit: Deposit,
+  charge: { method: string; phoneNumber: string } | undefined,
+): Promise<void> {
+  const publicKey = queryClient.getQueryData<DepositOptions>(depositKeys.options)?.inlinePublicKey;
+  if (!publicKey || !charge || deposit.status !== 'PENDING' || deposit.chargeMethod !== charge.method) return;
+  await sendInlineCharge(publicKey, deposit, charge);
+}
 
 /** Whether money can be added online, the limits and the bonus. Public: visitors see the bonus offer too. */
 export function useDepositOptions() {
@@ -131,6 +143,7 @@ export function useStartBidPayment(auctionId: string) {
           }),
         );
         attempt.current = null;
+        await sendFromBrowser(queryClient, deposit, charge);
         return deposit;
       } catch (error) {
         if (!isUnconfirmed(error)) attempt.current = null;
@@ -171,6 +184,7 @@ export function useStartDeposit() {
           }),
         );
         attempt.current = null;
+        await sendFromBrowser(queryClient, deposit, charge);
         return deposit;
       } catch (error) {
         if (!isUnconfirmed(error)) attempt.current = null;

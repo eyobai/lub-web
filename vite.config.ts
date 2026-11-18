@@ -15,7 +15,10 @@ function contentSecurityPolicy(apiBaseUrl: string): Plugin {
     "style-src 'self'",
     "img-src 'self' https: data:",
     // "/" means the API is served from the site's own address.
-    apiBaseUrl.startsWith('/') ? "connect-src 'self'" : `connect-src 'self' ${new URL(apiBaseUrl).origin}`,
+    // The API, and Chapa's inline service, which sends phone payment requests from the browser.
+    apiBaseUrl.startsWith('/')
+      ? "connect-src 'self' https://inline.chapaservices.net"
+      : `connect-src 'self' ${new URL(apiBaseUrl).origin} https://inline.chapaservices.net`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

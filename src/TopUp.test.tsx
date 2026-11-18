@@ -97,6 +97,72 @@ describe('topping up the wallet', () => {
     expect(await within(sheet).findByRole('alert')).toHaveTextContent(message);
   });
 
+  describe("through Chapa's inline service", () => {
+    const INLINE = 'POST /v1/inline/charge';
+    const NOT_SENT = `POST /api/v1/wallet/deposits/${DEPOSIT.id}/charge-not-sent`;
+    const pending = aDeposit({
+      amountMinor: '10000',
+      amount: '100.00',
+      checkoutUrl: null,
+      chargeMethod: 'telebirr',
+    });
+
+    async function payWithTelebirr(user: ReturnType<typeof renderApp>['user']) {
+      const sheet = await screen.findByRole('dialog', { name: 'Top up wallet' });
+      await user.type(within(sheet).getByLabelText('Amount'), '100');
+      await user.click(within(sheet).getByRole('radio', { name: /telebirr/ }));
+      await user.click(within(sheet).getByRole('button', { name: 'Top up ETB 100' }));
+      return sheet;
+    }
+
+    it('sends the phone request from the browser with the public key and the deposit reference', async () => {
+      const fake = signedIn({
+        [OPTIONS]: [200, depositOptions({ inlinePublicKey: 'CHAPUBK-test-public' })],
+        [START]: [201, pending],
+        [INLINE]: [
+          200,
+          { status: 'success', message: 'Charge initiated', data: { meta: { ref_id: 'CHx1' } } },
+        ],
+        [ONE]: [200, pending],
+      });
+      const { user } = renderApp('/wallet?topup=1');
+      const sheet = await payWithTelebirr(user);
+
+      expect(await within(sheet).findByText('Approve the payment on your phone')).toBeInTheDocument();
+      const [call] = fake.callsTo(INLINE);
+      expect(call.authorization).toBe('Bearer CHAPUBK-test-public');
+      for (const field of ['tx_ref', 'amount', 'mobile', 'payment_method'])
+        expect(call.body).toContain(`name="${field}"`);
+      expect(call.body).toContain(pending.reference);
+      expect(call.body).toContain('100.00');
+      expect(fake.callsTo(NOT_SENT)).toHaveLength(0);
+    });
+
+    it('tells the server and the payer when Chapa will not send it', async () => {
+      const fake = signedIn({
+        [OPTIONS]: [200, depositOptions({ inlinePublicKey: 'CHAPUBK-test-public' })],
+        [START]: [201, pending],
+        [INLINE]: [400, { status: 'failed', message: 'You are not allowed for direct charges', data: null }],
+        [NOT_SENT]: [200, { ...pending, status: 'FAILED', requestNotSent: true }],
+      });
+      const { user } = renderApp('/wallet?topup=1');
+      const sheet = await payWithTelebirr(user);
+
+      expect(await within(sheet).findByRole('alert')).toHaveTextContent(
+        /Paying with telebirr is not available right now/,
+      );
+      expect(fake.callsTo(NOT_SENT)[0].body).toEqual({ reason: 'You are not allowed for direct charges' });
+    });
+
+    it('leaves the phone request to the server when there is no public key', async () => {
+      const fake = signedIn({ [START]: [201, pending], [ONE]: [200, pending] });
+      const { user } = renderApp('/wallet?topup=1');
+      const sheet = await payWithTelebirr(user);
+      expect(await within(sheet).findByText('Approve the payment on your phone')).toBeInTheDocument();
+      expect(fake.callsTo(INLINE)).toHaveLength(0);
+    });
+  });
+
   it('opens straight away from a link elsewhere on the site', async () => {
     signedIn();
     renderApp('/wallet?topup=1');
