@@ -71,7 +71,7 @@ describe('topping up the wallet', () => {
     expect(within(sheet).getByText('Valid for 7 days')).toBeInTheDocument();
 
     await user.click(within(sheet).getByRole('radio', { name: /M-Pesa/ }));
-    expect(within(sheet).getByLabelText('M-Pesa phone number')).toHaveValue('0911234567');
+    expect(within(sheet).getByLabelText('Phone number')).toHaveValue('911234567');
     await user.click(within(sheet).getByRole('button', { name: 'Top up ETB 500' }));
 
     expect(await within(sheet).findByText('Approve the payment on your phone')).toBeInTheDocument();

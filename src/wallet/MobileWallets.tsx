@@ -223,3 +223,79 @@ export function WalletTile({
     </label>
   );
 }
+
+/**
+ * The number the payment request goes to, shown above the wallets as in Chapa's own form: a fixed +251 and the
+ * nine local digits. Whatever is typed (09…, 9…, +2519…) is accepted; walletPhone() reads it.
+ */
+export function PhoneField({
+  id,
+  value,
+  error,
+  hint,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  error: string | null;
+  hint: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block px-1 text-sm font-semibold text-slate-700">
+        {t('Phone number')}
+      </label>
+      <div
+        className={cx(
+          'flex items-center overflow-hidden rounded-full border-2 bg-white shadow-sm focus-within:border-ink',
+          error ? 'border-red-500' : 'border-slate-200',
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className="flex items-center gap-2 border-r-2 border-slate-100 py-3 pr-3 pl-4"
+        >
+          <EthiopiaFlag />
+          <span className="font-semibold text-slate-700 tabular-nums">+251</span>
+        </span>
+        <input
+          id={id}
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel-national"
+          placeholder="911 223 344"
+          value={value}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={`${id}-note`}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-0 min-w-0 flex-1 bg-transparent px-3 py-3 text-lg tabular-nums outline-none"
+        />
+      </div>
+      <p id={`${id}-note`} className={cx('mt-1 px-1 text-sm', error ? 'text-red-700' : 'text-slate-500')}>
+        {error ?? hint}
+      </p>
+    </div>
+  );
+}
+
+function EthiopiaFlag() {
+  return (
+    <svg
+      viewBox="0 0 30 20"
+      className="h-4 w-6 shrink-0 overflow-hidden rounded-[3px] shadow-[0_0_0_1px_rgb(0_0_0/0.08)]"
+    >
+      <rect width="30" height="20" fill="#da121a" />
+      <rect width="30" height="13.34" fill="#fcdd09" />
+      <rect width="30" height="6.67" fill="#078930" />
+      <circle cx="15" cy="10" r="4.6" fill="#0f47af" />
+      <path
+        d="M15 6.6l.8 2.4h2.5l-2 1.5.8 2.4-2.1-1.5-2.1 1.5.8-2.4-2-1.5h2.5z"
+        fill="none"
+        stroke="#fcdd09"
+        strokeWidth=".7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

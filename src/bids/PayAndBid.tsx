@@ -11,13 +11,14 @@ import { cx } from '../lib/cx';
 import { leaveTo } from '../lib/leave';
 import { formatMinor } from '../lib/money';
 import {
+  localDigits,
   checkoutAddress,
   useDepositOptions,
   useStartBidPayment,
   walletName,
   walletPhone,
 } from '../wallet/deposits';
-import { ApproveOnPhone, Icon, WalletTile } from '../wallet/MobileWallets';
+import { ApproveOnPhone, Icon, PhoneField, WalletTile } from '../wallet/MobileWallets';
 import { useWallet } from '../wallet/queries';
 import { parseBidAmount, sortAmounts, type AmountProblem } from './amounts';
 import { bidErrorMessage, refusedAmounts } from './errors';
@@ -86,7 +87,7 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
   const [placed, setPlaced] = useState<BidSubmission | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [moreText, setMoreText] = useState(false);
-  const [phone, setPhone] = useState(() => walletPhone(user?.phoneNumber ?? '') ?? '');
+  const [phone, setPhone] = useState(() => localDigits(walletPhone(user?.phoneNumber ?? '') ?? ''));
   const [phoneError, setPhoneError] = useState<string | null>(null);
   /** A payment sent to the phone, which the sheet now waits on. */
   const [charged, setCharged] = useState<{ id: string; method: string; phone: string } | null>(null);
@@ -483,6 +484,19 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                   }
                 />
                 {mobileWallets.length > 0 && (
+                  <PhoneField
+                    id={`${amountId}-phone`}
+                    value={phone}
+                    error={phoneError}
+                    hint={t('The payment request is sent to this number.')}
+                    onChange={(next) => {
+                      setPhone(next);
+                      setPhoneError(null);
+                      reset();
+                    }}
+                  />
+                )}
+                {mobileWallets.length > 0 && (
                   <div className="grid grid-cols-2 gap-2">
                     {mobileWallets.map((key) => (
                       <WalletTile
@@ -517,41 +531,6 @@ export function PayAndBidSheet({ auction: a, onClose }: { auction: Auction; onCl
                   />
                 )}
               </fieldset>
-
-              {onPhone && method && (
-                <div>
-                  <label htmlFor={`${amountId}-phone`} className="block font-semibold text-slate-800">
-                    {t('{wallet} phone number', { wallet: walletName(method) })}
-                  </label>
-                  <p id={`${amountId}-phone-hint`} className="text-sm text-slate-500">
-                    {t('The payment request is sent to this number.')}
-                  </p>
-                  <input
-                    id={`${amountId}-phone`}
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    placeholder="0911223344"
-                    value={phone}
-                    aria-invalid={phoneError ? true : undefined}
-                    aria-describedby={`${amountId}-phone-hint${phoneError ? ` ${amountId}-phone-error` : ''}`}
-                    onChange={(event) => {
-                      setPhone(event.target.value);
-                      setPhoneError(null);
-                      reset();
-                    }}
-                    className={cx(
-                      'mt-2 block w-full rounded-full border-2 bg-white px-5 py-3.5 text-lg tabular-nums shadow-sm outline-none focus:border-ink',
-                      phoneError ? 'border-red-500' : 'border-slate-200',
-                    )}
-                  />
-                  {phoneError && (
-                    <p id={`${amountId}-phone-error`} className="mt-1 text-sm text-red-700">
-                      {phoneError}
-                    </p>
-                  )}
-                </div>
-              )}
 
               {error && (
                 <Alert>

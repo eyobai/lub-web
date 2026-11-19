@@ -298,3 +298,6 @@ export function bonusFor(
   const max = BigInt(options.bonusMaxMinor);
   return bonus < max ? bonus : max;
 }
+
+/** The number as it sits after +251: "0911223344" → "911223344". Anything else is left as typed. */
+export const localDigits = (phone: string): string => phone.replace(/^0(?=[79]\d{8}$)/, '');

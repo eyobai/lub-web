@@ -9,6 +9,7 @@ import { formatDateTime } from '../lib/clock';
 import { leaveTo } from '../lib/leave';
 import { formatMinor, formatMoney, toMinor } from '../lib/money';
 import {
+  localDigits,
   bonusFor,
   checkoutAddress,
   depositErrorMessage,
@@ -21,7 +22,7 @@ import {
   walletPhone,
   type DepositOptions,
 } from './deposits';
-import { ApproveOnPhone, Icon, WalletTile } from './MobileWallets';
+import { ApproveOnPhone, Icon, PhoneField, WalletTile } from './MobileWallets';
 import { useWallet } from './queries';
 import { t } from '../i18n/i18n';
 import { tRich } from '../i18n/rich';
@@ -94,7 +95,7 @@ export function TopUpSheet({ options: offered, onClose }: { options: DepositOpti
   const [input, setInput] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
-  const [phone, setPhone] = useState(() => walletPhone(user?.phoneNumber ?? '') ?? '');
+  const [phone, setPhone] = useState(() => localDigits(walletPhone(user?.phoneNumber ?? '') ?? ''));
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [charged, setCharged] = useState<{ id: string; method: string; phone: string } | null>(null);
   const [leaving, setLeaving] = useState(false);
@@ -317,6 +318,17 @@ export function TopUpSheet({ options: offered, onClose }: { options: DepositOpti
                 <Icon d="M3 7h18v10H3zm0 4h18" className="h-4 w-4 text-brand-600" />
                 {t('Select payment method')}
               </p>
+              <PhoneField
+                id={`${id}-phone`}
+                value={phone}
+                error={phoneError}
+                hint={t('You approve the payment on your phone, without leaving this page.')}
+                onChange={(next) => {
+                  setPhone(next);
+                  setPhoneError(null);
+                  start.reset();
+                }}
+              />
               <div className="grid grid-cols-2 gap-2">
                 {methods.map((key) => (
                   <WalletTile
@@ -333,42 +345,6 @@ export function TopUpSheet({ options: offered, onClose }: { options: DepositOpti
                 ))}
               </div>
             </fieldset>
-          )}
-
-          {method && (
-            <div>
-              <label htmlFor={`${id}-phone`} className="block font-semibold text-slate-700">
-                {t('{wallet} phone number', { wallet: walletName(method) })}
-              </label>
-              <input
-                id={`${id}-phone`}
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="0911223344"
-                value={phone}
-                aria-invalid={phoneError ? true : undefined}
-                aria-describedby={phoneError ? `${id}-phone-error` : undefined}
-                onChange={(event) => {
-                  setPhone(event.target.value);
-                  setPhoneError(null);
-                  start.reset();
-                }}
-                className={cx(
-                  'mt-2 block w-full rounded-full border-2 bg-white px-5 py-3.5 text-lg tabular-nums shadow-sm outline-none focus:border-ink',
-                  phoneError ? 'border-red-500' : 'border-slate-200',
-                )}
-              />
-              {phoneError ? (
-                <p id={`${id}-phone-error`} className="mt-1 text-sm text-red-700">
-                  {phoneError}
-                </p>
-              ) : (
-                <p className="mt-1 text-sm text-slate-500">
-                  {t('You approve the payment on your phone, without leaving this page.')}
-                </p>
-              )}
-            </div>
           )}
 
           {start.isError && (

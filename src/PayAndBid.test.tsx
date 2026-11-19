@@ -96,8 +96,8 @@ describe('pay and bid', () => {
     expect(within(sheet).getByRole('radio', { name: /telebirr/ })).toBeChecked();
     expect(within(sheet).getByRole('radio', { name: /M-Pesa/ })).toBeInTheDocument();
     // The account's own number, ready to change.
-    const phone = within(sheet).getByLabelText('telebirr phone number');
-    expect(phone).toHaveValue('0911234567');
+    const phone = within(sheet).getByLabelText('Phone number');
+    expect(phone).toHaveValue('911234567');
     await user.clear(phone);
     await user.type(phone, '+251 922 334455');
 
@@ -136,8 +136,8 @@ describe('pay and bid', () => {
     const sheet = await openSheet(user);
     await user.click(within(sheet).getByRole('radio', { name: /M-Pesa/ }));
     await user.type(within(sheet).getByLabelText('Your bid amount'), '4');
-    await user.clear(within(sheet).getByLabelText('M-Pesa phone number'));
-    await user.type(within(sheet).getByLabelText('M-Pesa phone number'), '0111');
+    await user.clear(within(sheet).getByLabelText('Phone number'));
+    await user.type(within(sheet).getByLabelText('Phone number'), '0111');
     await user.click(within(sheet).getByRole('button', { name: 'Pay ETB 75 & bid' }));
     expect(within(sheet).getByText('Enter your M-Pesa number, such as 0911223344.')).toBeInTheDocument();
     expect(fake.callsTo(START)).toHaveLength(0);
