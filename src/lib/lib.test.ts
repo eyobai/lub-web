@@ -70,9 +70,10 @@ describe('validation', () => {
   );
 
   it('applies the password rules of the API', () => {
-    expect(passwordError('abc1234')).toMatch(/8 characters/);
-    expect(passwordError('abcdefgh')).toMatch(/letter and one number/);
-    expect(passwordError('12345678')).toMatch(/letter and one number/);
+    expect(passwordError('abc')).toMatch(/4 characters/);
+    expect(passwordError('1234')).toBeNull();
+    expect(passwordError('ሰላም!')).toBeNull();
+    expect(passwordError('abcd')).toBeNull();
     expect(passwordError('a1'.repeat(65))).toMatch(/128/);
     expect(passwordError('abcd1234')).toBeNull();
   });

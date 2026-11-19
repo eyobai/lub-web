@@ -76,7 +76,7 @@ export function RegisterPage() {
             type="password"
             autoComplete="new-password"
             required
-            hint={t('At least 8 characters, with a letter and a number.')}
+            hint={t('At least 4 characters.')}
             value={form.password}
             onChange={set('password')}
             error={errors.password}

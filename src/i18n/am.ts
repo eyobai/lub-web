@@ -26,7 +26,6 @@ export const am: Record<string, string> = {
   'Announced {date}': 'የታወጀው {date}',
   'Approve the payment on your phone': 'ክፍያውን በስልክዎ ያጽድቁ',
   'Arranging delivery': 'ማድረሱ እየተዘጋጀ ነው',
-  'At least 8 characters, with a letter and a number.': 'ቢያንስ 8 ቁምፊዎች፣ ፊደልና ቁጥር ያካተተ።',
   'Auction not found': 'ጨረታው አልተገኘም',
   Auctions: 'ጨረታዎች',
   'Available balance': 'ያለው ቀሪ ሂሳብ',
@@ -369,8 +368,6 @@ export const am: Record<string, string> = {
   'Unique, but not the lowest': 'ልዩ ነው፣ ግን ዝቅተኛው አይደለም',
   Unread: 'ያልተነበቡ',
   Upcoming: 'መጪ',
-  'Use at least 8 characters.': 'ቢያንስ 8 ቁምፊዎች ይጠቀሙ።',
-  'Use at least one letter and one number.': 'ቢያንስ አንድ ፊደልና አንድ ቁጥር ይጠቀሙ።',
   'Use at most 128 characters.': 'ከ128 ቁምፊዎች አይብለጥ።',
   'Valid for {days} days': 'ለ{days} ቀናት ያገለግላል',
   'View payment': 'ክፍያውን ይመልከቱ',
@@ -548,4 +545,6 @@ export const am: Record<string, string> = {
     'ጨረታዎችዎን ለማየትና ለመከታተል ይግቡ ወይም መለያ ይፍጠሩ።',
   'Sign in or create an account to see your account, wallet and wins.':
     'መለያዎን፣ ዋሌትዎንና ያሸነፉትን ለማየት ይግቡ ወይም መለያ ይፍጠሩ።',
+  'Use at least 4 characters.': 'ቢያንስ 4 ቁምፊዎችን ይጠቀሙ።',
+  'At least 4 characters.': 'ቢያንስ 4 ቁምፊዎች።',
 };

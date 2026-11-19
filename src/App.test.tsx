@@ -90,14 +90,14 @@ describe('registration', () => {
     const { user } = renderApp('/register');
 
     await user.type(screen.getByLabelText('Phone number'), '12345');
-    await user.type(screen.getByLabelText('Password'), 'short');
+    await user.type(screen.getByLabelText('Password'), 'abc');
     await user.type(screen.getByLabelText('Repeat password'), 'different');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
 
     expect(screen.getByLabelText('Phone number')).toHaveAccessibleDescription(
       /valid Ethiopian mobile number/,
     );
-    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(/at least 8 characters/);
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(/at least 4 characters/);
     expect(screen.getByLabelText('Repeat password')).toHaveAccessibleDescription(/do not match/);
     expect(screen.getByLabelText('Phone number')).toBeInvalid();
     expect(fake.calls).toHaveLength(0);

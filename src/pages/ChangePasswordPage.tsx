@@ -90,7 +90,7 @@ export function ChangePasswordPage() {
             type="password"
             autoComplete="new-password"
             required
-            hint={t('At least 8 characters, with a letter and a number.')}
+            hint={t('At least 4 characters.')}
             value={form.next}
             onChange={set('next')}
             error={errors.next}

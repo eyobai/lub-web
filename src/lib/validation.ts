@@ -12,9 +12,8 @@ export function phoneError(value: string): string | null {
 }
 
 export function passwordError(value: string): string | null {
-  if (value.length < 8) return t('Use at least 8 characters.');
+  if (value.length < 4) return t('Use at least 4 characters.');
   if (value.length > 128) return t('Use at most 128 characters.');
-  if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) return t('Use at least one letter and one number.');
   return null;
 }
 

@@ -7138,9 +7138,9 @@
           "password": {
             "type": "string",
             "example": "Str0ngPassw0rd",
-            "minLength": 8,
+            "minLength": 4,
             "maxLength": 128,
-            "description": "At least 8 characters, with at least one letter and one digit."
+            "description": "At least 4 characters; any letters, digits or symbols."
           },
           "fullName": {
             "type": "string",
@@ -7458,9 +7458,9 @@
           "newPassword": {
             "type": "string",
             "example": "Str0ngPassw0rd",
-            "minLength": 8,
+            "minLength": 4,
             "maxLength": 128,
-            "description": "At least 8 characters, with at least one letter and one digit."
+            "description": "At least 4 characters; any letters, digits or symbols."
           }
         },
         "required": [
@@ -7491,9 +7491,9 @@
           "newPassword": {
             "type": "string",
             "example": "Str0ngPassw0rd",
-            "minLength": 8,
+            "minLength": 4,
             "maxLength": 128,
-            "description": "At least 8 characters, with at least one letter and one digit."
+            "description": "At least 4 characters; any letters, digits or symbols."
           }
         },
         "required": [

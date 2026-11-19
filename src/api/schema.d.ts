@@ -1679,7 +1679,7 @@ export interface components {
              */
             phoneNumber: string;
             /**
-             * @description At least 8 characters, with at least one letter and one digit.
+             * @description At least 4 characters; any letters, digits or symbols.
              * @example Str0ngPassw0rd
              */
             password: string;
@@ -1841,7 +1841,7 @@ export interface components {
              */
             code: string;
             /**
-             * @description At least 8 characters, with at least one letter and one digit.
+             * @description At least 4 characters; any letters, digits or symbols.
              * @example Str0ngPassw0rd
              */
             newPassword: string;
@@ -1854,7 +1854,7 @@ export interface components {
             /** @example Str0ngPassw0rd */
             currentPassword: string;
             /**
-             * @description At least 8 characters, with at least one letter and one digit.
+             * @description At least 4 characters; any letters, digits or symbols.
              * @example Str0ngPassw0rd
              */
             newPassword: string;
